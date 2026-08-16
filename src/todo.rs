@@ -56,9 +56,21 @@ pub struct Task {
     /// filter parses it on demand via `crate::threshold`.
     pub threshold: Option<String>,
     pub notes: Vec<String>,
+    /// Number of two-space indentation levels this task sits at in the file.
+    /// Derived from leading spaces in the raw line; drives subtree grouping
+    /// and indented rendering. `raw` itself stays trimmed of leading
+    /// whitespace so the rest of the parser/tokenizers can ignore indentation.
+    pub indent_level: u8,
+}
+
+/// Number of two-space indentation levels in `raw`. Tabs are not counted as
+/// indentation — nesting is expressed with two leading spaces per level.
+pub fn indent_level_of(raw: &str) -> u8 {
+    (raw.chars().take_while(|c| *c == ' ').count() / 2) as u8
 }
 
 pub fn parse_line(raw: &str) -> Result<Task, ParseError> {
+    let indent_level = indent_level_of(raw);
     let line = raw.trim();
     if line.is_empty() {
         return Err(ParseError::Empty);
@@ -109,6 +121,7 @@ pub fn parse_line(raw: &str) -> Result<Task, ParseError> {
         rec,
         threshold,
         notes,
+        indent_level,
     })
 }
 
@@ -225,8 +238,38 @@ pub fn parse_file(s: &str) -> Vec<Task> {
 pub fn serialize(tasks: &[Task]) -> String {
     let mut out = String::new();
     for t in tasks {
+        for _ in 0..t.indent_level {
+            out.push_str("  ");
+        }
         out.push_str(&t.raw);
         out.push('\n');
+    }
+    out
+}
+
+/// Index of the nearest task above `idx` with a strictly smaller indent
+/// level, i.e. its parent. Returns `None` for top-level tasks or an out-of-
+/// range `idx`.
+pub fn parent_index(tasks: &[Task], idx: usize) -> Option<usize> {
+    let level = tasks.get(idx)?.indent_level;
+    (0..idx).rev().find(|&i| tasks[i].indent_level < level)
+}
+
+/// Indices of the subtree rooted at `idx` (inclusive), in file order. A task
+/// belongs to the subtree if it immediately follows `idx` and sits at a deeper
+/// indent level than `idx`, up to the first task at level `<= tasks[idx]`.
+pub fn subtree_indices(tasks: &[Task], idx: usize) -> Vec<usize> {
+    let Some(root) = tasks.get(idx) else {
+        return vec![];
+    };
+    let root_level = root.indent_level;
+    let mut out = vec![idx];
+    for (i, task) in tasks.iter().enumerate().skip(idx + 1) {
+        if task.indent_level > root_level {
+            out.push(i);
+        } else {
+            break;
+        }
     }
     out
 }
@@ -355,10 +398,26 @@ impl Task {
     }
 
     /// Re-parse `raw` and overwrite self. Only mutates on success, so a
-    /// failed parse leaves the task untouched.
+    /// failed parse leaves the task untouched. Preserves the existing indent
+    /// level — the `raw` handed in is indentation-free, so a fresh parse would
+    /// otherwise reset a subtask back to top level.
     fn replace_from_raw(&mut self, raw: &str) -> Result<(), ParseError> {
-        *self = parse_line(raw)?;
+        let indent_level = self.indent_level;
+        let mut parsed = parse_line(raw)?;
+        parsed.indent_level = indent_level;
+        *self = parsed;
         Ok(())
+    }
+
+    /// Shift this task one indentation level deeper. The caller is
+    /// responsible for shifting the whole subtree, not just this node.
+    pub fn indent(&mut self) {
+        self.indent_level = self.indent_level.saturating_add(1);
+    }
+
+    /// Shift this task one indentation level shallower (min 0).
+    pub fn outdent(&mut self) {
+        self.indent_level = self.indent_level.saturating_sub(1);
     }
 }
 
@@ -632,5 +691,65 @@ mod tests {
         for (a, b) in parsed.iter().zip(reparsed.iter()) {
             assert_eq!(a.raw, b.raw);
         }
+    }
+
+    #[test]
+    fn parses_indent_levels_from_leading_spaces() {
+        assert_eq!(parse_line("top").unwrap().indent_level, 0);
+        assert_eq!(parse_line("  child").unwrap().indent_level, 1);
+        assert_eq!(parse_line("    grandchild").unwrap().indent_level, 2);
+        // Odd leading spaces round down (1 space = level 0).
+        assert_eq!(parse_line(" one").unwrap().indent_level, 0);
+        assert_eq!(parse_line("   three").unwrap().indent_level, 1);
+    }
+
+    #[test]
+    fn serialize_round_trips_indentation() {
+        let raw = "top\n  child\n    grandchild\n  sibling\n";
+        let parsed = parse_file(raw);
+        assert_eq!(serialize(&parsed), raw);
+    }
+
+    #[test]
+    fn parent_index_resolves_nearest_shallower_task() {
+        let tasks = parse_file("a\n  b\n    c\n  d\ne\n");
+        assert_eq!(parent_index(&tasks, 1), Some(0));
+        assert_eq!(parent_index(&tasks, 2), Some(1));
+        assert_eq!(parent_index(&tasks, 3), Some(0));
+        assert_eq!(parent_index(&tasks, 4), None);
+        assert_eq!(parent_index(&tasks, 0), None);
+    }
+
+    #[test]
+    fn subtree_indices_cover_contiguous_descendants() {
+        let tasks = parse_file("a\n  b\n    c\n  d\ne\n");
+        assert_eq!(subtree_indices(&tasks, 0), vec![0, 1, 2, 3]);
+        assert_eq!(subtree_indices(&tasks, 1), vec![1, 2]);
+        assert_eq!(subtree_indices(&tasks, 2), vec![2]);
+        assert_eq!(subtree_indices(&tasks, 3), vec![3]);
+        assert_eq!(subtree_indices(&tasks, 4), vec![4]);
+    }
+
+    #[test]
+    fn indent_and_outdent_shift_level() {
+        let mut t = parse_line("task").unwrap();
+        t.indent();
+        t.indent();
+        assert_eq!(t.indent_level, 2);
+        t.outdent();
+        assert_eq!(t.indent_level, 1);
+        t.outdent();
+        t.outdent();
+        assert_eq!(t.indent_level, 0, "outdent never goes below zero");
+    }
+
+    #[test]
+    fn replace_from_raw_preserves_indent() {
+        let mut t = parse_line("  child").unwrap();
+        assert_eq!(t.indent_level, 1);
+        t.mark_done("2026-05-06").unwrap();
+        assert_eq!(t.indent_level, 1);
+        assert!(t.done);
+        assert_eq!(t.raw, "x 2026-05-06 2026-05-06 child");
     }
 }

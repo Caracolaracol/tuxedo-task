@@ -57,6 +57,34 @@ impl App {
         }
     }
 
+    /// Nest the task at `abs` (and its subtree) one level deeper.
+    pub fn indent(&mut self, abs: usize) {
+        match self.store.shift_indent(abs, 1) {
+            EditOutcome::Saved { abs } => {
+                self.flash("indented");
+                self.after_mutation(abs);
+            }
+            EditOutcome::Aborted(r) => self.handle_reconcile_abort(r),
+            EditOutcome::OutOfRange => {}
+            EditOutcome::Error(e) => self.flash(format!("indent failed: {e}")),
+            EditOutcome::Empty | EditOutcome::TermNotFound => {}
+        }
+    }
+
+    /// Un-nest the task at `abs` (and its subtree) one level.
+    pub fn outdent(&mut self, abs: usize) {
+        match self.store.shift_indent(abs, -1) {
+            EditOutcome::Saved { abs } => {
+                self.flash("outdented");
+                self.after_mutation(abs);
+            }
+            EditOutcome::Aborted(r) => self.handle_reconcile_abort(r),
+            EditOutcome::OutOfRange => {}
+            EditOutcome::Error(e) => self.flash(format!("outdent failed: {e}")),
+            EditOutcome::Empty | EditOutcome::TermNotFound => {}
+        }
+    }
+
     pub fn add_from_draft(&mut self) -> AddOutcome {
         let text = self.draft.text().trim().to_string();
         if text.is_empty() {

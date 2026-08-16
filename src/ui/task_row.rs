@@ -24,6 +24,12 @@ pub struct RowOpts<'a> {
 pub fn build_line<'a>(task: &'a Task, opts: RowOpts<'a>, theme: &Theme) -> Line<'a> {
     let mut spans: Vec<Span<'a>> = Vec::new();
 
+    // Indentation first so the whole row (glyph + body) shifts right per
+    // nesting level. Two spaces per level, mirroring the on-disk format.
+    for _ in 0..task.indent_level {
+        spans.push(Span::raw("  "));
+    }
+
     if opts.show_line_num {
         // fixes in line color selection
         let num_color = if opts.cursor { theme.fg } else { theme.dim };

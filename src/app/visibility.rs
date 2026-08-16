@@ -54,6 +54,11 @@ impl App {
             })
             .collect();
 
+        // Snapshot the visible set (file order) before sorting, so group keys
+        // can resolve each row to its family root (a child inherits its
+        // parent's priority/due bucket rather than emitting its own header).
+        let visible_set: std::collections::HashSet<usize> = idxs.iter().copied().collect();
+
         filter::sort_by_prefs(&mut idxs, tasks, self.prefs.sort);
 
         let week_start = &self.week_start;
@@ -62,11 +67,17 @@ impl App {
             Sort::File => vec![GroupKey::None; idxs.len()],
             Sort::Priority => idxs
                 .iter()
-                .map(|&i| GroupKey::ListPriority(tasks[i].priority))
+                .map(|&i| {
+                    let root = filter::family_root(tasks, i, &visible_set);
+                    GroupKey::ListPriority(tasks[root].priority)
+                })
                 .collect(),
             Sort::Due => idxs
                 .iter()
-                .map(|&i| GroupKey::ListDue(filter::due_bucket(&tasks[i], today, week_start)))
+                .map(|&i| {
+                    let root = filter::family_root(tasks, i, &visible_set);
+                    GroupKey::ListDue(filter::due_bucket(&tasks[root], today, week_start))
+                })
                 .collect(),
         };
         self.visible_groups = groups;

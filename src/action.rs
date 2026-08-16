@@ -59,6 +59,11 @@ pub enum Action {
     /// Open the theme picker dialog (j/k to preview, Enter to accept).
     OpenThemePicker,
     ChangeWeekStart,
+    /// Increase the selected task's indentation level (nest it under the task
+    /// above), shifting its whole subtree.
+    Indent,
+    /// Decrease the selected task's indentation level (and its subtree's).
+    Outdent,
 }
 
 impl Action {
@@ -112,6 +117,8 @@ impl Action {
             "open_share" | "share" => Some(Self::OpenShare),
             "open_theme_picker" | "theme_picker" => Some(Self::OpenThemePicker),
             "change_week_start" => Some(Self::ChangeWeekStart),
+            "indent" => Some(Self::Indent),
+            "outdent" => Some(Self::Outdent),
             _ => None,
         }
     }

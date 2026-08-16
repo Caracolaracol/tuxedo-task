@@ -1022,6 +1022,8 @@ fn resolve_normal_key(app: &mut App, key: KeyEvent, keybinds: &KeyBindings) -> O
         }
         KeyCode::Char('S') => Action::CycleSort,
         KeyCode::Char('+') => Action::BeginPromptProject,
+        KeyCode::Char('>') => Action::Indent,
+        KeyCode::Char('<') => Action::Outdent,
         KeyCode::Char('[') => Action::ToggleLeftPane,
         KeyCode::Char(']') => Action::ToggleRightPane,
         KeyCode::Char('T') => Action::OpenThemePicker,
@@ -1071,7 +1073,9 @@ fn apply_action(app: &mut App, action: Action) {
             | Action::CycleSort
             | Action::ToggleShowDone
             | Action::ToggleShowFuture
-            | Action::Undo => {
+            | Action::Undo
+            | Action::Indent
+            | Action::Outdent => {
                 app.flash("read-only in archive");
                 return;
             }
@@ -1286,6 +1290,16 @@ fn apply_action(app: &mut App, action: Action) {
         Action::ChangeWeekStart => {
             app.toggle_week_start_date();
             app.recompute_visible();
+        }
+        Action::Indent => {
+            if let Some(abs) = app.cur_task_index_in_tasks() {
+                app.indent(abs);
+            }
+        }
+        Action::Outdent => {
+            if let Some(abs) = app.cur_task_index_in_tasks() {
+                app.outdent(abs);
+            }
         }
     }
 }

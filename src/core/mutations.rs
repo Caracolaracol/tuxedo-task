@@ -26,13 +26,24 @@ impl Store {
         };
         let raw_before = t.raw.clone();
         let due_before = t.due.clone();
+        let root_indent = t.indent_level;
+        // The whole subtree toggles together: completing a parent completes
+        // its children, un-completing restores them.
+        let subtree = todo::subtree_indices(&self.tasks, abs);
 
         self.push_history();
-        let result = if was_done {
-            self.tasks[abs].unmark_done()
-        } else {
-            self.tasks[abs].mark_done(&self.today)
-        };
+        let mut result = Ok(());
+        for &i in &subtree {
+            let r = if was_done {
+                self.tasks[i].unmark_done()
+            } else {
+                self.tasks[i].mark_done(&self.today)
+            };
+            if let Err(e) = r {
+                result = Err(e);
+                break;
+            }
+        }
         match result {
             Ok(()) => {
                 let spawned = rec_spec.and_then(|spec| {
@@ -50,7 +61,8 @@ impl Store {
                     if already_live {
                         return None;
                     }
-                    let parsed = todo::parse_line(&next_raw).ok()?;
+                    let mut parsed = todo::parse_line(&next_raw).ok()?;
+                    parsed.indent_level = root_indent;
                     self.tasks.insert(abs + 1, parsed);
                     Some(abs + 1)
                 });
@@ -112,8 +124,11 @@ impl Store {
         if abs >= self.tasks.len() {
             return DeleteOutcome::OutOfRange;
         }
+        let subtree = todo::subtree_indices(&self.tasks, abs);
         self.push_history();
-        self.tasks.remove(abs);
+        for &i in subtree.iter().rev() {
+            self.tasks.remove(i);
+        }
         match self.persist() {
             Ok(()) => DeleteOutcome::Deleted { abs },
             Err(e) => DeleteOutcome::Error(e),
@@ -251,10 +266,13 @@ impl Store {
     }
 
     /// Parse `new_raw`, snapshot for undo, replace the task at `abs`, persist.
-    /// Caller is responsible for reconcile + bounds checks.
+    /// Caller is responsible for reconcile + bounds checks. Preserves the
+    /// task's indent level so editing a subtask doesn't promote it to top level.
     fn rewrite_raw(&mut self, abs: usize, new_raw: &str) -> EditOutcome {
+        let indent = self.tasks.get(abs).map(|t| t.indent_level).unwrap_or(0);
         match todo::parse_line(new_raw) {
-            Ok(task) => {
+            Ok(mut task) => {
+                task.indent_level = indent;
                 self.push_history();
                 self.tasks[abs] = task;
                 match self.persist() {
@@ -335,16 +353,33 @@ impl Store {
     }
 
     /// Bulk-complete the given task indices, spawning recurring successors.
-    /// Indices that are out of range or already done are skipped.
+    /// Indices that are out of range or already done are skipped. Selecting a
+    /// parent also completes its whole subtree; overlapping subtrees collapse
+    /// to unique indices. Recurrence spawns only from the explicitly selected
+    /// roots, not from children swept up by a cascade.
     pub fn complete_many(&mut self, indices: &[usize]) -> BulkCompleteOutcome {
         match self.reconcile() {
             Reconcile::Unchanged => {}
             other => return BulkCompleteOutcome::Aborted(other),
         }
-        let to_complete: Vec<usize> = indices
+        let selected: Vec<usize> = indices
             .iter()
             .copied()
-            .filter(|&i| i < self.tasks.len() && !self.tasks[i].done)
+            .filter(|&i| i < self.tasks.len())
+            .collect();
+        if selected.is_empty() {
+            return BulkCompleteOutcome::NothingToComplete;
+        }
+        let selected_set: std::collections::HashSet<usize> = selected.iter().copied().collect();
+        let mut expanded: Vec<usize> = Vec::new();
+        for &i in &selected {
+            expanded.extend(todo::subtree_indices(&self.tasks, i));
+        }
+        expanded.sort_unstable();
+        expanded.dedup();
+        let to_complete: Vec<usize> = expanded
+            .into_iter()
+            .filter(|&i| !self.tasks[i].done)
             .collect();
         if to_complete.is_empty() {
             return BulkCompleteOutcome::NothingToComplete;
@@ -354,20 +389,27 @@ impl Store {
         let mut spawns: Vec<(usize, todo::Task)> = Vec::new();
         for abs in to_complete.iter().copied() {
             let t = &self.tasks[abs];
+            let indent = t.indent_level;
             let raw = t.raw.clone();
             let due = t.due.clone();
-            let rec_spec = t.rec.as_deref().and_then(recurrence::parse_rec_spec);
+            let rec_spec = if selected_set.contains(&abs) {
+                t.rec.as_deref().and_then(recurrence::parse_rec_spec)
+            } else {
+                None
+            };
             let created = t.created_date.clone().unwrap_or_else(|| self.today.clone());
             let body = todo::body_after_priority(&raw).to_string();
             let new_raw = format!("x {} {} {}", self.today, created, body);
-            if let Ok(parsed) = todo::parse_line(&new_raw) {
+            if let Ok(mut parsed) = todo::parse_line(&new_raw) {
+                parsed.indent_level = indent;
                 self.tasks[abs] = parsed;
             }
             if let Some(spec) = rec_spec
                 && let Some(next_raw) =
                     build_next_instance(&raw, due.as_deref(), &spec, &self.today)
-                && let Ok(next) = todo::parse_line(&next_raw)
+                && let Ok(mut next) = todo::parse_line(&next_raw)
             {
+                next.indent_level = indent;
                 spawns.push((abs, next));
             }
         }
@@ -385,13 +427,14 @@ impl Store {
         }
     }
 
-    /// Bulk-delete the given task indices.
+    /// Bulk-delete the given task indices. Selecting a parent also removes its
+    /// whole subtree; overlapping subtrees collapse to unique indices.
     pub fn delete_many(&mut self, indices: &[usize]) -> BulkDeleteOutcome {
         match self.reconcile() {
             Reconcile::Unchanged => {}
             other => return BulkDeleteOutcome::Aborted(other),
         }
-        let mut indices: Vec<usize> = indices
+        let indices: Vec<usize> = indices
             .iter()
             .copied()
             .filter(|&i| i < self.tasks.len())
@@ -399,15 +442,54 @@ impl Store {
         if indices.is_empty() {
             return BulkDeleteOutcome::Nothing;
         }
-        indices.sort_by(|a, b| b.cmp(a));
+        let mut expanded: Vec<usize> = Vec::new();
+        for &i in &indices {
+            expanded.extend(todo::subtree_indices(&self.tasks, i));
+        }
+        expanded.sort_unstable();
+        expanded.dedup();
+        expanded.sort_by(|a, b| b.cmp(a));
         self.push_history();
-        let deleted = indices.len();
-        for abs in indices {
+        let deleted = expanded.len();
+        for abs in expanded {
             self.tasks.remove(abs);
         }
         match self.persist() {
             Ok(()) => BulkDeleteOutcome::Done { deleted },
             Err(e) => BulkDeleteOutcome::Error(e),
+        }
+    }
+
+    /// Shift the whole subtree rooted at `abs` one level deeper (`delta > 0`)
+    /// or shallower (`delta < 0`). Every task in the subtree moves together so
+    /// the parent/child relationship is preserved. Outdenting a top-level task
+    /// is a no-op.
+    pub fn shift_indent(&mut self, abs: usize, delta: i8) -> EditOutcome {
+        match self.reconcile() {
+            Reconcile::Unchanged => {}
+            other => return EditOutcome::Aborted(other),
+        }
+        if abs >= self.tasks.len() {
+            return EditOutcome::OutOfRange;
+        }
+        if delta == 0 {
+            return EditOutcome::OutOfRange;
+        }
+        let subtree = todo::subtree_indices(&self.tasks, abs);
+        if delta < 0 && self.tasks[abs].indent_level == 0 {
+            return EditOutcome::Saved { abs };
+        }
+        self.push_history();
+        for &i in &subtree {
+            if delta > 0 {
+                self.tasks[i].indent();
+            } else {
+                self.tasks[i].outdent();
+            }
+        }
+        match self.persist() {
+            Ok(()) => EditOutcome::Saved { abs },
+            Err(e) => EditOutcome::Error(e),
         }
     }
 }
@@ -717,5 +799,103 @@ mod tests {
         assert_eq!(store.tasks().len(), 2);
         assert_eq!(store.tasks()[0].raw, "a");
         assert_eq!(store.tasks()[1].raw, "c");
+    }
+
+    #[test]
+    fn toggle_complete_cascades_to_children() {
+        let mut store = build_store("parent\n  child\n    grandchild\n  sibling\n");
+        assert!(matches!(
+            store.toggle_complete(0),
+            CompleteOutcome::Completed { .. }
+        ));
+        assert!(store.tasks().iter().all(|t| t.done));
+        // Indent levels survive completion.
+        assert_eq!(store.tasks()[1].indent_level, 1);
+        assert_eq!(store.tasks()[2].indent_level, 2);
+    }
+
+    #[test]
+    fn toggle_complete_uncompletes_children() {
+        let raw = "x 2026-05-06 2026-05-01 parent\n  x 2026-05-06 2026-05-01 child\n";
+        let mut store = build_store(raw);
+        assert!(matches!(
+            store.toggle_complete(0),
+            CompleteOutcome::Uncompleted { .. }
+        ));
+        assert!(store.tasks().iter().all(|t| !t.done));
+    }
+
+    #[test]
+    fn toggle_complete_leaf_does_not_touch_following_top_level() {
+        let mut store = build_store("  child\ntop\n");
+        store.toggle_complete(0);
+        assert!(store.tasks()[0].done);
+        assert!(!store.tasks()[1].done);
+    }
+
+    #[test]
+    fn delete_removes_whole_subtree() {
+        let mut store = build_store("parent\n  child\n    grandchild\nsibling\n");
+        store.delete(0);
+        assert_eq!(store.tasks().len(), 1);
+        assert_eq!(store.tasks()[0].raw, "sibling");
+    }
+
+    #[test]
+    fn shift_indent_indents_whole_subtree() {
+        let mut store = build_store("parent\n  child\nsibling\n");
+        assert!(matches!(
+            store.shift_indent(0, 1),
+            EditOutcome::Saved { .. }
+        ));
+        assert_eq!(store.tasks()[0].indent_level, 1);
+        assert_eq!(store.tasks()[1].indent_level, 2);
+        assert_eq!(store.tasks()[2].indent_level, 0);
+        // Round-trips through serialize.
+        assert_eq!(
+            crate::todo::serialize(store.tasks()),
+            "  parent\n    child\nsibling\n"
+        );
+    }
+
+    #[test]
+    fn shift_indent_outdent_subtree() {
+        let mut store = build_store("  parent\n    child\nsibling\n");
+        store.shift_indent(0, -1);
+        assert_eq!(store.tasks()[0].indent_level, 0);
+        assert_eq!(store.tasks()[1].indent_level, 1);
+        assert_eq!(store.tasks()[2].indent_level, 0);
+    }
+
+    #[test]
+    fn shift_indent_outdent_at_top_level_is_noop() {
+        let mut store = build_store("parent\n");
+        assert!(matches!(
+            store.shift_indent(0, -1),
+            EditOutcome::Saved { .. }
+        ));
+        assert_eq!(store.tasks()[0].indent_level, 0);
+    }
+
+    #[test]
+    fn complete_many_expands_selected_subtrees() {
+        let mut store = build_store("parent\n  child\nsibling\n");
+        let out = store.complete_many(&[0]);
+        assert!(matches!(
+            out,
+            BulkCompleteOutcome::Done { completed: 2, .. }
+        ));
+        assert!(store.tasks()[0].done);
+        assert!(store.tasks()[1].done);
+        assert!(!store.tasks()[2].done);
+    }
+
+    #[test]
+    fn delete_many_expands_selected_subtrees() {
+        let mut store = build_store("parent\n  child\nsibling\n");
+        let out = store.delete_many(&[0]);
+        assert!(matches!(out, BulkDeleteOutcome::Done { deleted: 2 }));
+        assert_eq!(store.tasks().len(), 1);
+        assert_eq!(store.tasks()[0].raw, "sibling");
     }
 }

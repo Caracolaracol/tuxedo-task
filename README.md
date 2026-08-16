@@ -362,6 +362,8 @@ chords like `ZZ`, modifier forms like `Ctrl-n` / `Alt-x`, named keys like
 | `+` | add a project |
 | `yy` | copy current line to clipboard |
 | `yb` | copy current body only (no priority, dates, projects, contexts, `key:value`) |
+| `>` | indent task (and its subtree) one level — nests it as a subtask |
+| `<` | outdent task (and its subtree) one level |
 | `u` | undo (50 levels) |
 
 ### Edit dialog
@@ -468,6 +470,24 @@ Completed tasks are prefixed with `x ` and a completion date:
 ```
 x 2026-05-05 2026-05-01 Submit expense report +work
 ```
+
+### Subtasks (nested tasks)
+
+Subtasks are expressed with two leading spaces per nesting level:
+
+```
+Plan the launch
+  Write the announcement
+    Draft copy
+    Get review
+  Prepare the demo
+```
+
+Indent the task under the cursor with `>` and outdent it with `<` (the whole
+subtree moves together). Subtasks render indented in the list, and they stay
+attached to their parent across priority/due sorting. Completing or deleting
+a parent (`x` / `dd`) completes or deletes its whole subtree; `u` undoes it
+all at once.
 
 Recurring example:
 

@@ -78,10 +78,65 @@ pub fn due_bucket(task: &Task, today: &str, week_start: &WeekStart) -> ListDueBu
 
 pub fn sort_by_prefs(idxs: &mut [usize], tasks: &[Task], sort: Sort) {
     match sort {
-        Sort::Priority => idxs.sort_by(cmp_priority(tasks)),
-        Sort::Due => idxs.sort_by(cmp_due(tasks)),
+        Sort::Priority => sort_families(idxs, tasks, cmp_priority(tasks)),
+        Sort::Due => sort_families(idxs, tasks, cmp_due(tasks)),
         Sort::File => { /* preserve order */ }
     }
+}
+
+/// Topmost visible ancestor of `idx` (itself when no visible ancestor exists
+/// above it). A subtask is grouped with the nearest ancestor that also passes
+/// the active filter, so children never float away from their parent in a
+/// sorted view.
+pub fn family_root(
+    tasks: &[Task],
+    idx: usize,
+    visible: &std::collections::HashSet<usize>,
+) -> usize {
+    let mut r = idx;
+    while let Some(p) = crate::todo::parent_index(tasks, r) {
+        if visible.contains(&p) {
+            r = p;
+        } else {
+            break;
+        }
+    }
+    r
+}
+
+/// Sort `idxs` so each family (a root plus its descendants, in file order)
+/// stays contiguous, ordered by the family root's sort key. Children keep
+/// their file order within the family.
+fn sort_families<F>(idxs: &mut [usize], tasks: &[Task], cmp: F)
+where
+    F: Fn(&usize, &usize) -> Ordering,
+{
+    use std::collections::HashMap;
+    let visible: std::collections::HashSet<usize> = idxs.iter().copied().collect();
+    let mut families: HashMap<usize, Vec<usize>> = HashMap::new();
+    let mut root_order: Vec<usize> = Vec::new();
+    let mut root_of: HashMap<usize, usize> = HashMap::new();
+
+    for &i in idxs.iter() {
+        let root = *root_of
+            .entry(i)
+            .or_insert_with(|| family_root(tasks, i, &visible));
+        families
+            .entry(root)
+            .or_insert_with(|| {
+                root_order.push(root);
+                Vec::new()
+            })
+            .push(i);
+    }
+
+    root_order.sort_by(|a, b| cmp(a, b));
+
+    let mut out = Vec::with_capacity(idxs.len());
+    for root in root_order {
+        out.extend(families[&root].iter().copied());
+    }
+    idxs.copy_from_slice(&out);
 }
 
 /// Project / context / search predicate, shared by every view that honors
@@ -220,5 +275,27 @@ mod tests {
             .expect("unable to get the week cutoff date");
         assert_eq!(end_this_week, "2026-06-21");
         assert_eq!(end_next_week, "2026-06-28");
+    }
+
+    #[test]
+    fn sort_by_prefs_keeps_families_together() {
+        // Parent (no priority) + child (priority A); sibling (priority A).
+        // Under priority sort the sibling family (A) comes first, then the
+        // parent family, with the child pinned right after its parent even
+        // though the child itself is also priority A.
+        let tasks = crate::todo::parse_file("parent\n  (A) child\n(A) sibling\n");
+        let mut idxs = vec![0, 1, 2];
+        sort_by_prefs(&mut idxs, &tasks, Sort::Priority);
+        assert_eq!(idxs, vec![2, 0, 1]);
+    }
+
+    #[test]
+    fn family_root_skips_filtered_out_ancestors() {
+        let tasks = crate::todo::parse_file("parent\n  child\n");
+        let visible: std::collections::HashSet<usize> = [1].iter().copied().collect();
+        // Parent isn't visible, so the child roots itself.
+        assert_eq!(family_root(&tasks, 1, &visible), 1);
+        let visible: std::collections::HashSet<usize> = [0, 1].iter().copied().collect();
+        assert_eq!(family_root(&tasks, 1, &visible), 0);
     }
 }
