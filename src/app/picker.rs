@@ -72,22 +72,36 @@ impl App {
 
     /// Commit an open picker (Enter): keep the previewed filter, return to
     /// Normal. For the saved-filter picker this also drops the revert
-    /// snapshot so a later cancel elsewhere can't resurrect it.
+    /// snapshot so a later cancel elsewhere can't resurrect it. The
+    /// project/context pickers persist the chosen filter.
     pub fn pick_accept(&mut self) {
-        if self.mode == Mode::PickSavedFilter {
-            self.saved_pick_restore = None;
+        match self.mode {
+            Mode::PickSavedFilter => {
+                self.saved_pick_restore = None;
+            }
+            Mode::PickProject | Mode::PickContext => {
+                self.save_filter();
+            }
+            _ => {}
         }
         self.mode = Mode::Normal;
     }
 
     /// Cancel an open picker. Clears only the filter that was being picked
     /// (so escaping the context picker doesn't drop a project filter that
-    /// the user set independently). The saved-filter picker restores the
-    /// search that was active before it opened.
+    /// the user set independently), and persists the cleared filter. The
+    /// saved-filter picker restores the search that was active before it
+    /// opened.
     pub fn pick_cancel(&mut self) {
         match self.mode {
-            Mode::PickProject => self.filter.project = None,
-            Mode::PickContext => self.filter.context = None,
+            Mode::PickProject => {
+                self.filter.project = None;
+                self.save_filter();
+            }
+            Mode::PickContext => {
+                self.filter.context = None;
+                self.save_filter();
+            }
             Mode::PickSavedFilter => {
                 self.filter.search = self.saved_pick_restore.take().unwrap_or_default();
             }

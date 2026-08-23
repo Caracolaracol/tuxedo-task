@@ -19,13 +19,37 @@ pub struct RowOpts<'a> {
     /// rendered body. Empty (the common case) means render everything,
     /// byte-for-byte as before.
     pub hidden_keys: &'a [String],
+    /// Column span (screen columns relative to the body rect) currently
+    /// selected by a mouse drag, if this row is part of the selection. The
+    /// renderer highlights body tokens overlapping the span.
+    pub sel_cols: Option<(u16, u16)>,
+}
+
+/// Column (within the body area) where this row's body text begins. Must
+/// mirror the prefix that `build_line` emits *exactly* — the mouse handler
+/// uses it to translate a screen column into a character offset for text
+/// selection.
+pub fn body_col_offset(task: &Task, opts: &RowOpts<'_>) -> usize {
+    let mut col = task.indent_level as usize * 2;
+    if opts.show_line_num {
+        col += 4;
+    }
+    if opts.multi_mode {
+        col += 4;
+    }
+    col += 2; // glyph
+    col += 4; // priority / done box
+    if task.indent_level > 0 {
+        col += 2; // subtask bullet
+    }
+    col
 }
 
 pub fn build_line<'a>(task: &'a Task, opts: RowOpts<'a>, theme: &Theme) -> Line<'a> {
     let mut spans: Vec<Span<'a>> = Vec::new();
 
     // Indentation first so the whole row (glyph + body) shifts right per
-    // nesting level. Two spaces per level, mirroring the on-disk format.
+    // nesting level: two spaces per level, mirroring the on-disk format.
     for _ in 0..task.indent_level {
         spans.push(Span::raw("  "));
     }
@@ -81,6 +105,13 @@ pub fn build_line<'a>(task: &'a Task, opts: RowOpts<'a>, theme: &Theme) -> Line<
         spans.push(Span::raw("    "));
     }
 
+    // Subtask marker: a dim bullet right where the body text starts, so the
+    // child's bullet lines up under the parent's body column instead of
+    // hugging the pane border.
+    if task.indent_level > 0 {
+        spans.push(Span::styled("• ", Style::default().fg(theme.dim)));
+    }
+
     // body — walk &str slices instead of collecting Vec<char>. Spans borrow
     // straight from `task.raw`, so most rows allocate only for the format!()
     // calls above.
@@ -88,6 +119,10 @@ pub fn build_line<'a>(task: &'a Task, opts: RowOpts<'a>, theme: &Theme) -> Line<
     let body_match_positions: Option<Vec<usize>> =
         opts.match_term.and_then(|n| subseq_match_ci(body, n));
     let body_start = body.as_ptr() as usize;
+    // Screen column (relative to the body rect) of the current body char.
+    // Drives the selection highlight: tokens overlapping `sel_cols` get the
+    // selected background.
+    let mut body_col = body_col_offset(task, &opts);
     let mut rest = body;
     // Whether any visible body token has been emitted yet. Drives the
     // hidden-token branch's whitespace fix-up so a skipped token never
@@ -101,7 +136,17 @@ pub fn build_line<'a>(task: &'a Task, opts: RowOpts<'a>, theme: &Theme) -> Line<
             .unwrap_or(rest.len());
         let pushed_ws = ws_end > 0;
         if pushed_ws {
-            spans.push(Span::raw(&rest[..ws_end]));
+            let ws = &rest[..ws_end];
+            let ws_sel = opts.sel_cols.is_some_and(|(a, b)| {
+                let end = body_col as u16 + ws.chars().count() as u16;
+                body_col as u16 <= b && end >= a
+            });
+            spans.push(if ws_sel {
+                Span::styled(ws, Style::default().bg(theme.selected))
+            } else {
+                Span::raw(ws)
+            });
+            body_col += ws.chars().count();
             rest = &rest[ws_end..];
         }
         if rest.is_empty() {
@@ -127,6 +172,11 @@ pub fn build_line<'a>(task: &'a Task, opts: RowOpts<'a>, theme: &Theme) -> Line<
             continue;
         }
         let token_offset = token.as_ptr() as usize - body_start;
+        let token_sel = opts.sel_cols.is_some_and(|(a, b)| {
+            let end = body_col as u16 + token.chars().count() as u16;
+            body_col as u16 <= b && end >= a
+        });
+        let spans_start = spans.len();
         push_token_spans(
             &mut spans,
             token,
@@ -136,6 +186,12 @@ pub fn build_line<'a>(task: &'a Task, opts: RowOpts<'a>, theme: &Theme) -> Line<
             opts,
             theme,
         );
+        if token_sel {
+            for s in &mut spans[spans_start..] {
+                s.style = s.style.bg(theme.selected);
+            }
+        }
+        body_col += token.chars().count();
         emitted_body_token = true;
         rest = &rest[tok_end..];
     }
@@ -395,6 +451,7 @@ mod tests {
             match_term: Some("a"),
             today: "2026-05-06",
             hidden_keys: &[],
+            sel_cols: None,
         };
         // Build must not panic; we don't assert on the rendered spans.
         let _ = build_line(&task, opts, &MUTED);
@@ -416,6 +473,7 @@ mod tests {
             match_term: Some("cade"),
             today: "2026-05-06",
             hidden_keys: &[],
+            sel_cols: None,
         };
         let line = build_line(&task, opts, &MUTED);
         let highlight_bg = MUTED.matched;
@@ -444,6 +502,7 @@ mod tests {
             match_term: None,
             today: "2026-05-06",
             hidden_keys: hidden,
+            sel_cols: None,
         };
         let line = build_line(&task, opts, &MUTED);
         line.spans
@@ -511,6 +570,7 @@ mod tests {
             match_term: None,
             today: "2026-05-06",
             hidden_keys: &[],
+            sel_cols: None,
         };
         let line = build_line(&task, opts, &MUTED);
         let url_span = line
@@ -542,6 +602,7 @@ mod tests {
             match_term: None,
             today: "2026-05-06",
             hidden_keys: &[],
+            sel_cols: None,
         };
         let line = build_line(&task, opts, &MUTED);
         let url_span = line
@@ -554,6 +615,68 @@ mod tests {
             Some(MUTED.dim),
             "URL must not pick up the dim key-value color",
         );
+    }
+
+    #[test]
+    fn body_col_offset_tracks_prefix_columns() {
+        // Top-level task without line numbers: indent(0) + glyph(2) + prio(4).
+        let top = parse_line("task").unwrap();
+        let opts = RowOpts {
+            idx_label: 0,
+            cursor: false,
+            multi_mode: false,
+            multi_checked: false,
+            selected: false,
+            show_line_num: false,
+            match_term: None,
+            today: "2026-05-06",
+            hidden_keys: &[],
+            sel_cols: None,
+        };
+        assert_eq!(body_col_offset(&top, &opts), 6);
+
+        // Subtask adds indent (2) + bullet (2) → 10.
+        let child = parse_line("  child").unwrap();
+        assert_eq!(body_col_offset(&child, &opts), 10);
+
+        // Line numbers add 4.
+        let opts_num = RowOpts {
+            show_line_num: true,
+            ..opts
+        };
+        assert_eq!(body_col_offset(&top, &opts_num), 10);
+
+        // Multi-select checkboxes add 4.
+        let opts_multi = RowOpts {
+            multi_mode: true,
+            ..opts
+        };
+        assert_eq!(body_col_offset(&top, &opts_multi), 10);
+    }
+
+    #[test]
+    fn selected_token_gets_highlight_background() {
+        let task = parse_line("Buy milk").unwrap();
+        let opts = RowOpts {
+            idx_label: 0,
+            cursor: false,
+            multi_mode: false,
+            multi_checked: false,
+            selected: false,
+            show_line_num: false,
+            match_term: None,
+            today: "2026-05-06",
+            hidden_keys: &[],
+            // Body starts at col 6; select cols 6..13 → whole body.
+            sel_cols: Some((6, 13)),
+        };
+        let line = build_line(&task, opts, &MUTED);
+        let body_span = line
+            .spans
+            .iter()
+            .find(|s| s.content.as_ref() == "Buy")
+            .expect("body token rendered");
+        assert_eq!(body_span.style.bg, Some(MUTED.selected));
     }
 
     #[test]

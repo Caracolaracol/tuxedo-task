@@ -12,6 +12,10 @@ pub enum GroupKey {
     /// `Some('A'..='Z')` for a graded priority, `None` for unprioritized.
     ListPriority(Option<char>),
     ListDue(ListDueBucket),
+    /// `Some(name)` for a project group, `None` for the NO PROJECT group.
+    /// Under `Sort::Project` a multi-project task appears once per group, so
+    /// the same task index can repeat across the visible list.
+    ListProject(Option<String>),
 }
 
 impl App {
@@ -43,8 +47,9 @@ impl App {
 
         let mut idxs: Vec<usize> = (0..tasks.len())
             .filter(|&i| {
-                filter::list_predicate(
-                    &tasks[i],
+                filter::list_predicate_family(
+                    tasks,
+                    i,
                     self.prefs.show_done,
                     self.prefs.show_future,
                     today,
@@ -58,6 +63,15 @@ impl App {
         // can resolve each row to its family root (a child inherits its
         // parent's priority/due bucket rather than emitting its own header).
         let visible_set: std::collections::HashSet<usize> = idxs.iter().copied().collect();
+
+        // Project grouping expands the list (multi-project tasks repeat), so
+        // it produces both the cache and the parallel groups in one pass.
+        if self.prefs.sort == Sort::Project {
+            let (expanded, groups) = filter::expand_by_project(&idxs, tasks);
+            self.visible_groups = groups;
+            self.visible_cache = expanded;
+            return;
+        }
 
         filter::sort_by_prefs(&mut idxs, tasks, self.prefs.sort);
 
@@ -79,6 +93,8 @@ impl App {
                     GroupKey::ListDue(filter::due_bucket(&tasks[root], today, week_start))
                 })
                 .collect(),
+            // Guarded by the early return above; kept for exhaustiveness.
+            Sort::Project => unreachable!("project sort handled before this point"),
         };
         self.visible_groups = groups;
         self.visible_cache = idxs;
@@ -164,6 +180,30 @@ mod tests {
     }
 
     #[test]
+    fn context_filter_keeps_subtasks_with_matching_root() {
+        // Root carries @phone, subtasks don't. Filtering @phone must keep the
+        // whole family visible together.
+        let raw = "Call dentist @phone\n  reschedule\n  pay\nOther task\n";
+        let mut app = build_app(raw);
+        app.set_context_filter(Some("phone".into()));
+        let idxs = app.visible_indices();
+        assert_eq!(idxs.len(), 3);
+        assert_eq!(app.tasks()[idxs[0]].raw, "Call dentist @phone");
+        assert_eq!(app.tasks()[idxs[1]].raw, "reschedule");
+        assert_eq!(app.tasks()[idxs[2]].raw, "pay");
+    }
+
+    #[test]
+    fn context_filter_hides_family_when_only_child_matches() {
+        // Option A: the root decides. A child with @phone under an untagged
+        // root does not surface the family.
+        let raw = "root\n  child @phone\n";
+        let mut app = build_app(raw);
+        app.set_context_filter(Some("phone".into()));
+        assert_eq!(app.visible_indices().len(), 0);
+    }
+
+    #[test]
     fn list_cursor_survives_archive_roundtrip() {
         let mut app = build_app("a\nb\nc\nd\ne\n");
         app.cursor = 3;
@@ -214,6 +254,24 @@ mod tests {
         assert_eq!(groups[1], GroupKey::ListPriority(Some('A')));
         assert_eq!(groups[2], GroupKey::ListPriority(Some('B')));
         assert_eq!(groups[3], GroupKey::ListPriority(None));
+    }
+
+    #[test]
+    fn list_groups_under_sort_project_repeat_multi_project_tasks() {
+        let raw = "a +apple\nb +banana +apple\nc\n";
+        let mut app = build_app(raw);
+        app.prefs.sort = Sort::Project;
+        app.recompute_visible();
+        // b (+banana +apple) appears under both groups → 4 rows total.
+        let idxs = app.visible_indices();
+        let groups = app.visible_groups();
+        assert_eq!(idxs.len(), 4);
+        assert_eq!(groups[0], GroupKey::ListProject(Some("apple".into())));
+        assert_eq!(groups[1], GroupKey::ListProject(Some("apple".into())));
+        assert_eq!(groups[2], GroupKey::ListProject(Some("banana".into())));
+        assert_eq!(groups[3], GroupKey::ListProject(None));
+        // The duplicated index still resolves to the same task.
+        assert_eq!(idxs[1], idxs[2]);
     }
 
     #[test]

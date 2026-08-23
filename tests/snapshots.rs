@@ -63,8 +63,8 @@ fn make_app() -> App {
     app
 }
 
-fn render(app: &App) -> Buffer {
-    let backend = TestBackend::new(COLS, ROWS);
+fn render_at(app: &App, cols: u16, rows: u16) -> Buffer {
+    let backend = TestBackend::new(cols, rows);
     let mut terminal = Terminal::new(backend).expect("terminal init");
     terminal.draw(|f| ui::draw(f, app)).expect("draw frame");
     terminal.backend().buffer().clone()
@@ -222,7 +222,13 @@ fn escape(s: &str) -> String {
 /// Uses two separate insta calls so a layout-only change doesn't force a
 /// styling review (and vice versa).
 fn snapshot_app(name: &str, app: &App) {
-    let buf = render(app);
+    snapshot_app_at(name, app, COLS, ROWS);
+}
+
+/// Like [`snapshot_app`] but on a custom terminal size (for overlays that
+/// need more room than the standard scene viewport, e.g. the tall help pane).
+fn snapshot_app_at(name: &str, app: &App, cols: u16, rows: u16) {
+    let buf = render_at(app, cols, rows);
     insta::assert_snapshot!(format!("{name}_text"), buffer_to_text(&buf));
     insta::assert_snapshot!(format!("{name}_styled"), buffer_to_styled(&buf));
 }
@@ -253,10 +259,19 @@ fn list_with_project_filter() {
 #[test]
 fn list_grouped_by_due() {
     let mut app = make_app();
-    // Default sort is Priority (groups by priority bucket); cycle once to
-    // exercise the Due grouping path which has different bucket logic.
-    app.cycle_sort();
+    // Default sort is Priority (groups by priority bucket); switch to Due to
+    // exercise the bucket grouping path with different header logic.
+    app.prefs.sort = tuxedo::app::Sort::Due;
+    app.recompute_visible();
     snapshot_app("list_grouped_by_due", &app);
+}
+
+#[test]
+fn list_grouped_by_project() {
+    let mut app = make_app();
+    app.prefs.sort = tuxedo::app::Sort::Project;
+    app.recompute_visible();
+    snapshot_app("list_grouped_by_project", &app);
 }
 
 #[test]
@@ -296,7 +311,9 @@ fn archive_view() {
 fn help_overlay() {
     let mut app = make_app();
     app.mode = Mode::Help;
-    snapshot_app("help_overlay", &app);
+    // The help pane is tall (SUBTASKS section was added); render it on a
+    // taller screen so the full overlay is captured instead of clipped.
+    snapshot_app_at("help_overlay", &app, COLS, 40);
 }
 
 #[test]
@@ -343,6 +360,23 @@ fn insert_dialog() {
     app.mode = Mode::Insert;
     app.draft_set_insert("(A) Buy milk +groceries @errands due:2026-05-10".to_string());
     snapshot_app("insert_dialog", &app);
+}
+
+#[test]
+fn insert_dialog_with_subtasks() {
+    // The add dialog can draft a parent plus indented subtasks before saving.
+    let mut app = make_app();
+    app.mode = Mode::Insert;
+    app.draft_set_insert("Plan team offsite +work".to_string());
+    app.draft.add_child_line();
+    for c in "Book venue".chars() {
+        app.draft.insert_char(c);
+    }
+    app.draft.add_child_line();
+    for c in "Send invites".chars() {
+        app.draft.insert_char(c);
+    }
+    snapshot_app("insert_dialog_with_subtasks", &app);
 }
 
 #[test]
@@ -493,6 +527,9 @@ fn list_scrolls_to_keep_cursor_visible_when_below_fold() {
         "2026-05-06".to_string(),
         Config::default(),
     );
+    // Redirect any pref save triggered by `cycle_sort` below to the fixture
+    // file so the test never writes the user's real ~/.config/tuxedo/config.
+    app.config_path = Some(PathBuf::from(FIXTURE_CONFIG_PATH));
     app.prefs.density = Density::Compact;
     app.prefs.layout.left = false;
     app.prefs.layout.right = false;

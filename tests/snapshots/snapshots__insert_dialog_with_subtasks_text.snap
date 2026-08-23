@@ -13,16 +13,16 @@ expression: buffer_to_text(&buf)
 │   +personal         1  ││  5   (B) Draft hiring rubric for seni││ RAW                            │
 │   +travel           1  ││ (2)  PRIORITY C  ────────────────────││                                │
 │                        ││  6   (C) Pay quarterly estimated taxe││ (A) 2026-05-01 Finish Q2 board │
-│ CONTEXTS               ││  7   (C) Order new running shoes +hea││ deck +work @laptop             │
-│   @errands          4  ││ (8┌ ADD TASK ────────────────────────────┐e:2026-05-06                 │
-│   @home             4  ││  8│                                      │                             │
-│   @laptop           4  ││  9│  › groceries @errands due:2026-05-10█│                             │
-│   @phone            3  ││ 10│  ok · pri A · due 2026-05-10 · 1 +pro│                             │
-│                        ││ 11│                                      │                             │
-│                        ││ 12│  format: (A) Buy milk +shop @home due│                             │
-│                        ││ 13│                                      │                             │
-│                        ││ 14└──────────────────────────────────────┘                             │
-│                        ││ 15       Replace bathroom faucet wash││                                │
+│ CONTEXTS               ││  7┌ ADD TASK ────────────────────────────┐ck +work @laptop             │
+│   @errands          4  ││ (8│                                      │e:2026-05-06                 │
+│   @home             4  ││  8│    Plan team offsite +work           │                             │
+│   @laptop           4  ││  9│      Book venue                      │                             │
+│   @phone            3  ││ 10│  ›     Send invites█                 │                             │
+│                        ││ 11│  ok                                  │                             │
+│                        ││ 12│                                      │                             │
+│                        ││ 13│  format: (A) Buy milk +shop @home due│                             │
+│                        ││ 14│                                      │                             │
+│                        ││ 15└──────────────────────────────────────┘                             │
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │

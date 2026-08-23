@@ -69,6 +69,10 @@ pub enum Sort {
     Priority,
     Due,
     File,
+    /// Group tasks under their projects (`+name` headers). A task with several
+    /// projects appears once under each; tasks with none land in a final
+    /// NO PROJECT group.
+    Project,
 }
 
 impl Sort {
@@ -77,6 +81,7 @@ impl Sort {
             Sort::Priority => "priority",
             Sort::Due => "due",
             Sort::File => "file",
+            Sort::Project => "project",
         }
     }
 }
@@ -94,6 +99,7 @@ impl FromStr for Sort {
             "priority" => Ok(Sort::Priority),
             "due" => Ok(Sort::Due),
             "file" => Ok(Sort::File),
+            "project" => Ok(Sort::Project),
             _ => Err(()),
         }
     }
@@ -162,4 +168,67 @@ impl Filter {
 pub struct SavedFilter {
     pub name: String,
     pub query: String,
+}
+
+/// What clicking a row in the left filter pane should do. Carries the exact
+/// name the filter compares against so the mouse handler can toggle it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FilterTarget {
+    Project(String),
+    Context(String),
+    Saved(String),
+}
+
+/// Per-frame hit-test state for mouse support, rebuilt by the renderers each
+/// time a frame is drawn. Kept in a `RefCell` because rendering only borrows
+/// `&App`; the mouse handler reads it on the next input event. Rects are
+/// `(x, y, width, height)` in screen coordinates.
+#[derive(Debug, Clone, Default)]
+pub struct MouseHit {
+    /// Screen rect of the list/archive body area.
+    pub body_rect: Option<(u16, u16, u16, u16)>,
+    /// Parallel to the rendered body rows: `Some(visible index)` for a task
+    /// row, `None` for group headers and density blank lines.
+    pub body_rows: Vec<Option<usize>>,
+    /// Parallel to `body_rows`: the exact visible text of each rendered row
+    /// (indent, line number, glyph, priority box, bullet and body all
+    /// included). `None` for headers/blanks. The mouse handler copies from
+    /// this verbatim so the selection matches exactly what's on screen.
+    pub body_texts: Vec<Option<String>>,
+    /// Screen rect of the left filter pane.
+    pub left_rect: Option<(u16, u16, u16, u16)>,
+    /// Parallel to the rendered filter rows: the filter a click should apply,
+    /// or `None` for headers/blanks.
+    pub left_rows: Vec<Option<FilterTarget>>,
+}
+
+/// An in-progress (or just-finished) mouse text selection over the task list.
+/// Coordinates are screen-space rows/columns inside the body area; the renderer
+/// highlights rows between `anchor` and `cur`, and releasing the button copies
+/// the selected body text.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct MouseSel {
+    pub anchor_row: u16,
+    pub anchor_col: u16,
+    pub cur_row: u16,
+    pub cur_col: u16,
+}
+
+impl MouseSel {
+    pub fn new(row: u16, col: u16) -> Self {
+        Self {
+            anchor_row: row,
+            anchor_col: col,
+            cur_row: row,
+            cur_col: col,
+        }
+    }
+
+    /// Normalized row span `(min, max)`.
+    pub fn row_span(&self) -> (u16, u16) {
+        (
+            self.anchor_row.min(self.cur_row),
+            self.anchor_row.max(self.cur_row),
+        )
+    }
 }

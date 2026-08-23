@@ -20,5 +20,9 @@ pub(crate) fn build_app(raw: &str) -> App {
 pub(crate) fn build_app_with_config(raw: &str, cfg: Config) -> App {
     let path = test_path();
     std::fs::write(&path, raw).unwrap();
-    App::new(path, raw.to_string(), "2026-05-06".into(), cfg)
+    let mut app = App::new(path, raw.to_string(), "2026-05-06".into(), cfg);
+    // Route any pref-save (cycle_sort, share bind, etc.) a test triggers to a
+    // temp file instead of the developer's real ~/.config/tuxedo/config.toml.
+    app.config_path = Some(std::env::temp_dir().join("tuxedo-tests-config.toml"));
+    app
 }

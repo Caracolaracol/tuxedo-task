@@ -274,6 +274,17 @@ pub fn subtree_indices(tasks: &[Task], idx: usize) -> Vec<usize> {
     out
 }
 
+/// Index of the topmost ancestor of `idx` — the family root — regardless of
+/// visibility. Climbs `parent_index` until `None`, so it resolves to the task
+/// that decides whether the whole family shows under a filter.
+pub fn abs_family_root(tasks: &[Task], idx: usize) -> usize {
+    let mut r = idx;
+    while let Some(p) = parent_index(tasks, r) {
+        r = p;
+    }
+    r
+}
+
 /// Atomically write `body` to `path` (write to .tmp sibling, rename).
 pub fn write_atomic(path: &Path, body: &str) -> std::io::Result<()> {
     let tmp = path.with_extension("tmp");

@@ -31,11 +31,10 @@ const LEFT_PANE_W: u16 = 26;
 const RIGHT_PANE_W: u16 = 34;
 const MIN_BODY_W: u16 = 40;
 
-const DIALOG_H: u16 = 8;
 const DIALOG_MIN_W: u16 = 40;
 const DIALOG_MAX_W: u16 = 100;
 
-const HELP_MAX_H: u16 = 29;
+const HELP_MAX_H: u16 = 38;
 const HELP_MIN_W: u16 = 76;
 const HELP_MAX_W: u16 = 120;
 
@@ -52,6 +51,11 @@ pub fn draw(frame: &mut Frame, app: &App) {
 
     // Paint full background.
     frame.render_widget(Block::default().style(Style::default().bg(theme.bg)), area);
+
+    // Optional margin: inset the whole UI from the terminal edges, leaving a
+    // background frame around the interface. Panels, status bar and overlays
+    // all render inside the inset area.
+    let area = inset(area, app.prefs.margin);
 
     let bottom = if app.prefs.layout.status_bar { 1 } else { 0 };
     let [body_area, bottom_area] =
@@ -108,7 +112,8 @@ pub fn draw(frame: &mut Frame, app: &App) {
             let dlg_w: u16 = (u32::from(center_area.width) * 4 / 5)
                 .clamp(u32::from(DIALOG_MIN_W), u32::from(DIALOG_MAX_W))
                 as u16;
-            let dlg = centered_in(area, dlg_w, DIALOG_H);
+            let dlg_h = dialog::dialog_height(app).min(area.height);
+            let dlg = centered_in(area, dlg_w, dlg_h);
             frame.render_widget(Clear, dlg);
             dialog::render(frame, dlg, app);
             // At most one overlay shows at a time. The autocomplete popup is
@@ -184,6 +189,25 @@ pub(crate) fn centered_in(parent: Rect, w: u16, h: u16) -> Rect {
     Rect {
         x,
         y,
+        width: w,
+        height: h,
+    }
+}
+
+/// Shrink `rect` by `n` cells on every side, clamped so the result never
+/// underflows (a zero-size rect stays in place). Used to add a UI margin.
+pub(crate) fn inset(rect: Rect, n: u16) -> Rect {
+    if n == 0 {
+        return rect;
+    }
+    let w = rect.width.saturating_sub(n * 2);
+    let h = rect.height.saturating_sub(n * 2);
+    if w == 0 || h == 0 {
+        return rect;
+    }
+    Rect {
+        x: rect.x + n,
+        y: rect.y + n,
         width: w,
         height: h,
     }

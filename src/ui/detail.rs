@@ -2,7 +2,7 @@ use ratatui::Frame;
 use ratatui::layout::Rect;
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::Paragraph;
+use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
 
 use crate::app::App;
 use crate::theme::Theme;
@@ -11,15 +11,31 @@ use crate::ui::task_row::{due_label, due_token_style, is_url_token, url_token_st
 
 pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     let theme = app.theme();
-    super::fill_bg(frame, area, Style::default().bg(theme.panel));
+    let bordered = app.prefs.borders;
+
+    let block = Block::default()
+        .borders(if bordered {
+            Borders::ALL
+        } else {
+            Borders::NONE
+        })
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(theme.border).bg(theme.bg))
+        .title(Line::from(Span::styled(
+            " DETAIL ",
+            Style::default().fg(theme.dim).add_modifier(Modifier::BOLD),
+        )))
+        .style(Style::default().bg(theme.bg));
+    let content = if bordered { block.inner(area) } else { area };
+    frame.render_widget(block, area);
 
     let task = app.cur_task();
     // Wrap to the actual pane width minus 1-char left padding and 1-char
     // safety margin on the right. Floor at 16 so a tiny pane still wraps.
-    let wrap_w = (area.width as usize).saturating_sub(2).max(16);
+    let wrap_w = (content.width as usize).saturating_sub(2).max(16);
     let lines = build_lines(theme, task, app.today(), wrap_w);
-    let para = Paragraph::new(lines).style(Style::default().bg(theme.panel).fg(theme.fg));
-    frame.render_widget(para, area);
+    let para = Paragraph::new(lines).style(Style::default().bg(theme.bg).fg(theme.fg));
+    frame.render_widget(para, content);
 }
 
 fn build_lines<'a>(
@@ -29,13 +45,6 @@ fn build_lines<'a>(
     wrap_w: usize,
 ) -> Vec<Line<'a>> {
     let mut rows: Vec<Line> = Vec::new();
-    rows.push(line_panel(
-        theme,
-        vec![Span::styled(
-            " DETAIL",
-            Style::default().fg(theme.dim).add_modifier(Modifier::BOLD),
-        )],
-    ));
     rows.push(line_panel(theme, vec![Span::raw(" ")]));
     let Some(t) = task else {
         rows.push(line_panel(
@@ -220,7 +229,7 @@ fn style_raw_token<'a>(
 }
 
 fn line_panel<'a>(theme: &Theme, spans: Vec<Span<'a>>) -> Line<'a> {
-    Line::from(spans).style(Style::default().bg(theme.panel))
+    Line::from(spans).style(Style::default().bg(theme.bg))
 }
 
 /// Wrap `s` to roughly `width` graphemes, returning each output line as a

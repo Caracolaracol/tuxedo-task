@@ -86,6 +86,34 @@ impl App {
     }
 
     pub fn add_from_draft(&mut self) -> AddOutcome {
+        // Multi-line draft (parent + subtasks): skip the natural-language
+        // pre-pass — each line is already structured todo.txt — and commit
+        // the whole family as a single store unit.
+        if self.draft.line_count() > 1 {
+            let lines: Vec<(u8, &str)> = self
+                .draft
+                .lines()
+                .iter()
+                .map(|l| (l.indent_level, l.text.as_str()))
+                .collect();
+            return match self.store.add_family(&lines) {
+                CoreAdd::Added { abs } => {
+                    self.flash("added");
+                    self.after_mutation(abs);
+                    AddOutcome::Saved
+                }
+                CoreAdd::Empty => AddOutcome::Empty,
+                CoreAdd::Aborted(r) => {
+                    self.handle_reconcile_abort(r);
+                    AddOutcome::Invalid
+                }
+                CoreAdd::Error(e) => {
+                    self.flash(format!("invalid: {e}"));
+                    AddOutcome::Invalid
+                }
+            };
+        }
+
         let text = self.draft.text().trim().to_string();
         if text.is_empty() {
             return AddOutcome::Empty;
@@ -134,8 +162,18 @@ impl App {
         let Some(idx) = self.selection.editing() else {
             return;
         };
-        let text = self.draft.text().to_string();
-        match self.store.edit_line(idx, &text) {
+        // Commit the whole drafted family. The edit dialog loads the task's
+        // subtree (or a single line for a leaf), so this replaces everything
+        // under the root — growing or shrinking it as the draft demands. For a
+        // leaf task the family is one line, making this equivalent to the old
+        // `edit_line` path.
+        let lines: Vec<(u8, &str)> = self
+            .draft
+            .lines()
+            .iter()
+            .map(|l| (l.indent_level, l.text.as_str()))
+            .collect();
+        match self.store.edit_subtree(idx, &lines) {
             EditOutcome::Saved { abs } => {
                 self.flash("saved");
                 self.after_mutation(abs);
@@ -494,11 +532,139 @@ mod tests {
     }
 
     #[test]
+    fn add_from_draft_family_saves_parent_and_subtasks() {
+        let mut app = build_app("");
+        app.draft_set("Plan launch".into());
+        // First child (indent 1), typed via insert_char.
+        app.draft.add_child_line();
+        for c in "Book venue".chars() {
+            app.draft.insert_char(c);
+        }
+        // Move back to the parent, then add a sibling child (indent 1).
+        app.draft.move_active(-1);
+        app.draft.add_child_line();
+        for c in "Send invites".chars() {
+            app.draft.insert_char(c);
+        }
+        let outcome = app.add_from_draft();
+        assert_eq!(outcome, crate::app::AddOutcome::Saved);
+        assert_eq!(app.tasks().len(), 3);
+        assert_eq!(app.tasks()[0].indent_level, 0);
+        assert_eq!(app.tasks()[1].indent_level, 1);
+        assert_eq!(app.tasks()[2].indent_level, 1);
+        // Cursor follows the parent.
+        assert!(app.tasks()[app.cursor].raw.contains("Plan launch"));
+    }
+
+    #[test]
+    fn add_from_draft_family_skips_nl_pass() {
+        let mut app = build_app("");
+        // "tomorrow" must NOT be parsed as a due date when part of a family.
+        app.draft_set("Buy milk tomorrow".into());
+        app.draft.add_child_line();
+        for c in "child".chars() {
+            app.draft.insert_char(c);
+        }
+        let outcome = app.add_from_draft();
+        assert_eq!(outcome, crate::app::AddOutcome::Saved);
+        assert_eq!(app.tasks().len(), 2);
+        assert!(app.tasks()[0].due.is_none());
+    }
+
+    #[test]
+    fn add_from_draft_single_line_still_uses_nl_pass() {
+        let mut app = build_app("");
+        app.draft_set("Buy milk tomorrow".into());
+        let outcome = app.add_from_draft();
+        assert_eq!(outcome, crate::app::AddOutcome::Parsed);
+        assert_eq!(app.tasks().len(), 0);
+    }
+
+    #[test]
     fn test_toggling_week_start() {
         let mut app = build_app("");
         app.toggle_week_start_date();
         assert_eq!(app.week_start, WeekStart::Monday);
         app.toggle_week_start_date();
         assert_eq!(app.week_start, WeekStart::Sunday);
+    }
+
+    #[test]
+    fn active_filter_restored_from_config_and_persisted_on_change() {
+        // Config carries the active context; a fresh App must reopen filtered.
+        let cfg = Config {
+            active_context: Some("laptop".into()),
+            ..Config::default()
+        };
+        let mut app = build_app_with_config("a +work @laptop\nb +work @phone\n", cfg.clone());
+        assert_eq!(app.filter().context.as_deref(), Some("laptop"));
+        assert_eq!(app.visible_indices().len(), 1);
+
+        // Changing the filter writes it back to the fixture config path.
+        let path = app.config_path.clone().expect("test config path");
+        app.set_context_filter(Some("phone".into()));
+        let on_disk = Config::load_from(&path);
+        assert_eq!(on_disk.active_context.as_deref(), Some("phone"));
+        assert_eq!(on_disk.active_project, cfg.active_project);
+
+        // Clearing persists the removal.
+        app.clear_filter();
+        let on_disk = Config::load_from(&path);
+        assert_eq!(on_disk.active_context, None);
+    }
+
+    #[test]
+    fn subtree_draft_lines_loads_family_with_relative_indent() {
+        let app = build_app("Plan launch\n  Book venue\n  Send invites\nOther\n");
+        let lines = app.subtree_draft_lines(0).expect("subtree present");
+        assert_eq!(lines.len(), 3);
+        assert_eq!(lines[0].text, "Plan launch");
+        assert_eq!(lines[0].indent_level, 0);
+        assert_eq!(lines[1].text, "  Book venue".trim());
+        assert_eq!(lines[1].indent_level, 1);
+        assert_eq!(lines[2].indent_level, 1);
+        // A leaf task yields a single line.
+        assert_eq!(app.subtree_draft_lines(3).expect("leaf").len(), 1);
+    }
+
+    #[test]
+    fn save_edit_family_commits_whole_subtree() {
+        let mut app = build_app("Plan launch\n  Book venue\n  Send invites\nOther\n");
+        app.selection.enter_edit(0);
+        let lines = app.subtree_draft_lines(0).expect("subtree");
+        app.draft_set_family(lines);
+        // Add a new child via the draft; `add_child_line` nests it one level
+        // under the active line (the root) and makes it active.
+        app.draft.add_child_line();
+        for c in "Confirm catering".chars() {
+            app.draft.insert_char(c);
+        }
+        // Commit.
+        app.save_edit();
+        assert_eq!(app.tasks().len(), 5);
+        assert_eq!(app.tasks()[0].raw, "Plan launch");
+        // `add_child_line` inserts directly under the root, so the new child
+        // sits right after it; the original children shift down.
+        assert!(app.tasks()[1].raw.contains("Confirm catering"));
+        assert_eq!(app.tasks()[1].indent_level, 1);
+        assert_eq!(app.tasks()[2].raw, "Book venue");
+        assert_eq!(app.tasks()[3].raw, "Send invites");
+        // Sibling "Other" untouched.
+        assert_eq!(app.tasks()[4].raw, "Other");
+    }
+
+    #[test]
+    fn save_edit_family_shrinks_when_children_deleted() {
+        let mut app = build_app("Plan launch\n  Book venue\n  Send invites\n");
+        app.selection.enter_edit(0);
+        let lines = app.subtree_draft_lines(0).expect("subtree");
+        app.draft_set_family(lines);
+        // Delete both children.
+        app.draft.move_active(1);
+        app.draft.delete_active();
+        app.draft.delete_active();
+        app.save_edit();
+        assert_eq!(app.tasks().len(), 1);
+        assert_eq!(app.tasks()[0].raw, "Plan launch");
     }
 }

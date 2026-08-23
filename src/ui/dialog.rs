@@ -262,6 +262,17 @@ pub fn draft_cursor_spans<'a>(
     }
 }
 
+/// Number of border+padding rows around the editable lines, so the caller can
+/// size the dialog: 2 borders + 1 top pad + 1 gap + preview + hint + 1 bottom
+/// pad. Single-line dialog height is `1 + EXTRA` = 8 (matches `DIALOG_H`).
+const DIALOG_EXTRA_H: u16 = 7;
+
+/// Height the add/edit dialog needs for the current draft. Grows one row per
+/// family line; clamped to a sane cap so a deep draft can't outgrow the screen.
+pub fn dialog_height(app: &App) -> u16 {
+    (app.draft.line_count() as u16 + DIALOG_EXTRA_H).min(16)
+}
+
 pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     let theme = app.theme();
     let title = if app.selection.editing().is_some() {
@@ -282,75 +293,107 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     let inner = block.inner(area);
     frame.render_widget(block, area);
 
-    let [_p1, input_area, preview_area, _p2, hint_area, _p3] = Layout::vertical([
-        Constraint::Length(1),
-        Constraint::Length(1),
-        Constraint::Length(1),
-        Constraint::Length(1),
-        Constraint::Length(1),
-        Constraint::Length(1),
-    ])
-    .areas(inner);
+    let n = app.draft.line_count() as u16;
+    // Row order matches the original single-line dialog: pad, [input lines],
+    // preview, pad, hint, pad. Growing the input block is the only change, so
+    // single-line rendering stays byte-identical.
+    let mut constraints: Vec<Constraint> = Vec::new();
+    constraints.push(Constraint::Length(1)); // top pad
+    for _ in 0..n {
+        constraints.push(Constraint::Length(1));
+    }
+    constraints.push(Constraint::Length(1)); // preview
+    constraints.push(Constraint::Length(1)); // pad
+    constraints.push(Constraint::Length(1)); // hint
+    constraints.push(Constraint::Length(1)); // bottom pad
+    let rows = Layout::vertical(constraints).split(inner);
 
-    // Split the input row into a fixed prefix ("  › ") and a scrollable
-    // content area. Without this, long drafts get clipped at the dialog's
-    // right edge — including the cursor itself, so the user can't see what
-    // they're typing. The prefix never scrolls; the content paragraph offsets
-    // horizontally to keep the cursor onscreen.
+    // Split each input row into a fixed prefix and a scrollable content area.
+    // The prefix never scrolls; the content paragraphs offset horizontally to
+    // keep the cursor onscreen. The active row gets "  › ", inactive rows get
+    // blank padding so content columns align.
     const PREFIX_W: u16 = 4;
-    let [prefix_area, content_area] =
-        Layout::horizontal([Constraint::Length(PREFIX_W), Constraint::Min(0)]).areas(input_area);
-
-    let prefix_line = Line::from(vec![
-        Span::raw("  "),
-        Span::styled(
-            "› ",
-            Style::default()
-                .fg(theme.accent)
-                .add_modifier(Modifier::BOLD),
-        ),
-    ])
-    .style(Style::default().bg(theme.panel));
-    frame.render_widget(
-        Paragraph::new(prefix_line).style(Style::default().bg(theme.panel)),
-        prefix_area,
-    );
-
-    let content_line = Line::from(highlighted_draft_spans(
-        app.draft.text(),
-        app.draft.cursor(),
-        theme,
-    ))
-    .style(Style::default().bg(theme.panel));
     let cursor = app.draft.cursor().min(app.draft.text().len());
-    let cursor_col = app.draft.text()[..cursor].chars().count();
-    let avail = content_area.width as usize;
-    // Pin the cursor to the rightmost visible column whenever it would
-    // otherwise overflow. Stateless: when the cursor moves left of the
-    // viewport, scroll naturally drops back to 0.
+    let cursor_col =
+        app.draft.text()[..cursor].chars().count() + (app.draft.active_indent() as usize) * 2;
+    let avail = area
+        .width
+        .saturating_sub(PREFIX_W + 2) // content area width ≈ dialog inner
+        as usize;
     let scroll_x = if avail == 0 {
         0
     } else {
         cursor_col.saturating_sub(avail.saturating_sub(1)) as u16
     };
-    frame.render_widget(
-        Paragraph::new(content_line)
-            .style(Style::default().bg(theme.panel))
-            .scroll((0, scroll_x)),
-        content_area,
-    );
+
+    for i in 0..n {
+        let row_area = rows[(i + 1) as usize];
+        let active = i == app.draft.active_index() as u16;
+        let line = &app.draft.lines()[i as usize];
+        let [prefix_area, content_area] =
+            Layout::horizontal([Constraint::Length(PREFIX_W), Constraint::Min(0)]).areas(row_area);
+
+        let prefix = if active {
+            Line::from(vec![
+                Span::raw("  "),
+                Span::styled(
+                    "› ",
+                    Style::default()
+                        .fg(theme.accent)
+                        .add_modifier(Modifier::BOLD),
+                ),
+            ])
+        } else {
+            Line::from(Span::raw("    "))
+        };
+        frame.render_widget(
+            Paragraph::new(prefix).style(Style::default().bg(theme.panel)),
+            prefix_area,
+        );
+
+        let mut spans = Vec::new();
+        if line.indent_level > 0 {
+            let indent = "  ".repeat(line.indent_level as usize);
+            spans.push(Span::styled(indent, Style::default().fg(theme.dim)));
+        }
+        if active {
+            spans.extend(highlighted_draft_spans(
+                &line.text,
+                app.draft.cursor(),
+                theme,
+            ));
+        } else {
+            spans.extend(dim_draft_spans(&line.text, theme));
+        }
+        frame.render_widget(
+            Paragraph::new(Line::from(spans).style(Style::default().bg(theme.panel)))
+                .style(Style::default().bg(theme.panel))
+                .scroll((0, scroll_x)),
+            content_area,
+        );
+    }
 
     let preview = preview_line(app);
     frame.render_widget(
         Paragraph::new(preview).style(Style::default().bg(theme.panel)),
-        preview_area,
+        rows[n as usize + 1],
     );
 
     let hint = hint_line(theme);
     frame.render_widget(
         Paragraph::new(hint).style(Style::default().bg(theme.panel)),
-        hint_area,
+        rows[n as usize + 3],
     );
+}
+
+/// Dimmed, non-editable rendering of a draft line (inactive family rows).
+/// Everything is muted uniformly — no token colors, no cursor inversion — so
+/// inactive lines read as background context behind the line being edited.
+fn dim_draft_spans<'a>(draft: &'a str, theme: &Theme) -> Vec<Span<'a>> {
+    classify_draft(draft)
+        .into_iter()
+        .map(|(range, _)| Span::styled(&draft[range], Style::default().fg(theme.dim)))
+        .collect()
 }
 
 fn preview_line<'a>(app: &App) -> Line<'a> {

@@ -17,6 +17,7 @@ const NAVIGATION: Section = (
         ("gg", "first task"),
         ("G", "last task"),
         ("Ctrl-d / Ctrl-u", "page down / up"),
+        ("mouse", "click row · wheel · filter click"),
     ],
 );
 
@@ -55,6 +56,18 @@ const VIEW: Section = (
         ("T", "cycle theme"),
         ("D", "cycle density"),
         ("L", "toggle line numbers"),
+    ],
+);
+
+const SUBTASKS: Section = (
+    "SUBTASKS",
+    &[
+        ("> / <", "nest / unnest task (whole subtree)"),
+        ("x", "complete whole subtree"),
+        ("dd", "delete whole subtree"),
+        ("in dialog: o", "add a child line"),
+        ("in dialog: j / k", "move between lines"),
+        ("in dialog: > / <", "indent / outdent line"),
     ],
 );
 
@@ -106,7 +119,12 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     // Keybindings (top, two columns) — divider — Format (bottom, two columns).
     // Each half splits sections across left/right; the last section in each
     // column drops its trailing blank so the divider lands tight.
-    let kb_lines = two_columns(theme, inner.width, &[NAVIGATION, EDITING], &[VIEW, SYSTEM]);
+    let kb_lines = two_columns(
+        theme,
+        inner.width,
+        &[NAVIGATION, EDITING],
+        &[VIEW, SUBTASKS, SYSTEM],
+    );
     let kb_height = u16::try_from(kb_lines.len()).unwrap_or(u16::MAX);
 
     let (fmt_left, fmt_right) = FORMAT.1.split_at(FORMAT.1.len().div_ceil(2));

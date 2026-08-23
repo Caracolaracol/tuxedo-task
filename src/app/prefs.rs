@@ -35,6 +35,12 @@ pub struct Prefs {
     pub layout: Layout,
     pub show_done: bool,
     pub show_future: bool,
+    /// Mouse support enabled. See `Config::mouse`.
+    pub mouse: bool,
+    /// Inset of the whole UI from the terminal edges. See `Config::margin`.
+    pub margin: u16,
+    /// Draw borders around each pane. See `Config::borders`.
+    pub borders: bool,
     /// Metadata keys whose `key:value` tokens are hidden from task rows.
     /// Config-only (no in-app toggle); see `Config::hidden_keys`.
     pub hidden_keys: Vec<String>,
@@ -60,6 +66,9 @@ impl Prefs {
             },
             show_done: cfg.show_done.unwrap_or(false),
             show_future: cfg.show_future.unwrap_or(false),
+            mouse: cfg.mouse.unwrap_or(true),
+            margin: cfg.margin.unwrap_or(0),
+            borders: cfg.borders.unwrap_or(true),
             hidden_keys: cfg.hidden_keys,
             week_start: cfg.week_start.unwrap_or(WeekStart::Sunday),
         }
@@ -101,7 +110,8 @@ impl Prefs {
 
     pub fn cycle_sort(&mut self) -> String {
         self.sort = match self.sort {
-            Sort::Priority => Sort::Due,
+            Sort::Priority => Sort::Project,
+            Sort::Project => Sort::Due,
             Sort::Due => Sort::File,
             Sort::File => Sort::Priority,
         };
@@ -145,7 +155,17 @@ impl Prefs {
     /// `share_token` / `share_port`, owned by the capture server) are
     /// preserved across pref toggles.
     pub fn save(&self) -> io::Result<()> {
-        let mut cfg = Config::load();
+        let Some(path) = Config::path() else {
+            return Ok(());
+        };
+        self.save_to(&path)
+    }
+
+    /// Persist to an explicit config path. `App::save_prefs` routes through
+    /// this so tests writing prefs land in their fixture file instead of the
+    /// user's real config — `Config::path()` alone would clobber it.
+    pub fn save_to(&self, path: &std::path::Path) -> io::Result<()> {
+        let mut cfg = Config::load_from(path);
         cfg.theme = Some(self.theme().name.to_string());
         cfg.density = Some(self.density);
         cfg.sort = Some(self.sort);
@@ -155,7 +175,52 @@ impl Prefs {
         cfg.show_status_bar = Some(self.layout.status_bar);
         cfg.show_done = Some(self.show_done);
         cfg.show_future = Some(self.show_future);
+        cfg.mouse = Some(self.mouse);
+        cfg.margin = Some(self.margin);
+        cfg.borders = Some(self.borders);
         cfg.hidden_keys = self.hidden_keys.clone();
-        cfg.save()
+        cfg.save_to(path)
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn save_to_writes_only_target_path_and_preserves_other_fields() {
+        // Regression: `Prefs::save` used to write through `Config::load` /
+        // `Config::save`, which resolve the *real* XDG path — so any test that
+        // called `cycle_sort` (which triggers a pref save) clobbered the
+        // developer's actual ~/.config/tuxedo/config.toml. `save_to` must load
+        // and persist only at the given path, keeping unrelated fields intact.
+        let dir = std::env::temp_dir().join(format!(
+            "tuxedo-prefs-save-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("config.toml");
+        // "Nord" is a built-in theme, so it always resolves in test contexts
+        // where `theme::init` may not have been called with user themes. The
+        // token must be 64 hex chars (the parser rejects shorter ones).
+        std::fs::write(
+            &path,
+            "theme = Nord\nshare_token = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n",
+        )
+        .unwrap();
+
+        let prefs = Prefs::from_config(Config::load_from(&path));
+        prefs.save_to(&path).unwrap();
+
+        let saved = std::fs::read_to_string(&path).unwrap();
+        // Theme survives the round-trip (theme_idx resolved Nord).
+        assert!(saved.contains("theme = Nord"), "theme lost: {saved}");
+        // Unrelated field not owned by Prefs is preserved.
+        assert!(saved.contains("share_token"), "share_token lost: {saved}");
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

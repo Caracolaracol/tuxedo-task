@@ -4,7 +4,7 @@ use super::outcome::{
     EditOutcome, PriorityOutcome, Reconcile, StoreError, TagOutcome,
 };
 use crate::recurrence::{self, RecSpec};
-use crate::todo::{self, TagError};
+use crate::todo::{self, TagError, Task};
 
 impl Store {
     pub fn toggle_complete(&mut self, abs: usize) -> CompleteOutcome {
@@ -148,6 +148,44 @@ impl Store {
         self.add_with(text, false)
     }
 
+    /// Add a whole family of tasks in one shot: a parent line plus its
+    /// indented subtasks, all parsed contiguously and persisted as a single
+    /// unit (one undo snapshot). Each entry is `(indent_level, text)` — the
+    /// caller (the add-task dialog's multi-line draft) tracks indentation
+    /// separately, since `finalize_line` trims leading spaces. Empty lines are
+    /// skipped. Returns the index of the parent (first inserted line) so the
+    /// cursor can follow it.
+    pub fn add_family(&mut self, lines: &[(u8, &str)]) -> AddOutcome {
+        match self.reconcile() {
+            Reconcile::Unchanged => {}
+            other => return AddOutcome::Aborted(other),
+        }
+        let mut parsed = Vec::with_capacity(lines.len());
+        for (indent, text) in lines {
+            let text = text.trim();
+            if text.is_empty() {
+                continue;
+            }
+            match crate::inbox::finalize_line(text, &self.today) {
+                Ok(mut task) => {
+                    task.indent_level = *indent;
+                    parsed.push(task);
+                }
+                Err(e) => return AddOutcome::Error(StoreError::Parse(e)),
+            }
+        }
+        if parsed.is_empty() {
+            return AddOutcome::Empty;
+        }
+        let parent = self.tasks.len();
+        self.push_history();
+        self.tasks.extend(parsed);
+        match self.persist() {
+            Ok(()) => AddOutcome::Added { abs: parent },
+            Err(e) => AddOutcome::Error(e),
+        }
+    }
+
     fn add_with(&mut self, text: &str, natural_language: bool) -> AddOutcome {
         let text = text.trim();
         if text.is_empty() {
@@ -195,6 +233,55 @@ impl Store {
             return EditOutcome::OutOfRange;
         }
         self.rewrite_raw(abs, text)
+    }
+
+    /// Replace a whole subtree in one shot: the task at `abs` plus every line
+    /// drafted after it (its subtasks). Each entry is a *relative* indent level
+    /// — the caller's add/edit dialog tracks indentation relative to the root
+    /// line — so the stored levels are `root_indent + relative`. The subtree
+    /// is replaced contiguously (grow or shrink) as a single undo snapshot.
+    /// Used by the TUI edit dialog when editing a task that has subtasks.
+    pub fn edit_subtree(&mut self, abs: usize, lines: &[(u8, &str)]) -> EditOutcome {
+        match self.reconcile() {
+            Reconcile::Unchanged => {}
+            other => return EditOutcome::Aborted(other),
+        }
+        let Some(root) = self.tasks.get(abs) else {
+            return EditOutcome::OutOfRange;
+        };
+        let root_indent = root.indent_level;
+        let subtree_len = todo::subtree_indices(&self.tasks, abs).len();
+
+        let mut parsed: Vec<Task> = Vec::with_capacity(lines.len());
+        for (rel, text) in lines {
+            let text = text.trim();
+            if text.is_empty() {
+                continue;
+            }
+            // Edit semantics match `rewrite_raw`: parse the line as-is (no
+            // creation-date injection) and re-attach the absolute indent.
+            match todo::parse_line(text) {
+                Ok(mut task) => {
+                    task.indent_level = root_indent.saturating_add(*rel);
+                    parsed.push(task);
+                }
+                Err(e) => return EditOutcome::Error(StoreError::Parse(e)),
+            }
+        }
+        if parsed.is_empty() {
+            return EditOutcome::Empty;
+        }
+
+        self.push_history();
+        let end = abs.saturating_add(subtree_len);
+        if end > self.tasks.len() {
+            return EditOutcome::OutOfRange;
+        }
+        self.tasks.splice(abs..end, parsed);
+        match self.persist() {
+            Ok(()) => EditOutcome::Saved { abs },
+            Err(e) => EditOutcome::Error(e),
+        }
     }
 
     /// Append text to the end of a task line (CLI `append`).
@@ -702,6 +789,64 @@ mod tests {
     }
 
     #[test]
+    fn add_family_inserts_parent_and_children_with_indent() {
+        let mut store = build_store("");
+        let lines = [
+            (0u8, "Plan launch"),
+            (1u8, "Book venue"),
+            (1u8, "Send invites"),
+        ];
+        let outcome = store.add_family(&lines);
+        assert!(matches!(outcome, AddOutcome::Added { abs: 0 }));
+        assert_eq!(store.tasks().len(), 3);
+        assert_eq!(store.tasks()[0].indent_level, 0);
+        assert_eq!(store.tasks()[1].indent_level, 1);
+        assert_eq!(store.tasks()[2].indent_level, 1);
+        assert_eq!(store.tasks()[0].raw, "2026-05-06 Plan launch");
+        // Creation date added per line.
+        assert!(store.tasks()[1].raw.starts_with("2026-05-06 Book venue"));
+    }
+
+    #[test]
+    fn add_family_serializes_indent_round_trip() {
+        let mut store = build_store("");
+        let lines = [(0u8, "Parent"), (2u8, "Deep child"), (1u8, "Child")];
+        store.add_family(&lines);
+        let body = crate::todo::serialize(store.tasks());
+        assert_eq!(
+            body,
+            "2026-05-06 Parent\n    2026-05-06 Deep child\n  2026-05-06 Child\n"
+        );
+    }
+
+    #[test]
+    fn add_family_skips_empty_lines() {
+        let mut store = build_store("");
+        let lines = [(0u8, "  "), (1u8, "child")];
+        let outcome = store.add_family(&lines);
+        assert!(matches!(outcome, AddOutcome::Added { abs: 0 }));
+        assert_eq!(store.tasks().len(), 1);
+        assert_eq!(store.tasks()[0].indent_level, 1);
+    }
+
+    #[test]
+    fn add_family_all_empty_is_empty_outcome() {
+        let mut store = build_store("");
+        let outcome = store.add_family(&[(0u8, "  "), (1u8, " \t ")]);
+        assert!(matches!(outcome, AddOutcome::Empty));
+        assert_eq!(store.tasks().len(), 0);
+    }
+
+    #[test]
+    fn add_family_undo_restores_whole_family() {
+        let mut store = build_store("");
+        store.add_family(&[(0u8, "Parent"), (1u8, "Child")]);
+        assert_eq!(store.tasks().len(), 2);
+        store.undo();
+        assert_eq!(store.tasks().len(), 0);
+    }
+
+    #[test]
     fn set_priority_and_depri() {
         let mut store = build_store("buy milk\n");
         assert!(matches!(
@@ -726,6 +871,63 @@ mod tests {
         assert!(store.tasks()[0].raw.starts_with("(A) 2026-05-01 URGENT"));
         store.edit_line(0, "completely new");
         assert_eq!(store.tasks()[0].raw, "completely new");
+    }
+
+    #[test]
+    fn edit_subtree_replaces_parent_and_subtasks_with_new_family() {
+        let mut store = build_store("Plan launch\n  Book venue\n  Send invites\n");
+        // Root + two children.
+        let lines = [
+            (0u8, "Plan launch 2026"),
+            (1u8, "Book venue"),
+            (1u8, "Send invites"),
+            (1u8, "Confirm catering"),
+        ];
+        let outcome = store.edit_subtree(0, &lines);
+        assert!(matches!(outcome, EditOutcome::Saved { abs: 0 }));
+        assert_eq!(store.tasks().len(), 4);
+        assert_eq!(store.tasks()[0].raw, "Plan launch 2026");
+        assert_eq!(store.tasks()[1].indent_level, 1);
+        assert_eq!(store.tasks()[2].indent_level, 1);
+        assert_eq!(store.tasks()[3].indent_level, 1);
+        assert!(store.tasks()[3].raw.contains("Confirm catering"));
+    }
+
+    #[test]
+    fn edit_subtree_shrinks_when_children_removed() {
+        let mut store = build_store("Plan launch\n  Book venue\n  Send invites\n");
+        // User deleted both children: only the parent line remains.
+        let lines = [(0u8, "Plan launch")];
+        let outcome = store.edit_subtree(0, &lines);
+        assert!(matches!(outcome, EditOutcome::Saved { abs: 0 }));
+        assert_eq!(store.tasks().len(), 1);
+        assert_eq!(store.tasks()[0].raw, "Plan launch");
+    }
+
+    #[test]
+    fn edit_subtree_preserves_absolute_indent_of_nested_root() {
+        // Root sits at indent 2 (a grandchild). Its family must stay at level 2.
+        let mut store = build_store("A\n  B\n    C\n      C1\n    D\n");
+        let lines = [(0u8, "C updated"), (1u8, "C1 updated")];
+        let outcome = store.edit_subtree(2, &lines);
+        assert!(matches!(outcome, EditOutcome::Saved { abs: 2 }));
+        assert_eq!(store.tasks().len(), 5);
+        assert_eq!(store.tasks()[2].indent_level, 2);
+        assert_eq!(store.tasks()[2].raw, "C updated");
+        assert_eq!(store.tasks()[3].indent_level, 3);
+        assert!(store.tasks()[3].raw.contains("C1 updated"));
+        // Sibling D untouched, still a child of B.
+        assert_eq!(store.tasks()[4].indent_level, 2);
+        assert_eq!(store.tasks()[4].raw, "D");
+    }
+
+    #[test]
+    fn edit_subtree_out_of_range_is_quiet() {
+        let mut store = build_store("a\n");
+        assert!(matches!(
+            store.edit_subtree(5, &[(0u8, "x")]),
+            EditOutcome::OutOfRange
+        ));
     }
 
     #[test]

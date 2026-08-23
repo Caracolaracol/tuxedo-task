@@ -1,5 +1,5 @@
 use core::fmt;
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::sync::mpsc::{Receiver, TryRecvError};
@@ -35,7 +35,7 @@ pub use crate::core::History;
 pub use crate::core::filter::{ListDueBucket, ordered_unique};
 pub use autocomplete::{ActiveToken, AutocompleteTarget, TokenKind, active_token};
 pub use chord::Chord;
-pub use draft::{DialogInputMode, DraftCursor, DraftState};
+pub use draft::{DialogInputMode, DraftCursor, DraftLine, DraftState};
 pub use draft_overlay::{
     BuilderField, CalendarState, CalendarTarget, DraftOverlay, OverlayKind, PriorityChooserState,
     REC_UNIT_ORDER, RecurrenceBuilderState, SLASH_ENTRIES, SlashEntry, SlashKind, SlashMenuState,
@@ -49,6 +49,7 @@ pub use types::{
     AUTOCOMPLETE_CAP, AddOutcome, Density, FLASH_TTL, Filter, LEADER_WINDOW, Mode, SavedFilter,
     Sort, UNDO_LIMIT, View,
 };
+pub use types::{FilterTarget, MouseHit, MouseSel};
 pub use visibility::GroupKey;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -159,6 +160,13 @@ pub struct App {
     /// can restore it.
     theme_pick_orig: usize,
     pub week_start: WeekStart,
+    /// Per-frame hit-test state for mouse support, populated by the renderers
+    /// and read by the mouse handler. See [`MouseHit`].
+    pub(crate) mouse_hit: RefCell<MouseHit>,
+    /// In-progress mouse text selection over the task list. Set on button
+    /// down, extended on drag, consumed on release (copies the text). See
+    /// [`MouseSel`].
+    pub(crate) mouse_sel: RefCell<Option<MouseSel>>,
 }
 
 impl App {
@@ -181,7 +189,8 @@ impl App {
     }
 
     fn from_store(store: Store, file_path: PathBuf, cfg: Config) -> Self {
-        // Read saved filters before `cfg` is moved into `Prefs::from_config`.
+        // Read saved filters + active filter before `cfg` is moved into
+        // `Prefs::from_config`.
         let note_dir = note::notes_dir_from_config(cfg.notes_dir.as_deref());
         let saved_filters = cfg
             .filters
@@ -191,6 +200,11 @@ impl App {
                 query: query.clone(),
             })
             .collect();
+        let active_filter = Filter {
+            project: cfg.active_project.clone(),
+            context: cfg.active_context.clone(),
+            search: String::new(),
+        };
         let mut app = Self {
             store,
             view: View::List,
@@ -198,7 +212,7 @@ impl App {
             prefs: Prefs::from_config(cfg),
             cursor: 0,
             view_cursor: [0; 2],
-            filter: Filter::default(),
+            filter: active_filter,
             draft: DraftState::default(),
             selection: Selection::default(),
             flash_state: Flash::default(),
@@ -220,6 +234,8 @@ impl App {
             pending_editor_path: None,
             theme_pick_orig: 0,
             week_start: WeekStart::Sunday,
+            mouse_hit: RefCell::new(MouseHit::default()),
+            mouse_sel: RefCell::new(None),
         };
         app.recompute_visible();
         app
@@ -281,11 +297,19 @@ impl App {
         };
         // Persist token + port back to config so phone bookmarks survive.
         // Load fresh first so we don't clobber any prefs the user has
-        // toggled since this App was constructed.
-        let mut to_save = Config::load();
+        // toggled since this App was constructed. Route through
+        // `config_path` when set so tests never touch the real config.
+        let mut to_save = match &self.config_path {
+            Some(path) => Config::load_from(path),
+            None => Config::load(),
+        };
         to_save.share_token = Some(info.token.clone());
         to_save.share_port = Some(info.port);
-        if let Err(e) = to_save.save() {
+        let result = match &self.config_path {
+            Some(path) => to_save.save_to(path),
+            None => to_save.save(),
+        };
+        if let Err(e) = result {
             self.flash(format!("share config save failed: {e}"));
         }
         Ok(info)
@@ -358,8 +382,16 @@ impl App {
     /// Persist preferences. On failure, flashes a short error so the user
     /// sees the problem inside the TUI (writing to stderr would smash the
     /// alt-screen).
+    ///
+    /// Writes to `config_path` when set (the binary always sets it), so tests
+    /// and one-shot CLI runs that construct an `App` with a fixture config
+    /// path never clobber the user's real `~/.config/tuxedo/config.toml`.
     pub fn save_prefs(&mut self) {
-        if let Err(e) = self.prefs.save() {
+        let result = match &self.config_path {
+            Some(path) => self.prefs.save_to(path),
+            None => self.prefs.save(),
+        };
+        if let Err(e) = result {
             self.flash(format!("config save failed: {e}"));
         }
     }
@@ -473,6 +505,27 @@ impl App {
         }
     }
 
+    /// Draft lines for the subtree rooted at `abs` (in List view): the task
+    /// itself plus its subtasks, in file order, with indent levels relative to
+    /// the root. `None` when the index is out of range or in Archive view.
+    /// Used to open the edit dialog on a whole family so subtasks are visible
+    /// and editable alongside their parent.
+    pub fn subtree_draft_lines(&self, abs: usize) -> Option<Vec<DraftLine>> {
+        if matches!(self.view, View::Archive) {
+            return None;
+        }
+        let tasks = self.store.tasks();
+        let root_indent = tasks.get(abs)?.indent_level;
+        let lines = crate::todo::subtree_indices(tasks, abs)
+            .into_iter()
+            .map(|i| DraftLine {
+                text: tasks[i].raw.clone(),
+                indent_level: tasks[i].indent_level.saturating_sub(root_indent),
+            })
+            .collect();
+        Some(lines)
+    }
+
     /// Pump archive state (startup loader + external `done.txt` edits). Returns
     /// true when the visible archive changed, so the caller redraws. Refreshes
     /// the visible cache when the Archive view is active.
@@ -493,6 +546,25 @@ impl App {
             return None;
         }
         self.cur_abs()
+    }
+
+    /// Vertical scroll offset for a view, set by the renderer so the cursor
+    /// row stays visible. Read by the mouse handler to translate a click row
+    /// back to a line index.
+    pub fn scroll_for_view(&self, view: View) -> u16 {
+        self.view_scroll[view.idx()].get()
+    }
+
+    /// Per-frame mouse hit-test state, populated by the renderers and read by
+    /// the mouse handler. See [`MouseHit`].
+    pub fn mouse_hit(&self) -> &RefCell<MouseHit> {
+        &self.mouse_hit
+    }
+
+    /// In-progress mouse text selection, read by the renderer (to highlight)
+    /// and written by the mouse handler. See [`MouseSel`].
+    pub fn mouse_sel(&self) -> &RefCell<Option<MouseSel>> {
+        &self.mouse_sel
     }
 
     /// Read-only view of the active filter.
@@ -537,18 +609,44 @@ impl App {
         self.recompute_visible();
     }
 
-    /// Set or clear the active project filter. `None` removes it.
+    /// Set or clear the active project filter. `None` removes it. Persists
+    /// so the list reopens filtered the same way it closed.
     pub fn set_project_filter(&mut self, project: Option<String>) {
         self.filter.project = project;
         self.cursor = 0;
         self.recompute_visible();
+        self.save_filter();
     }
 
-    /// Set or clear the active context filter. `None` removes it.
+    /// Set or clear the active context filter. `None` removes it. Persists.
     pub fn set_context_filter(&mut self, context: Option<String>) {
         self.filter.context = context;
         self.cursor = 0;
         self.recompute_visible();
+        self.save_filter();
+    }
+
+    /// Persist the active project/context filter to config so it survives a
+    /// restart. Load-modify-save keeps unrelated keys (share token, prefs,
+    /// saved searches) intact and routes through `config_path` in tests.
+    pub(crate) fn save_filter(&mut self) {
+        let result = match &self.config_path {
+            Some(path) => {
+                let mut cfg = Config::load_from(path);
+                cfg.active_project = self.filter.project.clone();
+                cfg.active_context = self.filter.context.clone();
+                cfg.save_to(path)
+            }
+            None => {
+                let mut cfg = Config::load();
+                cfg.active_project = self.filter.project.clone();
+                cfg.active_context = self.filter.context.clone();
+                cfg.save()
+            }
+        };
+        if let Err(e) = result {
+            self.flash(format!("filter save failed: {e}"));
+        }
     }
 
     /// Update the cached "today" string. When it changes, the visible cache
@@ -573,6 +671,7 @@ impl App {
         self.filter.clear();
         self.cursor = 0;
         self.recompute_visible();
+        self.save_filter();
     }
 
     // ---- shared helpers for the mutation wrappers -----------------------

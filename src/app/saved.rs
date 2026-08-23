@@ -55,9 +55,16 @@ impl App {
     pub fn save_current_filter_as(&mut self, name: &str) {
         match self.upsert_saved_filter(name) {
             Ok(saved) => {
-                let mut cfg = Config::load();
+                let mut cfg = match &self.config_path {
+                    Some(path) => Config::load_from(path),
+                    None => Config::load(),
+                };
                 cfg.filters = merge_saved(&cfg.filters, &self.saved_filters);
-                if let Err(e) = cfg.save() {
+                let result = match &self.config_path {
+                    Some(path) => cfg.save_to(path),
+                    None => cfg.save(),
+                };
+                if let Err(e) = result {
                     self.flash(format!("save failed: {e}"));
                 } else {
                     self.flash(format!("saved filter: {saved}"));

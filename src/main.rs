@@ -6,12 +6,18 @@ use std::time::{Duration, Instant};
 
 use anyhow::{Context, Result};
 use ratatui::DefaultTerminal;
-use ratatui::crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+use ratatui::crossterm::event::{
+    self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton, MouseEvent,
+    MouseEventKind,
+};
 
 use std::io::Write;
 
 use tuxedo::action::Action;
-use tuxedo::app::{AddOutcome, App, CalendarTarget, DialogInputMode, Mode, OverlayKind, View};
+use tuxedo::app::{
+    AddOutcome, App, CalendarTarget, DialogInputMode, FilterTarget, Mode, MouseSel, OverlayKind,
+    View,
+};
 use tuxedo::cli;
 use tuxedo::config::Config;
 use tuxedo::config_watcher;
@@ -110,6 +116,11 @@ fn main() -> Result<()> {
     }
 
     let terminal = ratatui::init();
+    // Mouse capture (click-to-move-cursor, scroll) is opt-out via config.
+    // Set it before entering the run loop so events start flowing immediately.
+    if app_state.prefs.mouse {
+        let _ = crossterm::execute!(io::stdout(), crossterm::event::EnableMouseCapture);
+    }
     // Give the window/tab a consistent `tuxedo <path>` title across terminals
     // and operating systems, shortening long paths to fit a fixed budget.
     let home = std::env::var_os("HOME").map(std::path::PathBuf::from);
@@ -117,6 +128,11 @@ fn main() -> Result<()> {
     let _ = crossterm::execute!(io::stdout(), crossterm::terminal::SetTitle(title));
     let result = run(terminal, &mut app_state, &keybinds, config_rx);
     ratatui::restore();
+    // Release the mouse capture the same way we took it, so the shell below
+    // keeps its normal selection behavior.
+    if app_state.prefs.mouse {
+        let _ = crossterm::execute!(io::stdout(), crossterm::event::DisableMouseCapture);
+    }
     // Clear the title on exit so the shell retitles on its next prompt rather
     // than leaving `tuxedo …` behind.
     let _ = crossterm::execute!(io::stdout(), crossterm::terminal::SetTitle(""));
@@ -232,6 +248,10 @@ fn run(
                     }
                     dirty = true;
                 }
+                Event::Mouse(ev) => {
+                    handle_mouse(app, ev);
+                    dirty = true;
+                }
                 // A terminal resize must trigger an immediate redraw;
                 // otherwise the screen stays stale until the next keystroke.
                 Event::Resize(_, _) => {
@@ -287,6 +307,9 @@ fn open_path_in_editor(path: &std::path::Path) -> Result<()> {
     let editor = std::env::var("VISUAL")
         .or_else(|_| std::env::var("EDITOR"))
         .unwrap_or_else(|_| "nvim".to_string());
+    // Release mouse capture and the alt-screen before handing off to the
+    // editor, then re-acquire both on return so the TUI resumes cleanly.
+    let _ = crossterm::execute!(io::stdout(), ratatui::crossterm::event::DisableMouseCapture);
     ratatui::restore();
     let status = std::process::Command::new(&editor)
         .arg(path)
@@ -295,7 +318,8 @@ fn open_path_in_editor(path: &std::path::Path) -> Result<()> {
     ratatui::crossterm::terminal::enable_raw_mode()?;
     ratatui::crossterm::execute!(
         io::stdout(),
-        ratatui::crossterm::terminal::EnterAlternateScreen
+        ratatui::crossterm::terminal::EnterAlternateScreen,
+        ratatui::crossterm::event::EnableMouseCapture
     )?;
     match status {
         Ok(_) => Ok(()),
@@ -337,6 +361,167 @@ fn handle_key(app: &mut App, key: KeyEvent, keybinds: &KeyBindings) {
         Mode::Share => handle_share(app, key),
         Mode::Welcome => handle_welcome(app, key),
         Mode::Normal | Mode::Visual => handle_normal(app, key, keybinds),
+    }
+}
+
+/// Mouse handler. Clicking a task row moves the cursor there; clicking a
+/// filter row in the left pane toggles that filter; the scroll wheel moves
+/// the cursor up/down; clicking and dragging over the task list selects text
+/// and copies it on release (OSC 52). Only meaningful while the list is shown
+/// (Normal or Visual); other modes ignore mouse events so modal input stays
+/// keyboard-only.
+///
+/// The renderers populate `App::mouse_hit` every frame with the body and left
+/// pane row maps, so this handler only translates a click position into a row
+/// using the same scroll offset the list rendered with.
+fn handle_mouse(app: &mut App, ev: MouseEvent) {
+    if !matches!(app.mode, Mode::Normal | Mode::Visual) {
+        return;
+    }
+    let (col, row) = (ev.column, ev.row);
+    let visible_len = app.visible_indices().len();
+    let scroll = app.scroll_for_view(app.view());
+
+    match ev.kind {
+        MouseEventKind::ScrollUp => {
+            if app.cursor > 0 {
+                app.cursor -= 1;
+            }
+        }
+        MouseEventKind::ScrollDown => {
+            if visible_len > 0 && app.cursor < visible_len - 1 {
+                app.cursor += 1;
+            }
+        }
+        MouseEventKind::Down(MouseButton::Left) => {
+            // Left pane filters take precedence — they're drawn at the
+            // leftmost columns; the body hit-map only covers the center.
+            let left_target = {
+                let hit = app.mouse_hit().borrow();
+                if let Some((x, y, w, h)) = hit.left_rect
+                    && col >= x
+                    && col < x.saturating_add(w)
+                    && row >= y
+                    && row < y.saturating_add(h)
+                {
+                    let idx = (row - y) as usize;
+                    hit.left_rows.get(idx).and_then(|o| o.clone())
+                } else {
+                    None
+                }
+            };
+            if let Some(target) = left_target {
+                match target {
+                    FilterTarget::Project(name) => {
+                        if app.filter().project.as_deref() == Some(name.as_str()) {
+                            app.set_project_filter(None);
+                        } else {
+                            app.set_project_filter(Some(name));
+                        }
+                    }
+                    FilterTarget::Context(name) => {
+                        if app.filter().context.as_deref() == Some(name.as_str()) {
+                            app.set_context_filter(None);
+                        } else {
+                            app.set_context_filter(Some(name));
+                        }
+                    }
+                    FilterTarget::Saved(name) => {
+                        if let Some(f) = app.saved_filters().iter().find(|f| f.name == name) {
+                            app.set_search(f.query.clone());
+                        }
+                    }
+                }
+                return;
+            }
+            // Click on a task row: start a text selection anchor (a plain
+            // click without drag just moves the cursor) and move the cursor.
+            let (on_body, cursor) = {
+                let hit = app.mouse_hit().borrow();
+                let on_body = hit.body_rect.is_some_and(|(x, y, w, h)| {
+                    col >= x && col < x.saturating_add(w) && row >= y && row < y.saturating_add(h)
+                });
+                let cursor = if let Some((x, y, w, h)) = hit.body_rect
+                    && col >= x
+                    && col < x.saturating_add(w)
+                    && row >= y
+                    && row < y.saturating_add(h)
+                {
+                    let line = (row as usize) - (y as usize) + scroll as usize;
+                    hit.body_rows
+                        .get(line)
+                        .copied()
+                        .flatten()
+                        .filter(|&i| i < visible_len)
+                } else {
+                    None
+                };
+                (on_body, cursor)
+            };
+            if on_body {
+                *app.mouse_sel().borrow_mut() = Some(MouseSel::new(row, col));
+            }
+            if let Some(i) = cursor {
+                app.cursor = i;
+            }
+        }
+        MouseEventKind::Drag(MouseButton::Left) => {
+            if let Some(sel) = app.mouse_sel().borrow_mut().as_mut() {
+                sel.cur_row = row;
+                sel.cur_col = col;
+            }
+        }
+        MouseEventKind::Up(MouseButton::Left) => {
+            let sel = app.mouse_sel().borrow_mut().take();
+            if let Some(sel) = sel
+                && (sel.anchor_row != sel.cur_row || sel.anchor_col != sel.cur_col)
+                && let Some(payload) = build_selection_text(app, &sel)
+                && !payload.is_empty()
+            {
+                match clipboard::copy(&payload) {
+                    Ok(()) => app.flash("copied"),
+                    Err(e) => app.flash(format!("copy failed: {e}")),
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Reconstruct the text a mouse selection covers: the body text of every task
+/// row between the anchor and current rows, trimmed to the selected columns.
+/// Copies the *exact visible text* of each row (indent, glyph, priority box,
+/// bullet, body and tags all included) between the selected screen columns.
+fn build_selection_text(app: &App, sel: &MouseSel) -> Option<String> {
+    let hit = app.mouse_hit().borrow();
+    let (bx, by, _bw, _bh) = hit.body_rect?;
+    let scroll = app.scroll_for_view(app.view());
+    let (r1, r2) = sel.row_span();
+    let col1 = sel.anchor_col.min(sel.cur_col);
+    let col2 = sel.anchor_col.max(sel.cur_col);
+
+    let mut out: Vec<String> = Vec::new();
+    for row in r1..=r2 {
+        let line = row as usize - by as usize + scroll as usize;
+        let Some(Some(text)) = hit.body_texts.get(line) else {
+            continue;
+        };
+        // The visible text starts at body_rect.x; the selected columns are
+        // absolute screen columns, so `col - bx` is the index into the text.
+        let start = (col1 as usize).saturating_sub(bx as usize);
+        let end = (col2 as usize).saturating_sub(bx as usize);
+        let c_start = start.min(text.chars().count());
+        let c_end = end.min(text.chars().count());
+        if c_start >= c_end {
+            continue;
+        }
+        let slice: String = text.chars().skip(c_start).take(c_end - c_start).collect();
+        out.push(slice);
+    }
+    if out.is_empty() {
+        None
+    } else {
+        Some(out.join("\n"))
     }
 }
 
@@ -547,6 +732,17 @@ fn handle_insert_normal(app: &mut App, key: KeyEvent) {
             app.mode = Mode::Normal;
             app.draft_clear();
             app.selection.exit_edit();
+        }
+        KeyCode::Char('o') => {
+            app.draft.add_child_line();
+            app.draft.set_input_mode(DialogInputMode::Insert);
+        }
+        KeyCode::Char('j') | KeyCode::Down => app.draft.move_active(1),
+        KeyCode::Char('k') | KeyCode::Up => app.draft.move_active(-1),
+        KeyCode::Char('>') => app.draft.indent_active(1),
+        KeyCode::Char('<') => app.draft.indent_active(-1),
+        KeyCode::Char('d') if app.chord.consume('d') => {
+            app.draft.delete_active();
         }
         KeyCode::Char('h') | KeyCode::Left => app.draft_left(),
         KeyCode::Char('l') | KeyCode::Right => app.draft_right(),
@@ -1107,20 +1303,32 @@ fn apply_action(app: &mut App, action: Action) {
             app.selection.exit_edit();
         }
         Action::BeginEdit => {
-            if let Some(abs) = app.cur_abs()
-                && let Some(raw) = app.task_raw(abs)
-            {
+            if let Some(abs) = app.cur_abs() {
                 app.selection.enter_edit(abs);
-                app.draft_set(raw);
+                // A task with subtasks drafts the whole subtree so the family
+                // is visible and editable together; plain tasks stay single-line.
+                match app.subtree_draft_lines(abs) {
+                    Some(lines) if lines.len() > 1 => app.draft_set_family(lines),
+                    _ => {
+                        if let Some(raw) = app.task_raw(abs) {
+                            app.draft_set(raw);
+                        }
+                    }
+                }
                 app.mode = Mode::Insert;
             }
         }
         Action::BeginEditInsert => {
-            if let Some(abs) = app.cur_abs()
-                && let Some(raw) = app.task_raw(abs)
-            {
+            if let Some(abs) = app.cur_abs() {
                 app.selection.enter_edit(abs);
-                app.draft_set_insert(raw);
+                match app.subtree_draft_lines(abs) {
+                    Some(lines) if lines.len() > 1 => app.draft_set_family_insert(lines),
+                    _ => {
+                        if let Some(raw) = app.task_raw(abs) {
+                            app.draft_set_insert(raw);
+                        }
+                    }
+                }
                 app.mode = Mode::Insert;
             }
         }
@@ -1413,12 +1621,16 @@ mod tests {
             std::thread::current().id()
         ));
         let _ = std::fs::write(&path, "a\nb\nc\n");
-        App::new(
+        let mut app = App::new(
             path,
             "a\nb\nc\n".into(),
             "2026-05-07".into(),
             Config::default(),
-        )
+        );
+        // Point config writes at a temp file so any save-triggering action in
+        // a test never touches the user's real ~/.config/tuxedo/config.toml.
+        app.config_path = Some(std::env::temp_dir().join("tuxedo-tests-config.toml"));
+        app
     }
 
     fn build_app_with_due() -> App {
@@ -1428,12 +1640,14 @@ mod tests {
             std::thread::current().id()
         ));
         let _ = std::fs::write(&path, "Buy milk due:2026-06-30\n");
-        App::new(
+        let mut app = App::new(
             path,
             "Buy milk due:2026-06-30\n".into(),
             "2026-05-07".into(),
             Config::default(),
-        )
+        );
+        app.config_path = Some(std::env::temp_dir().join("tuxedo-tests-config.toml"));
+        app
     }
 
     #[test]
@@ -1447,6 +1661,250 @@ mod tests {
         assert_eq!(resolve(&mut app, key('a')), Some(Action::ToggleArchiveView),);
         assert_eq!(resolve(&mut app, key('A')), Some(Action::ArchiveCompleted),);
         assert_eq!(resolve(&mut app, key('S')), Some(Action::CycleSort),);
+    }
+
+    fn mouse_click(col: u16, row: u16) -> MouseEvent {
+        MouseEvent {
+            kind: MouseEventKind::Down(MouseButton::Left),
+            column: col,
+            row,
+            modifiers: KeyModifiers::NONE,
+        }
+    }
+
+    fn mouse_scroll(kind: MouseEventKind, col: u16, row: u16) -> MouseEvent {
+        MouseEvent {
+            kind,
+            column: col,
+            row,
+            modifiers: KeyModifiers::NONE,
+        }
+    }
+
+    fn mouse_button(kind: MouseEventKind, col: u16, row: u16) -> MouseEvent {
+        MouseEvent {
+            kind,
+            column: col,
+            row,
+            modifiers: KeyModifiers::NONE,
+        }
+    }
+
+    #[test]
+    fn build_selection_text_copies_visible_text_verbatim() {
+        // The renderer stores the exact visible text of each row (indent,
+        // glyph, priority box, bullet, body and tags). The handler copies that
+        // verbatim between the selected columns — nothing reconstructed.
+        let app = build_app();
+        {
+            let mut hit = app.mouse_hit().borrow_mut();
+            hit.body_rect = Some((20, 4, 60, 10));
+            hit.body_rows = vec![Some(0), Some(1)];
+            hit.body_texts = vec![
+                Some("  1      (A) Buy milk +shop @home".to_string()),
+                Some("  2        Call dentist @phone".to_string()),
+            ];
+        }
+        // Select across the whole body area (cols 20..60) on rows 4..5.
+        let sel = MouseSel {
+            anchor_row: 4,
+            anchor_col: 20,
+            cur_row: 5,
+            cur_col: 60,
+        };
+        let text = build_selection_text(&app, &sel).expect("selection text");
+        assert_eq!(
+            text,
+            "  1      (A) Buy milk +shop @home\n  2        Call dentist @phone"
+        );
+    }
+
+    #[test]
+    fn build_selection_text_trims_to_selected_columns() {
+        // Copy only a sub-range of columns from the visible text.
+        // "  1      Call dentist @phone": "dentist" occupies chars 14..21, so
+        // with bx=20 those are screen cols 34..41.
+        let app = build_app();
+        {
+            let mut hit = app.mouse_hit().borrow_mut();
+            hit.body_rect = Some((20, 4, 60, 10));
+            hit.body_rows = vec![Some(0)];
+            hit.body_texts = vec![Some("  1      Call dentist @phone".to_string())];
+        }
+        let sel = MouseSel {
+            anchor_row: 4,
+            anchor_col: 34,
+            cur_row: 4,
+            cur_col: 41,
+        };
+        let text = build_selection_text(&app, &sel).expect("selection text");
+        assert_eq!(text, "dentist");
+    }
+
+    #[test]
+    fn build_selection_text_skips_blank_rows() {
+        let app = build_app();
+        {
+            let mut hit = app.mouse_hit().borrow_mut();
+            hit.body_rect = Some((0, 0, 80, 10));
+            // A header/blank row (None) between the two tasks.
+            hit.body_rows = vec![Some(0), None, Some(1)];
+            hit.body_texts = vec![
+                Some("  1      First".to_string()),
+                None,
+                Some("  2      Second".to_string()),
+            ];
+        }
+        let sel = MouseSel {
+            anchor_row: 0,
+            anchor_col: 0,
+            cur_row: 2,
+            cur_col: 40,
+        };
+        let text = build_selection_text(&app, &sel).expect("selection text");
+        assert_eq!(text, "  1      First\n  2      Second");
+    }
+
+    #[test]
+    fn mouse_drag_then_up_clears_selection_and_moves_cursor() {
+        // Down starts a selection; Drag extends it; Up consumes it (no copy
+        // asserted here — just that the selection state is cleared).
+        let mut app = build_app();
+        {
+            let mut hit = app.mouse_hit().borrow_mut();
+            hit.body_rect = Some((0, 0, 80, 10));
+            hit.body_rows = vec![Some(0), Some(1), Some(2)];
+        }
+        handle_mouse(
+            &mut app,
+            mouse_button(MouseEventKind::Down(MouseButton::Left), 10, 1),
+        );
+        assert!(app.mouse_sel().borrow().is_some());
+        handle_mouse(
+            &mut app,
+            mouse_button(MouseEventKind::Drag(MouseButton::Left), 30, 2),
+        );
+        assert_eq!(app.mouse_sel().borrow().unwrap().cur_row, 2);
+        handle_mouse(
+            &mut app,
+            mouse_button(MouseEventKind::Up(MouseButton::Left), 30, 2),
+        );
+        assert!(app.mouse_sel().borrow().is_none());
+        // A plain click (down+up same spot) moves the cursor.
+        assert_eq!(app.cursor, 1);
+    }
+
+    #[test]
+    fn mouse_plain_click_moves_cursor_without_selection() {
+        let mut app = build_app();
+        {
+            let mut hit = app.mouse_hit().borrow_mut();
+            hit.body_rect = Some((0, 0, 80, 10));
+            hit.body_rows = vec![Some(0), Some(1), Some(2)];
+        }
+        app.cursor = 0;
+        handle_mouse(
+            &mut app,
+            mouse_button(MouseEventKind::Down(MouseButton::Left), 10, 2),
+        );
+        handle_mouse(
+            &mut app,
+            mouse_button(MouseEventKind::Up(MouseButton::Left), 10, 2),
+        );
+        assert_eq!(app.cursor, 2);
+        assert!(app.mouse_sel().borrow().is_none());
+    }
+
+    #[test]
+    fn mouse_scroll_moves_cursor() {
+        let mut app = build_app();
+        app.cursor = 1;
+        handle_mouse(&mut app, mouse_scroll(MouseEventKind::ScrollDown, 10, 10));
+        assert_eq!(app.cursor, 2);
+        handle_mouse(&mut app, mouse_scroll(MouseEventKind::ScrollUp, 10, 10));
+        assert_eq!(app.cursor, 1);
+    }
+
+    #[test]
+    fn mouse_scroll_clamps_at_list_edges() {
+        let mut app = build_app();
+        app.cursor = 0;
+        handle_mouse(&mut app, mouse_scroll(MouseEventKind::ScrollUp, 0, 0));
+        assert_eq!(app.cursor, 0);
+        app.cursor = 2; // len 3
+        handle_mouse(&mut app, mouse_scroll(MouseEventKind::ScrollDown, 0, 0));
+        assert_eq!(app.cursor, 2);
+    }
+
+    #[test]
+    fn mouse_click_on_body_row_moves_cursor() {
+        let mut app = build_app();
+        let mut hit = app.mouse_hit().borrow_mut();
+        hit.body_rect = Some((20, 4, 60, 10));
+        hit.body_rows = vec![
+            None,    // header
+            Some(0), // row 0
+            Some(1), // row 1
+            Some(2), // row 2
+        ];
+        drop(hit);
+        // Click the second task row (body y=4 + line 2 = row 6).
+        handle_mouse(&mut app, mouse_click(40, 6));
+        assert_eq!(app.cursor, 1);
+    }
+
+    #[test]
+    fn mouse_click_on_filter_row_applies_project_filter() {
+        let mut app = build_app();
+        let mut hit = app.mouse_hit().borrow_mut();
+        hit.left_rect = Some((0, 0, 26, 10));
+        hit.left_rows = vec![
+            None, // FILTERS
+            None, // blank
+            None, // PROJECTS header
+            Some(FilterTarget::Project("health".into())),
+        ];
+        drop(hit);
+        handle_mouse(&mut app, mouse_click(2, 3));
+        assert_eq!(app.filter().project.as_deref(), Some("health"));
+    }
+
+    #[test]
+    fn mouse_click_toggles_active_project_filter() {
+        let mut app = build_app();
+        app.set_project_filter(Some("health".into()));
+        let mut hit = app.mouse_hit().borrow_mut();
+        hit.left_rect = Some((0, 0, 26, 10));
+        hit.left_rows = vec![Some(FilterTarget::Project("health".into()))];
+        drop(hit);
+        handle_mouse(&mut app, mouse_click(2, 0));
+        assert_eq!(app.filter().project, None);
+    }
+
+    #[test]
+    fn mouse_click_on_saved_filter_applies_search() {
+        let mut app = build_app();
+        app.set_search("report".into());
+        app.saved_filters.push(tuxedo::app::SavedFilter {
+            name: "weekly".into(),
+            query: "report".into(),
+        });
+        app.clear_search();
+        let mut hit = app.mouse_hit().borrow_mut();
+        hit.left_rect = Some((0, 0, 26, 10));
+        hit.left_rows = vec![Some(FilterTarget::Saved("weekly".into()))];
+        drop(hit);
+        handle_mouse(&mut app, mouse_click(2, 0));
+        assert_eq!(app.filter().search, "report");
+    }
+
+    #[test]
+    fn mouse_click_ignored_outside_normal_and_visual() {
+        let mut app = build_app();
+        app.mode = Mode::Search;
+        app.cursor = 0;
+        handle_mouse(&mut app, mouse_click(40, 6));
+        assert_eq!(app.cursor, 0);
     }
 
     #[test]

@@ -26,6 +26,18 @@ pub struct Config {
     pub show_status_bar: Option<bool>,
     pub show_done: Option<bool>,
     pub show_future: Option<bool>,
+    /// Inset of the whole UI (panels + status bar) from the terminal edges,
+    /// in cells. `0` (default) is full-bleed; `1` gives a thin background
+    /// frame around the interface.
+    pub margin: Option<u16>,
+    /// Draw a border around each pane (filters, list/archive, detail) so the
+    /// sections read as separate boxes. Defaults to on.
+    pub borders: Option<bool>,
+    /// Enable mouse support (click to place the cursor, scroll wheel to
+    /// navigate, click filters in the left pane). Defaults to on; set `false`
+    /// to restore pure-keyboard behavior (e.g. when the terminal's mouse
+    /// capture interferes with text selection).
+    pub mouse: Option<bool>,
     /// 64-character lowercase-hex token gating the in-TUI capture server.
     /// Persisted across sessions so phone bookmarks survive a relaunch.
     /// Stored on disk; only meaningful for LAN access, but flagged here
@@ -41,6 +53,13 @@ pub struct Config {
     /// The query is a `/`-search needle (subsequence match on the task
     /// body); see `App::save_current_filter_as`.
     pub filters: Vec<(String, String)>,
+    /// Persisted *active* project filter (the `+project` the sidebar shows
+    /// selected), so the list reopens filtered the same way it closed.
+    /// `None` means no project filter. Independent from `filters` (saved
+    /// searches); this is the live view state.
+    pub active_project: Option<String>,
+    /// Persisted *active* context filter, same semantics as `active_project`.
+    pub active_context: Option<String>,
     /// Directory used by note actions for relative `note:<path>` tokens and
     /// generated task notes. Serialized as `notes_dir = ~/notes`.
     pub notes_dir: Option<String>,
@@ -149,6 +168,9 @@ fn parse(s: &str) -> Config {
             "show_status_bar" => c.show_status_bar = parse_bool(v),
             "show_done" => c.show_done = parse_bool(v),
             "show_future" => c.show_future = parse_bool(v),
+            "mouse" => c.mouse = parse_bool(v),
+            "margin" => c.margin = v.parse().ok(),
+            "borders" => c.borders = parse_bool(v),
             // Reject anything that isn't a valid hex token so we don't
             // carry forward a corrupt value that the server would later
             // refuse to compare against.
@@ -169,6 +191,8 @@ fn parse(s: &str) -> Config {
                     .collect();
             }
             "week_start" => c.week_start = v.parse().ok(),
+            "active_project" => c.active_project = (!v.trim().is_empty()).then(|| v.to_string()),
+            "active_context" => c.active_context = (!v.trim().is_empty()).then(|| v.to_string()),
             // Saved searches: `filter.<name> = <query>`. The name is the
             // (trimmed) text after the `filter.` prefix; the query is the
             // (unquoted) value, which may itself contain `=`. A repeated
@@ -220,6 +244,15 @@ fn serialize(c: &Config) -> String {
     if let Some(v) = c.show_future {
         let _ = writeln!(out, "show_future = {v}");
     }
+    if let Some(v) = c.mouse {
+        let _ = writeln!(out, "mouse = {v}");
+    }
+    if let Some(v) = c.margin {
+        let _ = writeln!(out, "margin = {v}");
+    }
+    if let Some(v) = c.borders {
+        let _ = writeln!(out, "borders = {v}");
+    }
     if let Some(v) = &c.share_token {
         let _ = writeln!(out, "share_token = {v}");
     }
@@ -237,6 +270,12 @@ fn serialize(c: &Config) -> String {
     }
     if let Some(v) = c.week_start {
         let _ = writeln!(out, "week_start = {v}");
+    }
+    if let Some(p) = &c.active_project {
+        let _ = writeln!(out, "active_project = {p}");
+    }
+    if let Some(c) = &c.active_context {
+        let _ = writeln!(out, "active_context = {c}");
     }
     out
 }
@@ -274,6 +313,9 @@ mod tests {
             show_status_bar: Some(true),
             show_done: Some(true),
             show_future: Some(true),
+            mouse: Some(false),
+            margin: Some(1),
+            borders: Some(true),
             share_token: Some("a".repeat(64)),
             share_port: Some(18080),
             filters: vec![
@@ -283,6 +325,8 @@ mod tests {
             notes_dir: Some("~/notes".into()),
             hidden_keys: vec!["uid".into(), "sync".into()],
             week_start: Some(WeekStart::Sunday),
+            active_project: Some("health".into()),
+            active_context: Some("laptop".into()),
         };
 
         let s = serialize(&c);
@@ -387,6 +431,70 @@ mod tests {
     }
 
     #[test]
+    fn mouse_flag_defaults_on_and_round_trips() {
+        // Absent key → None (Prefs defaults to enabled).
+        let c = parse("theme = Dawn\n");
+        assert_eq!(c.mouse, None);
+        let c = parse("mouse = false\n");
+        assert_eq!(c.mouse, Some(false));
+        let c = parse("mouse = on\n");
+        assert_eq!(c.mouse, Some(true));
+        // serialize → parse must reproduce the value.
+        let c2 = Config {
+            mouse: Some(false),
+            ..Default::default()
+        };
+        let reparsed = parse(&serialize(&c2));
+        assert_eq!(reparsed.mouse, Some(false));
+    }
+
+    #[test]
+    fn margin_round_trips() {
+        let c = parse("margin = 1\n");
+        assert_eq!(c.margin, Some(1));
+        let c2 = Config {
+            margin: Some(2),
+            ..Default::default()
+        };
+        let reparsed = parse(&serialize(&c2));
+        assert_eq!(reparsed.margin, Some(2));
+        // Absent key → None (Prefs defaults to 0).
+        assert_eq!(parse("theme = Dawn\n").margin, None);
+    }
+
+    #[test]
+    fn borders_round_trips() {
+        let c = parse("borders = false\n");
+        assert_eq!(c.borders, Some(false));
+        let c2 = Config {
+            borders: Some(false),
+            ..Default::default()
+        };
+        let reparsed = parse(&serialize(&c2));
+        assert_eq!(reparsed.borders, Some(false));
+        // Absent key → None (Prefs defaults to on).
+        assert_eq!(parse("theme = Dawn\n").borders, None);
+    }
+
+    #[test]
+    fn active_filter_round_trips() {
+        // Empty values are dropped (a cleared filter shouldn't leave a stray
+        // `active_project =` line).
+        let c = parse("active_project = health\nactive_context = laptop\n");
+        assert_eq!(c.active_project.as_deref(), Some("health"));
+        assert_eq!(c.active_context.as_deref(), Some("laptop"));
+        assert_eq!(parse("active_project =\n").active_project, None);
+        let c2 = Config {
+            active_project: Some("work".into()),
+            active_context: Some("phone".into()),
+            ..Default::default()
+        };
+        let reparsed = parse(&serialize(&c2));
+        assert_eq!(reparsed.active_project.as_deref(), Some("work"));
+        assert_eq!(reparsed.active_context.as_deref(), Some("phone"));
+    }
+
+    #[test]
     fn comments_and_blanks_skipped() {
         let s = "# header\n\n  # indented comment\ntheme = Matrix\n";
         let c = parse(s);
@@ -433,12 +541,17 @@ mod tests {
             show_status_bar: Some(false),
             show_done: Some(true),
             show_future: Some(false),
+            mouse: Some(true),
+            margin: Some(1),
+            borders: Some(true),
             share_token: None,
             share_port: None,
             filters: vec![("errand".into(), "@errand".into())],
             notes_dir: Some("/tmp/notes".into()),
             hidden_keys: vec!["uid".into()],
             week_start: Some(WeekStart::Sunday),
+            active_project: None,
+            active_context: Some("phone".into()),
         };
         written.save_to(&path).expect("save should succeed");
         assert!(path.exists());

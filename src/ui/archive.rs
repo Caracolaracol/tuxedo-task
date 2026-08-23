@@ -2,34 +2,45 @@ use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::style::{Modifier, Style};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::Paragraph;
+use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
 
 use crate::app::{App, GroupKey, Mode, View};
 use crate::ui::{header, keep_cursor_visible, task_row};
 
 pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     let theme = app.theme();
-    super::fill_bg(frame, area, Style::default().bg(theme.bg));
+    let bordered = app.prefs.borders;
 
-    let [header_area, _sp, body_area] = Layout::vertical([
-        Constraint::Length(1),
-        Constraint::Length(1),
-        Constraint::Min(1),
-    ])
-    .areas(area);
+    let props = header::HeaderProps {
+        title: Some("done.txt"),
+        count: app.archive().len(),
+        sort: "completion-date",
+        filter: None,
+    };
 
-    header::render(
-        frame,
-        header_area,
-        theme,
-        header::HeaderProps {
-            title: Some("done.txt"),
-            // file: "completed",
-            count: app.archive().len(),
-            sort: "completion-date",
-            filter: None,
-        },
-    );
+    let body_area = if bordered {
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .border_type(BorderType::Rounded)
+            .border_style(Style::default().fg(theme.border).bg(theme.bg))
+            .title(header::header_line(theme, props))
+            .style(Style::default().bg(theme.bg));
+        let inner = block.inner(area);
+        frame.render_widget(block, area);
+        let [_sp, body] =
+            Layout::vertical([Constraint::Length(1), Constraint::Min(1)]).areas(inner);
+        body
+    } else {
+        super::fill_bg(frame, area, Style::default().bg(theme.bg));
+        let [header_area, _sp, body] = Layout::vertical([
+            Constraint::Length(1),
+            Constraint::Length(1),
+            Constraint::Min(1),
+        ])
+        .areas(area);
+        header::render(frame, header_area, theme, props);
+        body
+    };
 
     let visible = app.visible_indices();
     let groups = app.visible_groups();
@@ -55,6 +66,7 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     }
 
     let mut lines: Vec<Line> = Vec::new();
+    let mut hit_rows: Vec<Option<usize>> = Vec::new();
     let mut last_date: Option<&str> = None;
     let mut cursor_line: Option<usize> = None;
 
@@ -68,6 +80,7 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
                 for _ in 0..blank {
                     lines.push(Line::raw(" "));
                 }
+                hit_rows.extend(std::iter::repeat_n(None, blank));
             }
             let count = *counts.get(date).unwrap_or(&0);
             lines.push(Line::from(vec![
@@ -84,6 +97,7 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
                     Style::default().fg(theme.dim),
                 ),
             ]));
+            hit_rows.push(None);
             last_date = Some(date);
         }
 
@@ -98,11 +112,13 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
             match_term: None,
             today: app.today(),
             hidden_keys: &app.prefs.hidden_keys,
+            sel_cols: None,
         };
         if i == app.cursor {
             cursor_line = Some(lines.len());
         }
         lines.push(task_row::build_line(task, opts, theme));
+        hit_rows.push(Some(i));
     }
 
     let scroll_cell = &app.view_scroll[View::Archive.idx()];
@@ -113,6 +129,10 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
         lines.len(),
     );
     scroll_cell.set(scroll);
+
+    let mut mouse = app.mouse_hit.borrow_mut();
+    mouse.body_rect = Some((body_area.x, body_area.y, body_area.width, body_area.height));
+    mouse.body_rows = hit_rows;
 
     let para = Paragraph::new(lines)
         .style(Style::default().bg(theme.bg).fg(theme.fg))
