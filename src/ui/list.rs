@@ -148,6 +148,7 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
         cursor_line,
         body_area.height,
         lines.len(),
+        app.cursor == 0,
     );
     scroll_cell.set(scroll);
 

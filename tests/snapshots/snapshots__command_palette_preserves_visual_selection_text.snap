@@ -1,19 +1,20 @@
 ---
 source: tests/snapshots.rs
+assertion_line: 232
 expression: buffer_to_text(&buf)
 ---
-╭ FILTERS ───────────────╮╭ ▶▮◀ /tmp/tuxedo-snapshot.txt  •  15 t╮╭ DETAIL ────────────────────────╮
+╭ フ ィ ル タ ー  ────────────╮╭Tuxedo Task  /tmp/tuxedo-snapshot.txt ╮╭ デ ィ テ ー ル  ────────────────────╮
 │                        ││                                      ││                                │
-│ PROJECTS               ││ (2)  PRIORITY A  ────────────────────││ priority  (A)                  │
+│ プ ロ ジ ェ ク ト            ││ (2)  PRIORITY A  ────────────────────││ priority  (A)                  │
 │   +work             4  ││  1 [x] ▸ (A) Finish Q2 board deck +wo││ created   2026-05-01           │
 │   +health           3  ││  2 [x]   (A) Call dentist to reschedu││ due       2026-05-06  today    │
 │   +finance          2  ││ (3)  PRIORITY B  ────────────────────││ projects  +work                │
-│   +home           ┌ tuxedo · command ────────────────────────────────────────┐aptop              │
+│   +home           ┌ Tuxedo Task · command ───────────────────────────────────┐aptop              │
 │   +learning       │ > █                                                      │                   │
 │   +personal       │──────────────────────────────────────────────────────────│                   │
 │   +travel         │ ▶ new task                                             n │                   │
 │                   │   edit current task (normal mode)                      e │01 Finish Q2 board │
-│ CONTEXTS          │   edit current task (insert mode)                      i │laptop             │
+│ コ ン テ キ ス ト       │   edit current task (insert mode)                      i │laptop             │
 │   @errands        │   toggle complete                                      x │06                 │
 │   @home           │   delete task                                         dd │                   │
 │   @laptop         │   cycle priority                                       p │                   │
@@ -33,4 +34,4 @@ expression: buffer_to_text(&buf)
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
 ╰────────────────────────╯╰──────────────────────────────────────╯╰────────────────────────────────╯
- COMMAND   type to filter · Enter run · Esc canc15 open · 2 selected · 2026-05-06 · tuxedo 2026.7.1
+ COMMAND   type to filter · Enter run · Esc15 open · 2 selected · 2026-05-06 · Tuxedo Task 2026.7.1

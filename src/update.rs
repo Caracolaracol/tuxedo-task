@@ -42,7 +42,7 @@ pub fn run() -> io::Result<()> {
         .map(detect_kind)
         .unwrap_or(InstallKind::Unknown);
     let current = env!("CARGO_PKG_VERSION");
-    println!("tuxedo {current}");
+    println!("Tuxedo Task {current}");
     if let Some(p) = &exe {
         println!("installed at: {}", p.display());
     }

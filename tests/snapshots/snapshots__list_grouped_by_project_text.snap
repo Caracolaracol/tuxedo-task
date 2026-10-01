@@ -1,19 +1,20 @@
 ---
 source: tests/snapshots.rs
+assertion_line: 232
 expression: buffer_to_text(&buf)
 ---
-╭ FILTERS ───────────────╮╭ ▶▮◀ /tmp/tuxedo-snapshot.txt  •  15 t╮╭ DETAIL ────────────────────────╮
+╭ フ ィ ル タ ー  ────────────╮╭Tuxedo Task  /tmp/tuxedo-snapshot.txt ╮╭ デ ィ テ ー ル  ────────────────────╮
 │                        ││                                      ││                                │
-│ PROJECTS               ││ (2)  +finance  ──────────────────────││ priority  (C)                  │
+│ プ ロ ジ ェ ク ト            ││ (2)  +finance  ──────────────────────││ priority  (C)                  │
 │   +work             4  ││  1 ▸ (C) Pay quarterly estimated taxe││ created   2026-05-03           │
 │   +health           3  ││  2       Pay rent due:2026-05-15 rec:││ due       2026-06-15  2026-06-1│
 │   +finance          2  ││ (3)  +health  ───────────────────────││ projects  +finance             │
 │   +home             1  ││  3   (A) Call dentist to reschedule c││ contexts  @home                │
 │   +learning         1  ││  4   (C) Order new running shoes +hea││                                │
-│   +personal         1  ││  5       Schedule annual physical @ph││ RAW                            │
+│   +personal         1  ││  5       Schedule annual physical @ph││ ロ ー                            │
 │   +travel           1  ││ (1)  +home  ─────────────────────────││                                │
 │                        ││  6       Replace bathroom faucet wash││ (C) 2026-05-03 Pay quarterly   │
-│ CONTEXTS               ││ (1)  +learning  ─────────────────────││ estimated taxes @home +finance │
+│ コ ン テ キ ス ト            ││ (1)  +learning  ─────────────────────││ estimated taxes @home +finance │
 │   @errands          4  ││  7       Read "Designing Data-Intensi││ due:2026-06-15                 │
 │   @home             4  ││ (1)  +personal  ─────────────────────││                                │
 │   @laptop           4  ││  8       Plan Saturday hike with K. @││                                │
@@ -33,4 +34,4 @@ expression: buffer_to_text(&buf)
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
 ╰────────────────────────╯╰──────────────────────────────────────╯╰────────────────────────────────╯
- NORMAL   j/k · n new · r reschedule · x done · / search · ? 15 open · 2026-05-06 · tuxedo 2026.7.1
+ NORMAL   j/k · n new · r reschedule · x done · / search15 open · 2026-05-06 · Tuxedo Task 2026.7.1

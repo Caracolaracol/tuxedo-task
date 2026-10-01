@@ -1,10 +1,11 @@
 ---
 source: tests/snapshots.rs
+assertion_line: 232
 expression: buffer_to_text(&buf)
 ---
-╭ FILTERS ───────────────╮╭ ▶▮◀ /tmp/tuxedo-snapshot.txt  •  15 t╮╭ DETAIL ────────────────────────╮
-│    ┌ tuxedo · help ─────────────────────────────────────────────────────────────────────────┐    │
-│ PRO│  NAVIGATION                                  VIEW                                      │    │
+╭ フ ィ ル タ ー  ────────────╮╭Tuxedo Task  /tmp/tuxedo-snapshot.txt ╮╭ デ ィ テ ー ル  ────────────────────╮
+│    ┌ Tuxedo Task · help ────────────────────────────────────────────────────────────────────┐    │
+│ プ ロ   NAVIGATION                                  VIEW                                      │    │
 │   +│    j / ↓             next task                 /                 fuzzy search          │    │
 │   +│    k / ↑             previous task             fp / fc           filter project/context│    │
 │   +│    gg                first task                ff / fs           saved filter pick/save│    │
@@ -13,7 +14,7 @@ expression: buffer_to_text(&buf)
 │   +│    mouse             click row · wheel · filter click    l                 list view   │    │
 │   +│                                                a                 archive view          │    │
 │    │  EDITING                                       A                 archive completed     │ard │
-│ CON│    n                 new task                  H                 show done in list     │    │
+│ コ ン     n                 new task                  H                 show done in list     │    │
 │   @│    e                 edit line (normal)        F                 show future in list   │    │
 │   @│    i                 edit line (insert)        [ / ]             toggle filter / detail│    │
 │   @│    r                 reschedule task           T                 cycle theme           │    │
@@ -41,4 +42,4 @@ expression: buffer_to_text(&buf)
 │    │    @context          context tag(s)            x DATE BODY       completed task prefix │    │
 │    └────────────────────────────────────────────────────────────────────────────────────────┘    │
 ╰────────────────────────╯╰──────────────────────────────────────╯╰────────────────────────────────╯
- HELP   ? close help                                         15 open · 2026-05-06 · tuxedo 2026.7.1
+ HELP   ? close help                                    15 open · 2026-05-06 · Tuxedo Task 2026.7.1

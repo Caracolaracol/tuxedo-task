@@ -15,7 +15,7 @@ use std::path::Path;
 /// the pragmatic choice.
 pub const DEFAULT_BUDGET: usize = 64;
 
-const PREFIX: &str = "tuxedo ";
+const PREFIX: &str = "Tuxedo Task ";
 
 /// Build the terminal title for `path`. `home`, when supplied, collapses to
 /// `~`. The returned string never exceeds `budget` characters unless even a
@@ -117,7 +117,7 @@ mod tests {
             Some(Path::new("/Users/m")),
             DEFAULT_BUDGET,
         );
-        assert_eq!(title, "tuxedo ~/work/todo.txt");
+        assert_eq!(title, "Tuxedo Task ~/work/todo.txt");
     }
 
     #[test]
@@ -129,7 +129,7 @@ mod tests {
             Some(Path::new("/Users/m")),
             35,
         );
-        assert_eq!(title, "tuxedo ~/p/g/w/tuxedo/todo.txt");
+        assert_eq!(title, "Tuxedo Task ~/p/g/w/tuxedo/todo.txt");
     }
 
     #[test]
@@ -139,24 +139,27 @@ mod tests {
             Some(Path::new("/Users/m")),
             10,
         );
-        assert_eq!(title, "tuxedo ~/p/g/w/t/todo.txt");
+        assert_eq!(title, "Tuxedo Task ~/p/g/w/t/todo.txt");
     }
 
     #[test]
     fn keeps_absolute_path_when_home_is_unknown() {
         let title = terminal_title(Path::new("/Users/m/work/todo.txt"), None, DEFAULT_BUDGET);
-        assert_eq!(title, "tuxedo /Users/m/work/todo.txt");
+        assert_eq!(title, "Tuxedo Task /Users/m/work/todo.txt");
     }
 
     #[test]
     fn preserves_leading_dot_when_shortening_dotfiles() {
-        // Budget 28 forces collapsing `.config` -> `.c` but nothing more.
+        // The `.config` component must collapse before `.nvim` does.
+        // (budget 28 with the shorter "tuxedo " prefix used to keep
+        // `.nvim` whole; "Tuxedo Task " eats 5 more chars, so only
+        // the leading dotfile `.c` survives at this budget)
         let title = terminal_title(
             Path::new("/Users/m/.config/nvim/notes.txt"),
             Some(Path::new("/Users/m")),
             28,
         );
-        assert_eq!(title, "tuxedo ~/.c/nvim/notes.txt");
+        assert_eq!(title, "Tuxedo Task ~/.c/n/notes.txt");
     }
 
     #[test]
@@ -166,6 +169,6 @@ mod tests {
             Some(Path::new("/Users/m")),
             DEFAULT_BUDGET,
         );
-        assert_eq!(title, "tuxedo notes/todo.txt");
+        assert_eq!(title, "Tuxedo Task notes/todo.txt");
     }
 }

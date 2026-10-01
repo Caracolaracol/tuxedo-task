@@ -22,7 +22,7 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(theme.border).bg(theme.bg))
         .title(Line::from(Span::styled(
-            " DETAIL ",
+            " ディテール ",
             Style::default().fg(theme.dim).add_modifier(Modifier::BOLD),
         )))
         .style(Style::default().bg(theme.bg));
@@ -158,7 +158,7 @@ fn build_lines<'a>(
     rows.push(line_panel(
         theme,
         vec![Span::styled(
-            " RAW",
+            " ロー",
             Style::default().fg(theme.dim).add_modifier(Modifier::BOLD),
         )],
     ));

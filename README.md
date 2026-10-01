@@ -1,15 +1,19 @@
-# tuxedo
+# Tuxedo Task
 
 A fast, keyboard-driven terminal UI for [todo.txt](http://todotxt.org/).
 Vim-style bindings, atomic writes, instant external-edit detection, and five
 hand-tuned themes — all in a single static binary.
 
+This repository is a local fork of [webstonehq/tuxedo](https://github.com/webstonehq/tuxedo)
+with nested subtasks, project grouping, layout refinements, and live configuration
+reload support.
+
 ```sh
 brew install tuxedo
 ```
 
-[![CI](https://github.com/webstonehq/tuxedo/actions/workflows/ci.yml/badge.svg)](https://github.com/webstonehq/tuxedo/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/webstonehq/tuxedo?logo=github)](https://github.com/webstonehq/tuxedo/releases/latest)
+[![CI](https://github.com/Caracolaracol/tuxedo_steampunk/actions/workflows/ci.yml/badge.svg)](https://github.com/Caracolaracol/tuxedo_steampunk/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Caracolaracol/tuxedo_steampunk?logo=github)](https://github.com/Caracolaracol/tuxedo_steampunk/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
 [![Rust](https://img.shields.io/badge/rust-2024-orange.svg?logo=rust)](https://www.rust-lang.org)
 
@@ -28,6 +32,8 @@ For a more in-depth walkthrough, please watch [this video](https://www.youtube.c
 - **Atomic, sync-friendly writes.** Every change goes through write-temp-then-rename. If another process — Dropbox, an editor, a script — modifies the file, tuxedo reloads on the next keypress (or within ~250 ms while idle) and flashes a notice.
 - **Sibling-file archive.** `A` moves completed tasks to `done.txt` next to your file, atomically.
 - **Filter, sort, multi-select.** Cycle by `+project` or `@context`, sort by priority / due / file order, and bulk-complete or bulk-delete in visual mode.
+- **Nested subtasks.** Indent with `>` and outdent with `<`; parent actions, undo, and sorting keep each subtree together.
+- **Project grouping.** Sort tasks by `+project` while preserving parent/subtask families and multi-project membership.
 - **Saved searches.** Name the active `/`-search with `fs`, then recall it any time by cycling saved filters with `ff`. Stored as plain `filter.<name>` lines in the config — hand-editable like everything else.
 - **Five themes, three densities.** Cycle with `T` and `D`. Choices persist across runs and hot-reload when you edit `config.toml` externally.
 - **No daemon, no database, no cloud.** One file in, one file out.
@@ -135,13 +141,13 @@ Targets: `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`, `x86_64-apple-
 ### From source
 
 ```sh
-cargo install --git https://github.com/webstonehq/tuxedo
+cargo install --git https://github.com/Caracolaracol/tuxedo_steampunk
 ```
 
 Or clone and build:
 
 ```sh
-git clone https://github.com/webstonehq/tuxedo
+git clone https://github.com/Caracolaracol/tuxedo_steampunk
 cd tuxedo
 cargo build --release
 ./target/release/tuxedo [FILE]
@@ -401,7 +407,7 @@ The modal keys below apply in Normal mode:
 | `fc` | filter by context (`j` / `k` cycles, `Esc` clears) |
 | `ff` | pick a saved search (`j` / `k` cycles, `Enter` keeps, `Esc` reverts) |
 | `fs` | save the active `/`-search as a named filter |
-| `S` | cycle sort: priority → due → file order |
+| `S` | cycle sort: priority → due → file order → project |
 | `v` | enter visual / multi-select; `space` toggles a row |
 | `x` / `dd` (in visual) | bulk-complete / bulk-delete the selection |
 | `l` | list (default) view |

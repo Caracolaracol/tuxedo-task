@@ -44,7 +44,7 @@ fn main() -> Result<()> {
             return Ok(());
         }
         Some("--version") | Some("-V") => {
-            println!("tuxedo {}", env!("CARGO_PKG_VERSION"));
+            println!("Tuxedo Task {}", env!("CARGO_PKG_VERSION"));
             return Ok(());
         }
         Some("update") => {
@@ -284,7 +284,8 @@ fn poll_config_reload(app: &mut App, rx: &Option<mpsc::Receiver<()>>) -> bool {
         None => return false,
     };
     match rx.try_recv() {
-        Ok(()) | Err(mpsc::TryRecvError::Disconnected) => {}
+        Ok(()) => {}
+        Err(mpsc::TryRecvError::Disconnected) => return false,
         Err(mpsc::TryRecvError::Empty) => return false,
     }
     let Some(ref path) = app.config_path else {

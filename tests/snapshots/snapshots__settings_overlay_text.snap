@@ -1,8 +1,9 @@
 ---
 source: tests/snapshots.rs
+assertion_line: 232
 expression: buffer_to_text(&buf)
 ---
- ▶▮◀ settings  •  19 tasks  •  sort:priority                                                        
+Tuxedo Task  settings  •  19 tasks  •  sort:priority                                                
                                                                                                     
  FILES                                                                                              
    todo file                   /tmp/tuxedo-snapshot.txt                                             
@@ -33,4 +34,4 @@ expression: buffer_to_text(&buf)
                                                                                                     
                                                                                                     
                                                                                                     
- SETTINGS   Esc back                                         15 open · 2026-05-06 · tuxedo 2026.7.1
+ SETTINGS   Esc back                                    15 open · 2026-05-06 · Tuxedo Task 2026.7.1

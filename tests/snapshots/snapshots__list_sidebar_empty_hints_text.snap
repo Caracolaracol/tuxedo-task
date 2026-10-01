@@ -1,15 +1,16 @@
 ---
 source: tests/snapshots.rs
+assertion_line: 232
 expression: buffer_to_text(&buf)
 ---
-╭ FILTERS ───────────────╮╭ ▶▮◀ /tmp/tuxedo-snapshot.txt  •  3 ta╮╭ DETAIL ────────────────────────╮
+╭ フ ィ ル タ ー  ────────────╮╭Tuxedo Task  /tmp/tuxedo-snapshot.txt ╮╭ デ ィ テ ー ル  ────────────────────╮
 │                        ││                                      ││                                │
-│ PROJECTS               ││ (1)  PRIORITY A  ────────────────────││ priority  (A)                  │
+│ プ ロ ジ ェ ク ト            ││ (1)  PRIORITY A  ────────────────────││ priority  (A)                  │
 │   tag with +project    ││  1 ▸ (A) Buy milk                    ││ created   —                    │
 │                        ││ (1)  PRIORITY B  ────────────────────││ projects                       │
-│ CONTEXTS               ││  2   (B) Call mom                    ││ contexts                       │
+│ コ ン テ キ ス ト            ││  2   (B) Call mom                    ││ contexts                       │
 │   tag with @context    ││ (1)  NO PRIORITY  ───────────────────││                                │
-│                        ││  3       Write up notes              ││ RAW                            │
+│                        ││  3       Write up notes              ││ ロ ー                            │
 │                        ││                                      ││                                │
 │                        ││                                      ││ (A) Buy milk                   │
 │                        ││                                      ││                                │
@@ -33,4 +34,4 @@ expression: buffer_to_text(&buf)
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
 ╰────────────────────────╯╰──────────────────────────────────────╯╰────────────────────────────────╯
- NORMAL   j/k · n new · r reschedule · x done · / search · ? h3 open · 2026-05-06 · tuxedo 2026.7.1
+ NORMAL   j/k · n new · r reschedule · x done · / search 3 open · 2026-05-06 · Tuxedo Task 2026.7.1

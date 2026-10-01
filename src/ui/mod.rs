@@ -230,11 +230,20 @@ pub(crate) fn density_blank_lines(d: crate::app::Density) -> usize {
 /// `cursor_line` is the line index of the cursor (or `None` if there's no
 /// cursor row in the current build, e.g. when the list is empty). `height` is
 /// the viewport height in rows; `total` is the total line count.
+///
+/// `cursor_on_first_row` is true when the cursor sits on the very first visible
+/// row. Under a grouped sort the first row's line is not 0 — a group header
+/// (and nothing else) precedes it — so moving the cursor back up from the
+/// bottom would stop at that header's line and leave the offset pinned one
+/// line down, keeping the header permanently scrolled out of view. Clamping to
+/// 0 in that position lets the header come back (and behaves identically to
+/// before for flat lists, where the first row is already line 0).
 pub(crate) fn keep_cursor_visible(
     prev: u16,
     cursor_line: Option<usize>,
     height: u16,
     total: usize,
+    cursor_on_first_row: bool,
 ) -> u16 {
     let h = usize::from(height);
     if h == 0 || total == 0 {
@@ -242,10 +251,14 @@ pub(crate) fn keep_cursor_visible(
     }
     let max_offset = total.saturating_sub(h);
     let prev = usize::from(prev).min(max_offset);
-    let new = match cursor_line {
-        Some(cl) if cl < prev => cl,
-        Some(cl) if cl >= prev + h => cl + 1 - h,
-        _ => prev,
+    let new = if cursor_on_first_row {
+        0
+    } else {
+        match cursor_line {
+            Some(cl) if cl < prev => cl,
+            Some(cl) if cl >= prev + h => cl + 1 - h,
+            _ => prev,
+        }
     };
     new.min(max_offset).min(usize::from(u16::MAX)) as u16
 }
@@ -256,37 +269,51 @@ mod tests {
 
     #[test]
     fn no_scroll_when_content_fits() {
-        assert_eq!(keep_cursor_visible(0, Some(5), 10, 8), 0);
-        assert_eq!(keep_cursor_visible(0, Some(7), 10, 8), 0);
+        assert_eq!(keep_cursor_visible(0, Some(5), 10, 8, false), 0);
+        assert_eq!(keep_cursor_visible(0, Some(7), 10, 8, false), 0);
     }
 
     #[test]
     fn scrolls_down_when_cursor_below_viewport() {
         // viewport rows 0..5, cursor at line 7 -> offset = 7 - 5 + 1 = 3
-        assert_eq!(keep_cursor_visible(0, Some(7), 5, 20), 3);
+        assert_eq!(keep_cursor_visible(0, Some(7), 5, 20, false), 3);
     }
 
     #[test]
     fn scrolls_up_when_cursor_above_viewport() {
         // prev offset 10, cursor at line 3 -> offset = 3
-        assert_eq!(keep_cursor_visible(10, Some(3), 5, 20), 3);
+        assert_eq!(keep_cursor_visible(10, Some(3), 5, 20, false), 3);
     }
 
     #[test]
     fn keeps_previous_offset_when_cursor_in_viewport() {
         // prev 5, cursor at line 7, height 5 -> 7 in [5, 10), stays 5
-        assert_eq!(keep_cursor_visible(5, Some(7), 5, 20), 5);
+        assert_eq!(keep_cursor_visible(5, Some(7), 5, 20, false), 5);
     }
 
     #[test]
     fn clamps_to_max_offset_when_previous_exceeds_it() {
         // total shrank since last frame; previous offset 50 is now too large.
-        assert_eq!(keep_cursor_visible(50, None, 5, 8), 3);
+        assert_eq!(keep_cursor_visible(50, None, 5, 8, false), 3);
     }
 
     #[test]
     fn handles_degenerate_inputs() {
-        assert_eq!(keep_cursor_visible(0, None, 0, 100), 0);
-        assert_eq!(keep_cursor_visible(0, Some(0), 5, 0), 0);
+        assert_eq!(keep_cursor_visible(0, None, 0, 100, false), 0);
+        assert_eq!(keep_cursor_visible(0, Some(0), 5, 0, false), 0);
+    }
+
+    #[test]
+    fn first_row_cursor_reveals_leading_group_header() {
+        // Grouped sort: line 0 is the first group header, line 1 the first
+        // task. Scrolling back up pins the cursor at line 1 (row 0) and would
+        // keep offset 1 forever, hiding the header. Cursor on first row must
+        // clamp to offset 0 so the header reappears.
+        assert_eq!(keep_cursor_visible(40, Some(1), 20, 300, true), 0);
+        assert_eq!(keep_cursor_visible(5, Some(1), 20, 300, true), 0);
+        // Flat sort: first row is already line 0 — same result as before.
+        assert_eq!(keep_cursor_visible(40, Some(0), 20, 300, true), 0);
+        // Not on the first row: unchanged behavior.
+        assert_eq!(keep_cursor_visible(40, Some(7), 5, 300, false), 7);
     }
 }

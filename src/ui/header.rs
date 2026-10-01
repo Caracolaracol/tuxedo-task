@@ -35,22 +35,21 @@ pub struct HeaderProps<'a> {
 
 pub fn render(frame: &mut Frame, area: Rect, theme: &Theme, props: HeaderProps<'_>) {
     let line = header_line(theme, props);
-    let para = Paragraph::new(line).style(Style::default().bg(theme.panel));
+    let para = Paragraph::new(line).style(Style::default().bg(theme.bg));
     frame.render_widget(para, area);
 }
 
 /// Build the header line for a pane. Reused as the border title of the
 /// central list/archive pane when borders are enabled.
 pub fn header_line<'a>(theme: &Theme, props: HeaderProps<'_>) -> Line<'a> {
-    // Mini cell-bowtie at one-row scale: two triangles flanking a block
-    // cursor knot. Same body+knot+body structure and palette as the larger
-    // mark used in the empty state and help overlay.
     let mut spans: Vec<Span> = vec![
-        Span::raw(" "),
-        Span::styled("▶", Style::default().fg(theme.accent)),
-        Span::styled("▮", Style::default().fg(theme.pri_a)),
-        Span::styled("◀", Style::default().fg(theme.accent)),
-        Span::raw(" "),
+        Span::styled(
+            "Tuxedo Task",
+            Style::default()
+                .fg(theme.accent)
+                .add_modifier(Modifier::BOLD),
+        ),
+        Span::raw("  "),
     ];
     if let Some(t) = props.title {
         spans.push(Span::styled(
@@ -77,5 +76,5 @@ pub fn header_line<'a>(theme: &Theme, props: HeaderProps<'_>) -> Line<'a> {
             Style::default().fg(theme.context),
         ));
     }
-    Line::from(spans).style(Style::default().bg(theme.panel))
+    Line::from(spans).style(Style::default().bg(theme.bg))
 }

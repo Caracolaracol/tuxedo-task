@@ -26,7 +26,7 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(theme.border).bg(theme.bg))
         .title(Line::from(Span::styled(
-            " FILTERS ",
+            " フィルター ",
             Style::default().fg(theme.dim).add_modifier(Modifier::BOLD),
         )))
         .style(Style::default().bg(theme.bg));
@@ -43,7 +43,7 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     lines.push(line_pad(
         theme,
         vec![Span::styled(
-            " PROJECTS",
+            " プロジェクト",
             Style::default()
                 .fg(theme.project)
                 .add_modifier(Modifier::BOLD),
@@ -65,7 +65,7 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     lines.push(line_pad(
         theme,
         vec![Span::styled(
-            " CONTEXTS",
+            " コンテキスト",
             Style::default()
                 .fg(theme.context)
                 .add_modifier(Modifier::BOLD),
