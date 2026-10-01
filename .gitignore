@@ -3,3 +3,5 @@
 target
 # Nix build output
 /result
+# Local agent instructions may contain machine-specific paths.
+AGENTS.md
