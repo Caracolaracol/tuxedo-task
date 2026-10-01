@@ -12,8 +12,8 @@ reload support.
 brew install tuxedo
 ```
 
-[![CI](https://github.com/Caracolaracol/tuxedo_steampunk/actions/workflows/ci.yml/badge.svg)](https://github.com/Caracolaracol/tuxedo_steampunk/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/Caracolaracol/tuxedo_steampunk?logo=github)](https://github.com/Caracolaracol/tuxedo_steampunk/releases/latest)
+[![CI](https://github.com/Caracolaracol/tuxedo-task/actions/workflows/ci.yml/badge.svg)](https://github.com/Caracolaracol/tuxedo-task/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Caracolaracol/tuxedo-task?logo=github)](https://github.com/Caracolaracol/tuxedo-task/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
 [![Rust](https://img.shields.io/badge/rust-2024-orange.svg?logo=rust)](https://www.rust-lang.org)
 
@@ -141,13 +141,13 @@ Targets: `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`, `x86_64-apple-
 ### From source
 
 ```sh
-cargo install --git https://github.com/Caracolaracol/tuxedo_steampunk
+cargo install --git https://github.com/Caracolaracol/tuxedo-task
 ```
 
 Or clone and build:
 
 ```sh
-git clone https://github.com/Caracolaracol/tuxedo_steampunk
+git clone https://github.com/Caracolaracol/tuxedo-task
 cd tuxedo
 cargo build --release
 ./target/release/tuxedo [FILE]
