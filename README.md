@@ -4,13 +4,20 @@ A fast, keyboard-driven terminal UI for [todo.txt](http://todotxt.org/).
 Vim-style bindings, atomic writes, instant external-edit detection, and five
 hand-tuned themes — all in a single static binary.
 
-This repository is a local fork of [webstonehq/tuxedo](https://github.com/webstonehq/tuxedo)
-with nested subtasks, project grouping, layout refinements, and live configuration
-reload support.
+## About this fork
 
-```sh
-brew install tuxedo
-```
+Tuxedo Task is a community fork of [Tuxedo](https://github.com/webstonehq/tuxedo).
+It keeps the upstream todo.txt format and core workflow, while adding features
+that are not available in upstream:
+
+- Nested subtasks with two-space indentation, subtree-aware actions, undo, and sorting.
+- Project grouping that keeps parent/subtask families together.
+- Live `config.toml` reload while the TUI is running, including safe parse failures.
+- Refined layout, branding, and Japanese labels for selected UI sections.
+- Additional regression coverage for grouped views and rendered snapshots.
+
+Upstream is still the right choice if you want the official Homebrew package or
+official releases. Use the source install below to run this fork.
 
 [![CI](https://github.com/Caracolaracol/tuxedo-task/actions/workflows/ci.yml/badge.svg)](https://github.com/Caracolaracol/tuxedo-task/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Caracolaracol/tuxedo-task?logo=github)](https://github.com/Caracolaracol/tuxedo-task/releases/latest)
@@ -126,7 +133,7 @@ another theme is skipped with a warning at startup.
 
 ## Install
 
-### Homebrew (macOS, Linux)
+### Homebrew (upstream)
 
 ```sh
 brew install tuxedo
@@ -134,7 +141,7 @@ brew install tuxedo
 
 ### Prebuilt binaries
 
-Download the archive for your platform from the [latest release](https://github.com/webstonehq/tuxedo/releases/latest) and put `tuxedo` on your `PATH`.
+Download the archive for your platform from the [upstream latest release](https://github.com/webstonehq/tuxedo/releases/latest) and put `tuxedo` on your `PATH`.
 
 Targets: `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`, `x86_64-apple-darwin`, `aarch64-apple-darwin`, `x86_64-pc-windows-msvc`. Each archive ships with a `.sha256` checksum.
 
@@ -148,7 +155,7 @@ Or clone and build:
 
 ```sh
 git clone https://github.com/Caracolaracol/tuxedo-task
-cd tuxedo
+cd tuxedo-task
 cargo build --release
 ./target/release/tuxedo [FILE]
 ```
