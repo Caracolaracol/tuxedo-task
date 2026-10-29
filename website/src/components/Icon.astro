@@ -1,0 +1,17 @@
+---
+interface Props { name: 'arrow' | 'github' | 'tree' | 'folder' | 'mouse' | 'filter' | 'palette' | 'file' | 'copy' | 'check'; size?: number; }
+const { name, size = 20 } = Astro.props;
+const paths = {
+  arrow: 'M5 12h14m-6-6 6 6-6 6',
+  github: 'M9 19c-5 1.5-5-2.5-7-3m14 6v-4a3.5 3.5 0 0 0-1-2.7c3.3-.4 6.7-1.6 6.7-7.3A5.7 5.7 0 0 0 20 4a5.3 5.3 0 0 0-.1-4S18.6-.4 16 1.5a13.4 13.4 0 0 0-7 0C6.4-.4 5.1 0 5.1 0A5.3 5.3 0 0 0 5 4a5.7 5.7 0 0 0-1.7 4c0 5.7 3.4 6.9 6.7 7.3A3.5 3.5 0 0 0 9 18v4',
+  tree: 'M5 3v12a3 3 0 0 0 3 3h11M5 8h14m-4-3 3 3-3 3m0 4 3 3-3 3',
+  folder: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v10H3Z',
+  mouse: 'M12 3a6 6 0 0 0-6 6v6a6 6 0 0 0 12 0V9a6 6 0 0 0-6-6Zm0 0v6',
+  filter: 'M4 6h16M7 12h10m-7 6h4',
+  palette: 'M12 3a9 9 0 1 0 0 18h1a2 2 0 0 0 1.4-3.4 1.5 1.5 0 0 1 1.1-2.6H18a3 3 0 0 0 3-3 9 9 0 0 0-9-9ZM7 10h.01M10 6h.01M16 7h.01M6 15h.01',
+  file: 'M14 3H5v18h14V8Zm0 0v5h5M8 13h8m-8 4h5',
+  copy: 'M9 9h11v12H9ZM5 15H3V3h11v2',
+  check: 'm5 12 4 4L19 6',
+};
+---
+<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>

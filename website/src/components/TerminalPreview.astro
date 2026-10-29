@@ -1,0 +1,92 @@
+---
+const scenes = [
+  { id: 'subtasks', label: 'Subtasks', hint: 'A little structure goes a long way.', sort: 'file', rows: [
+    { text: 'Make room for the good stuff', project: '+life', priority: 'A', depth: 0 },
+    { text: 'Get the little things done', depth: 1 },
+    { text: 'Return the library books', depth: 2 },
+    { text: 'Fix that very squeaky door', depth: 2 },
+    { text: 'Plan something worth looking forward to', depth: 1 },
+    { text: 'A weekend without notifications', depth: 2 },
+    { text: 'Ship something you love', project: '+tuxedo', depth: 0 },
+  ] },
+  { id: 'projects', label: 'Projects', hint: 'Different projects. Everything in its place.', sort: 'project', rows: [
+    { text: '+life', group: true, depth: 0 },
+    { text: 'Make room for the good stuff', priority: 'A', depth: 0 },
+    { text: 'Return the library books', depth: 1 },
+    { text: 'Plan a quiet weekend', depth: 1 },
+    { text: '+tuxedo', group: true, depth: 0 },
+    { text: 'Ship something you love', depth: 0 },
+    { text: 'Write the docs', depth: 1 },
+    { text: 'Share it with the world', depth: 1 },
+  ] },
+];
+---
+<div class="terminal-demo" data-terminal-demo>
+  <div class="terminal-chrome">
+    <span class="terminal-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span>tuxedo <span class="chrome-path">~/life/todo.txt</span></span>
+    <span class="chrome-shell">zsh</span>
+  </div>
+  <div class="demo-tabs" role="tablist" aria-label="Application preview" hidden>
+    <button type="button" role="tab" id="tab-subtasks" aria-controls="panel-subtasks" aria-selected="true" tabindex="0">01 / Subtasks</button>
+    <button type="button" role="tab" id="tab-projects" aria-controls="panel-projects" aria-selected="false" tabindex="-1">02 / Projects</button>
+    <button type="button" role="tab" id="tab-text" aria-controls="panel-text" aria-selected="false" tabindex="-1">03 / Plain text</button>
+  </div>
+  {scenes.map((scene, sceneIndex) => (
+    <section class="demo-panel" role="tabpanel" id={`panel-${scene.id}`} aria-labelledby={`tab-${scene.id}`} tabindex="0" hidden={sceneIndex !== 0}>
+      <div class="terminal-heading"><strong>Tuxedo Task</strong><span>sort:{scene.sort}</span></div>
+      <ol class="task-list" aria-label={scene.label}>
+        {scene.rows.map((row, i) => (
+          <li class:list={[{ 'task-selected': i === (sceneIndex === 0 ? 1 : 2), 'task-group': 'group' in row }]} style={`--depth:${row.depth}`}>
+            <span class="line-number" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+            <span class="task-content"><span class="task-bullet" aria-hidden="true">{row.depth ? '↳' : '·'}</span>{'priority' in row && <span class="task-priority">({row.priority}) </span>}{row.text}{'project' in row && <span class="task-project"> {row.project}</span>}</span>
+          </li>
+        ))}
+      </ol>
+      <p class="terminal-hint">{scene.hint}</p>
+    </section>
+  ))}
+  <section class="demo-panel plain-panel" role="tabpanel" id="panel-text" aria-labelledby="tab-text" tabindex="0" hidden>
+    <div class="terminal-heading"><strong>Just a file.</strong><span>todo.txt</span></div>
+    <pre><code><span class="task-priority">(A)</span> Make room for the good stuff <span class="task-project">+life</span>
+  Get the little things done
+    Return the library books
+    Fix that very squeaky door
+  Plan something worth looking forward to
+    A weekend without notifications
+Ship something you love <span class="task-project">+tuxedo</span></code></pre>
+    <p class="terminal-hint">Open it in your editor. It is still your file.</p>
+  </section>
+  <div class="terminal-status"><span>NORMAL</span><span>j/k move · &gt; nest · x done · u undo</span><span class="status-open">7 open</span></div>
+</div>
+<p class="preview-caption"><span class="live-dot" aria-hidden="true"></span>Interactive preview · illustrative sample data, not a running terminal</p>
+<script>
+  for (const demo of document.querySelectorAll<HTMLElement>('[data-terminal-demo]')) {
+    const tablist = demo.querySelector<HTMLElement>('[role="tablist"]');
+    const tabs = [...demo.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const panels = [...demo.querySelectorAll<HTMLElement>('[role="tabpanel"]')];
+    if (tablist) tablist.hidden = false;
+    const activate = (selected: HTMLButtonElement, focus = false) => {
+      for (const tab of tabs) {
+        const active = tab === selected;
+        tab.setAttribute('aria-selected', String(active));
+        tab.tabIndex = active ? 0 : -1;
+      }
+      for (const panel of panels) panel.hidden = panel.id !== selected.getAttribute('aria-controls');
+      if (focus) selected.focus();
+    };
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => activate(tab));
+      tab.addEventListener('keydown', (event) => {
+        let target = index;
+        if (event.key === 'ArrowRight') target = (index + 1) % tabs.length;
+        else if (event.key === 'ArrowLeft') target = (index - 1 + tabs.length) % tabs.length;
+        else if (event.key === 'Home') target = 0;
+        else if (event.key === 'End') target = tabs.length - 1;
+        else return;
+        event.preventDefault();
+        activate(tabs[target], true);
+      });
+    });
+  }
+</script>

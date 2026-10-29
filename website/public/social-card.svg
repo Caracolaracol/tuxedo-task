@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f5f0e8"/>
+  <path d="M76 154h1048M76 548h1048" stroke="#dcd4cc"/>
+  <image href="brand.svg" x="76" y="68" width="52" height="52"/>
+  <text x="145" y="104" fill="#29232e" font-family="Arial,sans-serif" font-size="29" font-weight="bold">Tuxedo Task.</text>
+  <text x="76" y="270" fill="#29232e" font-family="Arial,sans-serif" font-size="91" font-weight="bold" letter-spacing="-5">Less noise.</text>
+  <text x="76" y="372" fill="#29232e" font-family="Arial,sans-serif" font-size="91" font-weight="bold" letter-spacing="-5">More <tspan fill="#a03555" font-family="Georgia,serif" font-style="italic" font-weight="normal">done.</tspan></text>
+  <text x="80" y="445" fill="#6e656b" font-family="Arial,sans-serif" font-size="24">Nested tasks. Familiar keys. Plain-text files that stay yours.</text>
+  <text x="80" y="493" fill="#a03555" font-family="monospace" font-size="17">LOCAL-FIRST / OPEN SOURCE / BUILT WITH RUST</text>
+  <rect x="905" y="219" width="205" height="205" rx="36" fill="#232031"/>
+  <svg x="905" y="219" width="205" height="205" viewBox="0 0 64 64"><path fill="#e8cfd4" fill-rule="evenodd" d="M8 16C16 22 23 20 32 25C41 20 48 22 56 16L52 36C49 47 40 48 32 38C24 48 15 47 12 36ZM16 29Q23 25 28 31Q23 38 18 35ZM48 29Q41 25 36 31Q41 38 46 35Z"/></svg>
+  <text x="80" y="588" fill="#6e656b" font-family="Arial,sans-serif" font-size="16">An independent community fork of Tuxedo by Webstone Technologies.</text>
+</svg>

@@ -10,7 +10,7 @@ and plain-text files you own.
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
 [![Rust](https://img.shields.io/badge/rust-2024-orange.svg?logo=rust)](https://www.rust-lang.org)
 
-[Install](#install) · [Fork features](#what-this-fork-adds) · [Keybindings](#keybindings) · [Configuration](#configuration)
+[Website](https://caracolaracol.github.io/tuxedo-task/) · [Install](#install) · [Fork features](#what-this-fork-adds) · [Keybindings](#keybindings) · [Configuration](#configuration)
 
 ![Tuxedo Task with nested tasks grouped by project](docs/screenshots/subtasks.svg)
 
@@ -719,6 +719,13 @@ Matching is case-insensitive. Hiding is purely visual — the tags stay on
 disk untouched, still serialize, and still show in the detail pane's **RAW**
 section (a deliberate escape hatch). Searches still match hidden text; the
 hidden characters just aren't drawn.
+
+## Website
+
+The [Tuxedo Task landing page](https://caracolaracol.github.io/tuxedo-task/) is a
+static Astro site in [`website/`](website). Its setup, browser tests, and GitHub
+Pages deployment are documented in [`website/README.md`](website/README.md).
+It is independent of the Rust application and does not change how tasks are stored.
 
 ## Development
 

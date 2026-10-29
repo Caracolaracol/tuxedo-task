@@ -1,0 +1,113 @@
+---
+import Icon from '../components/Icon.astro';
+import TerminalPreview from '../components/TerminalPreview.astro';
+import '../styles/global.css';
+
+const base = import.meta.env.BASE_URL;
+const repo = 'https://github.com/Caracolaracol/tuxedo-task';
+const upstream = 'https://github.com/webstonehq/tuxedo';
+const install = `cargo install --git ${repo} --locked`;
+const canonical = new URL(base, Astro.site).href;
+const features = [
+  { icon: 'tree' as const, number: '01', title: 'Think in smaller steps.', body: 'Nest subtasks as deep as you need. Complete, move, or delete a parent, and its whole family comes along.', tag: 'Subtree-aware actions' },
+  { icon: 'folder' as const, number: '02', title: 'Give every project a home.', body: 'Group your list by +project without scattering its subtasks. Keep work, life, and the next little idea in view.', tag: 'Family-preserving sort' },
+  { icon: 'file' as const, number: '03', title: 'Edit the whole picture.', body: 'Draft a parent and its children in one dialog. Rework an existing family together, then save it as one undoable change.', tag: 'Multi-line family editing' },
+  { icon: 'mouse' as const, number: '04', title: 'Keys first. Mouse welcome.', body: 'Click to navigate, scroll through your tasks, or drag text to copy. Prefer just the keyboard? Turn mouse support off.', tag: 'Your workflow, your call' },
+  { icon: 'filter' as const, number: '05', title: 'Pick up where you left off.', body: 'Your active project and context filters survive a restart. Less setting things up. More getting back to your work.', tag: 'Remembered filters' },
+  { icon: 'palette' as const, number: '06', title: 'A quieter place to focus.', body: 'Pane borders, outer margins, custom themes, and a refined layout. Make your terminal feel a little more like you.', tag: 'A considered interface' },
+];
+const faqs = [
+  { question: 'Is this the original Tuxedo?', answer: 'No. Tuxedo Task is an independent community fork of Tuxedo by Webstone Technologies. We preserve the original MIT license and build on the work of its contributors. Our additions include nested subtasks, family editing, project grouping, mouse interaction, and remembered filters.' },
+  { question: 'Can I keep using my todo.txt files?', answer: 'Yes. Tasks remain in plain-text files. Subtasks use two leading spaces per level, a fork-specific extension: other todo.txt clients may flatten the hierarchy or strip indentation. Back up your files before switching clients. The CLI listing and JSON output do not currently expose the hierarchy.' },
+  { question: 'Does it need an account or a cloud service?', answer: 'No account, hosted backend, or database is required. Task files live on your machine. Natural-language parsing is local. Optional phone capture uses your trusted local network; the update check contacts GitHub and can be disabled with TUXEDO_NO_UPDATE_CHECK=1.' },
+  { question: 'Will Homebrew install this fork?', answer: 'No. brew install tuxedo installs the upstream application, without this fork’s additions. Use the Git-based Cargo command above. The fork currently has no published binary releases or its own Homebrew formula.' },
+  { question: 'Why the mask?', answer: 'A small nod to Tuxedo Mask from Sailor Moon, created by Naoko Takeuchi. Our mask is an original design. This project is not affiliated with or endorsed by Sailor Moon’s rights holders, or by the upstream maintainers.' },
+];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f0e8" />
+    <title>Tuxedo Task — Less noise. More done.</title>
+    <meta name="description" content="A keyboard-driven todo.txt app with nested subtasks, project grouping, and files you own. Meet Tuxedo Task, an independent open-source fork of Tuxedo." />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href={`${base}brand.svg`} type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Tuxedo Task — Less noise. More done." />
+    <meta property="og:description" content="A little structure for your tasks. A lot more room for your life. An independent, open-source fork of Tuxedo." />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL(`${base}social-card.png`, Astro.site).href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Tuxedo Task's original mask and the words Less noise. More done." />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="site-shell">
+      <header class="site-header">
+        <a class="brand" href={base} aria-label="Tuxedo Task home"><img src={`${base}brand.svg`} width="38" height="38" alt="" /><span>Tuxedo<span class="brand-task">Task</span><span class="brand-dot">.</span></span></a>
+        <nav aria-label="Main navigation">
+          <a href="#features">The good stuff</a>
+          <a href="#install">Installation</a>
+          <a class="nav-github" href={repo}><Icon name="github" size={17} /><span>GitHub</span><span aria-hidden="true">↗</span></a>
+        </nav>
+      </header>
+      <main id="main">
+        <section class="hero" aria-labelledby="hero-title">
+          <div class="hero-copy">
+            <p class="eyebrow"><span class="small-star" aria-hidden="true">✳</span> A little structure. A lot more headspace.</p>
+            <h1 id="hero-title">Less noise.<br />More <em>done.</em><span class="title-star" aria-hidden="true">✳</span></h1>
+            <p class="hero-description">A thoughtful task manager for your terminal. Nested tasks, familiar keys, and plain-text files that stay <strong>yours.</strong></p>
+            <div class="hero-actions"><a class="button button-primary" href="#install">Meet your new task list <Icon name="arrow" /></a><a class="text-link" href={repo}>Explore the source <span aria-hidden="true">↗</span></a></div>
+            <p class="hero-footnote">Free & open source <span aria-hidden="true">/</span> No account required <span aria-hidden="true">/</span> Built with Rust</p>
+          </div>
+          <div class="hero-preview"><span class="preview-sticker">a task list, not a lifestyle subscription.</span><TerminalPreview /></div>
+        </section>
+        <div class="principles" aria-label="Project principles"><span>Small tool. Clear intentions.</span><ul><li><Icon name="file" size={17} /> Plain-text forever</li><li><Icon name="check" size={17} /> Local-first</li><li><Icon name="tree" size={17} /> Room to grow</li><li><Icon name="github" size={17} /> MIT licensed</li></ul></div>
+        <section class="features section-block" id="features" aria-labelledby="features-title">
+          <div class="section-heading"><p class="eyebrow">01 / The good stuff</p><div><h2 id="features-title">Big plans.<br /><em>Manageable pieces.</em></h2><p>Life does not fit in a flat list.<br />Your task manager should understand that.</p></div></div>
+          <div class="feature-grid">{features.map((feature) => <article class="feature-card"><div class="feature-top"><span class="feature-icon"><Icon name={feature.icon} size={24} /></span><span class="feature-number">/{feature.number}</span></div><h3>{feature.title}</h3><p>{feature.body}</p><span class="feature-tag">{feature.tag}</span></article>)}</div>
+        </section>
+        <section class="workflow section-block" aria-labelledby="workflow-title">
+          <div class="workflow-copy"><p class="eyebrow">02 / Stay in your flow</p><h2 id="workflow-title">Your terminal.<br /><em>Your kind of calm.</em></h2><p>No new system to maintain. Just a file, a few familiar keys, and a little more clarity about what comes next.</p><div class="key-list"><div><span><kbd>j</kbd> <kbd>k</kbd></span><span>Find your next thing</span></div><div><span><kbd>&gt;</kbd> <kbd>&lt;</kbd></span><span>Break it into smaller things</span></div><div><span><kbd>x</kbd></span><span>Enjoy crossing it off</span></div><div><span><kbd>u</kbd></span><span>Change your mind</span></div></div><a class="text-link" href={`${repo}#keybindings`}>All the shortcuts <Icon name="arrow" size={18} /></a></div>
+          <div class="real-preview"><div class="capture-label"><span class="live-dot" aria-hidden="true"></span> The actual app <span>Project view</span></div><a href={`${base}screenshots/subtasks.svg`} aria-label="Open full-size screenshot of Tuxedo Task"><img src={`${base}screenshots/subtasks.svg`} alt="Tuxedo Task showing nested tasks kept together under personal and tuxedo project groups" width="1040" height="512" loading="lazy" /></a><p>Real application capture. Your terminal, theme, and font may look different.</p></div>
+        </section>
+        <section class="inherited" aria-labelledby="inherited-title"><div><p class="eyebrow">Good roots. New branches.</p><h3 id="inherited-title">Everything we love about Tuxedo,<br />with a little more room to grow.</h3></div><ul><li>Natural-language dates</li><li>Recurring tasks</li><li>Phone capture on your LAN</li><li>Custom themes</li><li>Saved searches</li><li>Atomic file writes</li></ul><a href={upstream}>With thanks to upstream <span aria-hidden="true">↗</span></a></section>
+        <section class="installation section-block" id="install" aria-labelledby="install-title">
+          <div class="section-heading"><p class="eyebrow">03 / Make yourself at home</p><div><h2 id="install-title">One command.<br /><em>A fresh start.</em></h2><p>Install this fork from source.<br />No sign-up, no setup wizard, no drama.</p></div></div>
+          <div class="install-box"><div class="install-top"><span><span class="live-dot" aria-hidden="true"></span> Install with Cargo</span><span>macOS / Linux / Windows</span></div><div class="install-command"><span class="command-prompt" aria-hidden="true">$</span><code id="install-command">{install}</code><button class="copy-button" type="button" data-copy hidden aria-label="Copy installation command"><Icon name="copy" size={18} /><span>Copy</span></button></div><p class="copy-feedback" role="status" aria-live="polite" data-copy-status></p><div class="install-bottom"><span>Then run <code>tuxedo /path/to/todo.txt</code></span><a href={`${repo}#install`}>Full installation guide <span aria-hidden="true">↗</span></a></div></div>
+          <div class="install-notes"><p><strong>Before you begin</strong> You will need <a href="https://rustup.rs/">current stable Rust + Cargo</a>, Git, and your platform’s native build tools. On Windows, use a path such as <code>C:\tasks\todo.txt</code>.</p><p><strong>Coming from Tuxedo?</strong> The executable and config directory are still named <code>tuxedo</code>. Back up your files first. Add <code>--force</code> to replace a Cargo install, and check your PATH if you also use Homebrew.</p></div>
+          <p class="install-warning"><span aria-hidden="true">↳</span> <code>brew install tuxedo</code> installs the original project, not this fork. No prebuilt fork releases are published yet.</p>
+        </section>
+        <section class="faq section-block" aria-labelledby="faq-title"><div><p class="eyebrow">A few things worth knowing</p><h2 id="faq-title">Small print.<br /><em>Clear answers.</em></h2></div><div class="faq-list">{faqs.map((faq) => <details><summary>{faq.question}<span aria-hidden="true">+</span></summary><p>{faq.answer}</p></details>)}</div></section>
+        <section class="closing" aria-labelledby="closing-title"><span class="closing-mark" aria-hidden="true">✳</span><p class="eyebrow">Less managing the system. More living your life.</p><h2 id="closing-title">Make a little room<br />for <em>what matters.</em></h2><a class="button button-primary" href="#install">Get Tuxedo Task <Icon name="arrow" /></a></section>
+      </main>
+      <footer class="site-footer"><div><a class="brand" href={base}><img src={`${base}brand.svg`} width="32" height="32" alt="" /><span>Tuxedo<span class="brand-task">Task</span><span class="brand-dot">.</span></span></a><p>Plain text. Thoughtfully extended.</p></div><div class="footer-credit"><p>An independent community fork of <a href={upstream}>Tuxedo by Webstone Technologies</a>.<br />Maintained by <a href="https://github.com/Caracolaracol">Caracolaracol</a>. Original credits and MIT license preserved.</p><div><a href={`${repo}/blob/main/LICENSE`}>MIT license</a><a href={`${repo}/issues`}>Say hello / report a bug <span aria-hidden="true">↗</span></a><a href={repo}>Source code <span aria-hidden="true">↗</span></a></div></div></footer>
+    </div>
+    <script>
+      const button = document.querySelector<HTMLButtonElement>('[data-copy]');
+      const status = document.querySelector<HTMLElement>('[data-copy-status]');
+      const command = document.getElementById('install-command');
+      if (button && status && command) {
+        button.hidden = false;
+        button.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(command.textContent ?? '');
+            status.textContent = 'Copied. Your terminal is next.';
+            button.setAttribute('aria-label', 'Copy installation command again');
+          } catch {
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(command);
+            selection?.removeAllRanges();
+            selection?.addRange(range);
+            status.textContent = 'Command selected. Press Ctrl+C or ⌘C to copy.';
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
