@@ -31,9 +31,9 @@ rustPlatform.buildRustPackage (finalAttrs: {
   ];
 
   meta = {
-    description = "Fast, keyboard-driven terminal UI for todo.txt";
-    homepage = "https://github.com/webstonehq/tuxedo";
-    changelog = "https://github.com/webstonehq/tuxedo/releases/tag/${finalAttrs.src.tag}";
+    description = "Tuxedo Task: a Tuxedo fork with nested todo.txt subtasks";
+    homepage = "https://github.com/Caracolaracol/tuxedo-task";
+    changelog = "https://github.com/Caracolaracol/tuxedo-task/releases";
     license = lib.licenses.mit;
     mainProgram = "tuxedo";
   };

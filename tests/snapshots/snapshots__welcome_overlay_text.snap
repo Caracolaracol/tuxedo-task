@@ -1,6 +1,5 @@
 ---
 source: tests/snapshots.rs
-assertion_line: 232
 expression: buffer_to_text(&buf)
 ---
 ╭ フ ィ ル タ ー  ────────────╮╭Tuxedo Task  /tmp/tuxedo-snapshot.txt ╮╭ デ ィ テ ー ル  ────────────────────╮
@@ -12,11 +11,11 @@ expression: buffer_to_text(&buf)
 │   tag with @context    ││                                      ││                                │
 │                        ││                                      ││                                │
 │                     ┌ Tuxedo Task · welcome ───────────────────────────────┐                     │
-│                     │                    ██          ██                    │                     │
-│                     │                    ████  ██  ████                    │                     │
-│                     │                    ██████████████                    │                     │
-│                     │                    ████  ██  ████                    │                     │
-│                     │                    ██          ██                    │                     │
+│                     │            ████                      ████            │                     │
+│                     │            ██████████████  ██████████████            │                     │
+│                     │            ██████    ██████████    ██████            │                     │
+│                     │              ████      ██████      ████              │                     │
+│                     │                ██████████  ██████████                │                     │
 │                     │                                                      │                     │
 │                     │  no todo.txt in this folder yet                      │                     │
 │                     │                                                      │                     │

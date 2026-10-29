@@ -384,15 +384,11 @@ fn handle_mouse(app: &mut App, ev: MouseEvent) {
     let scroll = app.scroll_for_view(app.view());
 
     match ev.kind {
-        MouseEventKind::ScrollUp => {
-            if app.cursor > 0 {
-                app.cursor -= 1;
-            }
+        MouseEventKind::ScrollUp if app.cursor > 0 => {
+            app.cursor -= 1;
         }
-        MouseEventKind::ScrollDown => {
-            if visible_len > 0 && app.cursor < visible_len - 1 {
-                app.cursor += 1;
-            }
+        MouseEventKind::ScrollDown if visible_len > 0 && app.cursor < visible_len - 1 => {
+            app.cursor += 1;
         }
         MouseEventKind::Down(MouseButton::Left) => {
             // Left pane filters take precedence — they're drawn at the

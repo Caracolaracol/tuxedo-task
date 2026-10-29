@@ -1,12 +1,12 @@
 {
-  "name": "tuxedo capture",
-  "short_name": "tuxedo",
+  "name": "Tuxedo Task Capture",
+  "short_name": "Tuxedo Task",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#1a1c1f",
-  "theme_color": "#1a1c1f",
+  "background_color": "#232031",
+  "theme_color": "#232031",
   "icons": [
     {
       "src": "/icon.svg",

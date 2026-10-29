@@ -2,6 +2,10 @@
 name = "tuxedo"
 version = "2026.7.1"
 edition = "2024"
+description = "Keyboard-driven todo.txt TUI with nested subtasks — a community fork of Tuxedo"
+repository = "https://github.com/Caracolaracol/tuxedo-task"
+readme = "README.md"
+license = "MIT"
 
 [dependencies]
 anyhow = "1.0"

@@ -16,7 +16,7 @@ use ratatui::backend::TestBackend;
 use ratatui::buffer::Buffer;
 use ratatui::style::{Color, Modifier};
 
-use tuxedo::app::{App, Density, Mode, View};
+use tuxedo::app::{App, Density, Mode, Sort, View};
 use tuxedo::config::Config;
 use tuxedo::sample;
 use tuxedo::theme;
@@ -42,6 +42,7 @@ fn main() -> std::io::Result<()> {
             "2026-05-06".to_string(),
             Config::default(),
         );
+        app.config_path = Some(std::env::temp_dir().join("tuxedo-screenshots-config.toml"));
         app.prefs.density = Density::Compact;
         app
     };
@@ -57,7 +58,7 @@ fn main() -> std::io::Result<()> {
     // 3. Help overlay.
     let mut app = make();
     app.mode = Mode::Help;
-    save(&app, &out.join("help.svg"))?;
+    save_at(&app, &out.join("help.svg"), COLS, 40)?;
 
     // 4. List with an active project filter — sidebar shows the selection.
     let mut app = make();
@@ -74,7 +75,7 @@ fn main() -> std::io::Result<()> {
     app.command_palette.refresh("arch");
     save(&app, &out.join("command-palette.svg"))?;
 
-    // 6. Empty state — fresh file, cell-bowtie logo and quick-start panel.
+    // 6. Empty state — original mask logo and quick-start panel.
     // Sidebars hidden so the centered panel reads as the focal point.
     let mut app = App::new(
         PathBuf::from("/tmp/tuxedo-screenshots-empty.txt"),
@@ -95,12 +96,39 @@ fn main() -> std::io::Result<()> {
         save(&app, &out.join(format!("theme-{slug}.svg")))?;
     }
 
+    // 8. The fork's nested task families, grouped by project.
+    let app = App::new(
+        PathBuf::from("/tmp/tuxedo-task-demo.txt"),
+        concat!(
+            "(A) 2026-05-06 Launch Tuxedo Task +tuxedo @work due:2026-05-09\n",
+            "  2026-05-06 Prepare the public repository\n",
+            "    2026-05-06 Credit the upstream project\n",
+            "    2026-05-06 Document installation and fork features\n",
+            "  2026-05-06 Design an original mask logo\n",
+            "(B) 2026-05-06 Plan the weekend +personal @home\n",
+            "  2026-05-06 Visit the bookshop\n",
+            "  2026-05-06 Go for a walk\n",
+        )
+        .to_string(),
+        "2026-05-06".to_string(),
+        Config {
+            sort: Some(Sort::Project),
+            density: Some(Density::Compact),
+            ..Config::default()
+        },
+    );
+    save(&app, &out.join("subtasks.svg"))?;
+
     println!("wrote screenshots to {}", out.display());
     Ok(())
 }
 
 fn save(app: &App, path: &Path) -> std::io::Result<()> {
-    let backend = TestBackend::new(COLS, ROWS);
+    save_at(app, path, COLS, ROWS)
+}
+
+fn save_at(app: &App, path: &Path, cols: u16, rows: u16) -> std::io::Result<()> {
+    let backend = TestBackend::new(cols, rows);
     let mut terminal = Terminal::new(backend).expect("terminal init");
     terminal.draw(|f| ui::draw(f, app)).expect("draw frame");
     let svg = render_svg(terminal.backend().buffer());
@@ -122,6 +150,14 @@ fn render_svg(buf: &Buffer) -> String {
          font-size=\"13\">\n",
         tw = total_w,
         th = total_h,
+    ));
+
+    // Ratatui resets the trailing cell of wide glyphs (e.g. Japanese labels).
+    // Paint the canvas first so those cells don't become transparent holes
+    // when GitHub or a thumbnail viewer displays the SVG on a white page.
+    let canvas = bg_hex(buf[(0, 0)].bg).unwrap_or_else(|| "#1a1d23".into());
+    out.push_str(&format!(
+        "<rect width=\"{total_w:.0}\" height=\"{total_h:.0}\" fill=\"{canvas}\"/>\n"
     ));
 
     // Background pass: merge horizontal runs so we emit one <rect> per run.
@@ -199,4 +235,18 @@ fn escape(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::layout::Rect;
+
+    #[test]
+    fn svg_has_an_opaque_canvas_for_reset_cells() {
+        let mut buf = Buffer::empty(Rect::new(0, 0, 3, 1));
+        buf[(0, 0)].set_bg(Color::Rgb(0x23, 0x20, 0x31));
+        let svg = render_svg(&buf);
+        assert!(svg.contains("<rect width=\"24\" height=\"16\" fill=\"#232031\"/>"));
+    }
 }

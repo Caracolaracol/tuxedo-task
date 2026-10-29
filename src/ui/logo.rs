@@ -3,29 +3,31 @@ use ratatui::text::{Line, Span};
 
 use crate::theme::Theme;
 
-// 7×5 cell-grid bowtie ("Concept A" from the design handoff). Each design
-// cell renders as two block characters so the bowtie keeps its intended
-// aspect ratio under typical 2:1 terminal cell metrics. Body cells take the
-// theme accent (the muted-slate / equivalent in each palette); the central
-// 1×3 knot takes priority-A red, mirroring the live UI.
-pub const WIDTH: u16 = 14;
+// Original domino-mask mark for Tuxedo Task. Each design cell renders as two
+// blocks to keep square proportions under typical 2:1 terminal cell metrics.
+// The open eye shapes inherit the panel background; the mask uses the theme
+// accent so it remains legible across built-in and custom palettes.
+pub const WIDTH: u16 = 30;
 pub const HEIGHT: u16 = 5;
 
 const BLOCK: &str = "██";
 const SPACE: &str = "  ";
 
-// 7 columns × 5 rows. 'b' = body, 'k' = knot, ' ' = empty.
-const GRID: [&[u8; 7]; 5] = [b"b     b", b"bb k bb", b"bbbkbbb", b"bb k bb", b"b     b"];
+// 15 columns × 5 rows. 'b' = mask, ' ' = background / eye openings.
+const GRID: [&[u8; 15]; 5] = [
+    b"bb           bb",
+    b"bbbbbbb bbbbbbb",
+    b"bbb  bbbbb  bbb",
+    b" bb   bbb   bb ",
+    b"  bbbbb bbbbb  ",
+];
 
 #[cfg(test)]
 pub(crate) fn ascii_rows() -> Vec<String> {
     GRID.iter()
         .map(|row| {
             row.iter()
-                .map(|c| match c {
-                    b'b' | b'k' => BLOCK,
-                    _ => SPACE,
-                })
+                .map(|c| if *c == b'b' { BLOCK } else { SPACE })
                 .collect()
         })
         .collect()
@@ -35,16 +37,15 @@ pub fn centered_lines(theme: &Theme, inner_width: u16) -> Vec<Line<'static>> {
     let pad_w = inner_width.saturating_sub(WIDTH) / 2;
     let pad = " ".repeat(pad_w as usize);
     let body = Style::default().fg(theme.accent);
-    let knot = Style::default().fg(theme.pri_a);
     GRID.iter()
         .map(|row| {
             let mut spans: Vec<Span<'static>> = Vec::with_capacity(row.len() + 1);
             spans.push(Span::raw(pad.clone()));
             for &c in row.iter() {
-                spans.push(match c {
-                    b'b' => Span::styled(BLOCK, body),
-                    b'k' => Span::styled(BLOCK, knot),
-                    _ => Span::raw(SPACE),
+                spans.push(if c == b'b' {
+                    Span::styled(BLOCK, body)
+                } else {
+                    Span::raw(SPACE)
                 });
             }
             Line::from(spans)
@@ -57,21 +58,33 @@ mod tests {
     use super::*;
 
     #[test]
-    fn bowtie_shape() {
+    fn mask_shape() {
         let rows = ascii_rows();
-        assert_eq!(
-            rows,
-            vec![
-                "██          ██",
-                "████  ██  ████",
-                "██████████████",
-                "████  ██  ████",
-                "██          ██",
-            ]
-        );
-        for r in &rows {
-            assert_eq!(r.chars().count(), WIDTH as usize);
-        }
         assert_eq!(rows.len(), HEIGHT as usize);
+        for row in &rows {
+            assert_eq!(row.chars().count(), WIDTH as usize);
+        }
+        // A symmetric silhouette with two open eyes, not the upstream bowtie.
+        for row in GRID {
+            assert!(row.iter().eq(row.iter().rev()));
+        }
+        assert_eq!(GRID[2], b"bbb  bbbbb  bbb");
+        assert_eq!(GRID[3], b" bb   bbb   bb ");
+    }
+
+    #[test]
+    fn mask_is_centered_and_uses_theme_accent() {
+        let theme = &crate::theme::BUILT_IN[0];
+        let lines = centered_lines(theme, WIDTH + 10);
+        assert_eq!(lines.len(), HEIGHT as usize);
+        for line in lines {
+            assert_eq!(line.spans[0].content, "     ");
+            assert_eq!(line.width(), WIDTH as usize + 5);
+            for span in &line.spans[1..] {
+                if span.content == BLOCK {
+                    assert_eq!(span.style.fg, Some(theme.accent));
+                }
+            }
+        }
     }
 }

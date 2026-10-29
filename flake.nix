@@ -1,5 +1,5 @@
 {
-  description = "Fast, keyboard-driven terminal UI for todo.txt";
+  description = "Tuxedo Task: a Tuxedo fork with nested todo.txt subtasks";
 
   inputs = {
     flake-parts.url = "github:hercules-ci/flake-parts";

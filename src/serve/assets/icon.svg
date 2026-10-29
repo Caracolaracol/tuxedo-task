@@ -1,8 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="12" fill="#1a1c1f"/>
-  <g fill="#dfe1e6">
-    <polygon points="10,16 30,32 10,48"/>
-    <rect x="28" y="28" width="8" height="8"/>
-    <polygon points="54,16 34,32 54,48"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Tuxedo Task</title>
+  <desc id="desc">An original domino mask with swept tips and two open eyes.</desc>
+  <rect width="64" height="64" rx="14" fill="#232031"/>
+  <path fill="#e8cfd4" fill-rule="evenodd" d="M8 16C16 22 23 20 32 25C41 20 48 22 56 16L52 36C49 47 40 48 32 38C24 48 15 47 12 36ZM16 29Q23 25 28 31Q23 38 18 35ZM48 29Q41 25 36 31Q41 38 46 35Z"/>
 </svg>

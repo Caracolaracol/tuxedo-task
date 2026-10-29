@@ -1,36 +1,63 @@
 # Tuxedo Task
 
-A fast, keyboard-driven terminal UI for [todo.txt](http://todotxt.org/).
-Vim-style bindings, atomic writes, instant external-edit detection, and five
-hand-tuned themes — all in a single static binary.
+<img src="src/serve/assets/icon.svg" width="88" height="88" alt="Tuxedo Task's original mask logo">
 
-## About this fork
-
-Tuxedo Task is a community fork of [Tuxedo](https://github.com/webstonehq/tuxedo).
-It keeps the upstream todo.txt format and core workflow, while adding features
-that are not available in upstream:
-
-- Nested subtasks with two-space indentation, subtree-aware actions, undo, and sorting.
-- Project grouping that keeps parent/subtask families together.
-- Live `config.toml` reload while the TUI is running, including safe parse failures.
-- Refined layout, branding, and Japanese labels for selected UI sections.
-- Additional regression coverage for grouped views and rendered snapshots.
-
-Upstream is still the right choice if you want the official Homebrew package or
-official releases. Use the source install below to run this fork.
+**Your tasks, with a little more structure.** A keyboard-driven terminal UI and
+CLI for [todo.txt](http://todotxt.org/), with nested subtasks, project grouping,
+and plain-text files you own.
 
 [![CI](https://github.com/Caracolaracol/tuxedo-task/actions/workflows/ci.yml/badge.svg)](https://github.com/Caracolaracol/tuxedo-task/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/Caracolaracol/tuxedo-task?logo=github)](https://github.com/Caracolaracol/tuxedo-task/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
 [![Rust](https://img.shields.io/badge/rust-2024-orange.svg?logo=rust)](https://www.rust-lang.org)
 
-![tuxedo demo](docs/demo.gif)
+[Install](#install) · [Fork features](#what-this-fork-adds) · [Keybindings](#keybindings) · [Configuration](#configuration)
 
-For a more in-depth walkthrough, please watch [this video](https://www.youtube.com/watch?v=mT1tg6SQ_Ag) by [@IogaMaster](https://github.com/IogaMaster).
+![Tuxedo Task with nested tasks grouped by project](docs/screenshots/subtasks.svg)
+
+## About this fork
+
+**Tuxedo Task is an independent community fork of
+[Tuxedo by Webstone Technologies](https://github.com/webstonehq/tuxedo), maintained
+by [Caracolaracol](https://github.com/Caracolaracol).** It is not an official
+Webstone release. The original project and its contributors built the foundation;
+this fork builds on their work and preserves their MIT license and copyright.
+
+### What this fork adds
+
+Compared with the upstream revision this fork started from:
+
+| Addition | What it does |
+| --- | --- |
+| **Nested subtasks** | Two spaces per level; `>` / `<` move a whole subtree. Completion, deletion, undo, and priority/due sorting keep families together. |
+| **Family editing** | Add a parent with child tasks in one dialog, or edit an existing parent's subtree together. |
+| **Project grouping** | `S` cycles to project sort; grouping preserves families and supports multiple project tags. |
+| **Mouse interaction** | Click task rows or sidebar filters, navigate with the wheel, and drag task text to copy via OSC 52. Disable with `mouse = false`. |
+| **Remembered filters** | Active project and context filters survive restarts, separately from named saved searches. |
+| **Layout refinements** | Optional pane borders, configurable outer margin, revised task rows and headers, and Japanese labels in selected UI sections. |
+| **Config reload fix** | Keeps the filesystem watcher alive and avoids repeated reload notices after its channel disconnects. |
+| **Own identity** | An original mask mark, Tuxedo Task branding, and update instructions that point to this repository. |
+
+These additions have unit and rendered-snapshot coverage. They do not replace the
+features inherited from Tuxedo: its TUI/CLI workflow, natural-language dates,
+recurrence, phone capture, custom themes, saved searches, notes, and atomic writes.
+
+### A nod to Tuxedo Mask
+
+<a href="https://en.wikipedia.org/wiki/Tuxedo_Mask"><img src="https://upload.wikimedia.org/wikipedia/en/0/07/TuxedoMask.jpg" width="180" alt="Tuxedo Mask from Sailor Moon, the inspiration for our mask motif"></a>
+
+The mask motif is a playful nod to **Tuxedo Mask** from *Sailor Moon*, created by
+Naoko Takeuchi. The application uses its own original mask design, not this
+character artwork. This project is not affiliated with or endorsed by the
+*Sailor Moon* rights holders.
+
+Character image: [source and rights information](https://en.wikipedia.org/wiki/File:TuxedoMask.jpg).
+This externally hosted, non-free reference image is **not covered by this
+repository's MIT license**; its appearance on Wikipedia is not a grant of reuse
+rights for other projects.
 
 ## Highlights
 
-- **Pure todo.txt.** Reads and writes the [standard format](https://github.com/todotxt/todo.txt) — every line is plain text you can edit with anything else.
+- **Plain-text todo.txt workflow.** Reads and writes [todo.txt](https://github.com/todotxt/todo.txt) tasks, with a leading-space extension for subtasks — every line is text you can edit yourself. See the [compatibility note](#subtasks-nested-tasks).
 - **TUI and CLI in one binary.** Run `tuxedo` for the interactive UI, or `tuxedo <command>` for a [todo.txt-cli](https://github.com/todotxt/todo.txt-cli)-compatible command line (`add`, `ls`, `do`, `pri`, `archive`, …) — scriptable, with `--json` output and `$TODO_DIR` / `$TODO_FILE` / `$DONE_FILE` support.
 - **Natural-language add.** Type prose into the add prompt — `Pay rent monthly on the first, show 3 days before due, project home` — and tuxedo rewrites it to canonical todo.txt for you to review and save. Local, offline, no AI service.
 - **Phone capture.** Press `s` for a QR pointing at a tiny PWA on your machine's LAN — type tasks from your phone and they appear in the list. Captures land in a sibling `inbox.txt` first, so any tool that can append a line (shell, iOS Shortcuts, cron) is also a capture source.
@@ -49,7 +76,8 @@ For a more in-depth walkthrough, please watch [this video](https://www.youtube.c
 
 | | |
 | --- | --- |
-| **Empty state** • cell-bowtie mark and quick-start when the file has no tasks | ![empty](docs/screenshots/empty.svg) |
+| **Empty state** • original mask mark and quick-start when the file has no tasks | ![empty](docs/screenshots/empty.svg) |
+| **Nested subtasks** • parent/child families grouped by project | ![subtasks](docs/screenshots/subtasks.svg) |
 | **List** • list of todos, optionally grouped | ![empty](docs/screenshots/list.svg) |
 | **Archive** • completed tasks grouped by completion date | ![archive](docs/screenshots/archive.svg) |
 | **Filter sidebar active** • `fp` cycles projects with j/k, `fc` cycles contexts; saved searches list under a **SAVED** heading with live match counts | ![filter](docs/screenshots/filter.svg) |
@@ -60,7 +88,7 @@ For a more in-depth walkthrough, please watch [this video](https://www.youtube.c
     <summary>How to generate the screenshots and demo</summary>
     <p>The screenshots in the table above are checked-in SVGs. Regenerate them with:</p>
     <pre>mise run screenshots</pre>
-    <p>The hero GIF at the top is recorded with <a href="https://github.com/charmbracelet/vhs">vhs</a> from <code>docs/demo.tape</code>. Regenerate it with:</p>
+    <p>An optional demo recording can be generated with <a href="https://github.com/charmbracelet/vhs">vhs</a> from <code>docs/demo.tape</code> (requires VHS and its dependencies):</p>
     <pre>mise run demo</pre>
 </details>
 
@@ -84,7 +112,7 @@ picker in sorted filename order. Ready-made themes live in
 ```sh
 mkdir -p ~/.config/tuxedo/themes
 curl -o ~/.config/tuxedo/themes/gruvbox-dark-soft.toml \
-  https://raw.githubusercontent.com/webstonehq/tuxedo/main/docs/themes/gruvbox-dark-soft.toml
+  https://raw.githubusercontent.com/Caracolaracol/tuxedo-task/main/docs/themes/gruvbox-dark-soft.toml
 ```
 
 <details>
@@ -133,34 +161,67 @@ another theme is skipped with a warning at startup.
 
 ## Install
 
-### Homebrew (upstream)
+### Recommended: install this fork with Cargo
+
+Prerequisites: **Git**, a **current stable Rust toolchain** (Rust 2024 edition,
+including Cargo), and your platform's native linker/build tools. Use
+[rustup](https://rustup.rs/) if you need Rust; on macOS the native tools come with
+Xcode Command Line Tools, on Linux with your distribution's C build toolchain,
+and on Windows with Visual Studio C++ Build Tools for the MSVC toolchain.
 
 ```sh
-brew install tuxedo
+cargo install --git https://github.com/Caracolaracol/tuxedo-task --locked
+tuxedo --version
+tuxedo --help
 ```
 
-### Prebuilt binaries
+The package and executable are still named **`tuxedo`** for compatibility;
+`--version` identifies it as **Tuxedo Task**. Cargo puts the executable in
+`$CARGO_HOME/bin` (normally `~/.cargo/bin`, or `%USERPROFILE%\.cargo\bin` on
+Windows). Make sure that directory is on `PATH`; restart your shell after
+installing Rust if necessary.
 
-Download the archive for your platform from the [upstream latest release](https://github.com/webstonehq/tuxedo/releases/latest) and put `tuxedo` on your `PATH`.
+**Already have upstream Tuxedo installed?** Both applications use the same
+executable name and configuration directory. Back up your task files and config
+first. Add `--force` to the Cargo install command to replace a Cargo-installed
+`tuxedo`. If you also have a Homebrew/manual copy, check `command -v tuxedo`
+(macOS/Linux) or `where.exe tuxedo` (Windows) to confirm which one your shell runs.
+Installing the fork does not migrate or delete your task files.
 
-Targets: `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`, `x86_64-apple-darwin`, `aarch64-apple-darwin`, `x86_64-pc-windows-msvc`. Each archive ships with a `.sha256` checksum.
-
-### From source
+### Alternatively: clone and run without installing
 
 ```sh
-cargo install --git https://github.com/Caracolaracol/tuxedo-task
-```
-
-Or clone and build:
-
-```sh
-git clone https://github.com/Caracolaracol/tuxedo-task
+git clone https://github.com/Caracolaracol/tuxedo-task.git
 cd tuxedo-task
-cargo build --release
-./target/release/tuxedo [FILE]
+cargo build --release --locked
+./target/release/tuxedo --version
+./target/release/tuxedo --help
 ```
 
-Requires the Rust 2024 edition (recent stable toolchain).
+On macOS/Linux, launch `./target/release/tuxedo /path/to/todo.txt`.
+On Windows, use `.\target\release\tuxedo.exe C:\path\to\todo.txt`.
+The selected file and its parent directory are created if missing.
+
+### Updates
+
+```sh
+cargo install --git https://github.com/Caracolaracol/tuxedo-task --locked --force
+```
+
+For a cloned checkout, run `git pull --ff-only` and `cargo build --release --locked`
+from that checkout, then use the newly built executable. `tuxedo update` only
+prints instructions; it never installs anything automatically.
+
+### Binary releases and Homebrew
+
+There are **no published fork binary releases yet**. Source installation above is
+the supported route today. Future binaries will appear under
+[this repository's Releases](https://github.com/Caracolaracol/tuxedo-task/releases),
+with platform archives and SHA-256 checksums.
+
+**`brew install tuxedo` and Webstone's releases install upstream Tuxedo, not
+Tuxedo Task.** They do not include this fork's additions. This fork does not
+currently publish a Homebrew formula.
 
 ## Usage
 
@@ -180,8 +241,8 @@ tuxedo --version
 
 When a newer release is available, the status bar shows `↑ <version> (tuxedo
 update)` next to the version. The check runs in the background, is cached at
-`$XDG_CACHE_HOME/tuxedo/latest_version.json` for 24 h, and fails silently
-when offline. Set `TUXEDO_NO_UPDATE_CHECK=1` to disable.
+`${XDG_CACHE_HOME:-$HOME/.cache}/tuxedo-task/latest_version.json` for 24 h, and
+fails silently when offline. Set `TUXEDO_NO_UPDATE_CHECK=1` to disable.
 
 ### Which file tuxedo opens
 
@@ -381,6 +442,12 @@ chords like `ZZ`, modifier forms like `Ctrl-n` / `Alt-x`, named keys like
 
 ### Edit dialog
 
+**Fork family editing:** `e` / `i` on a parent opens its existing subtree. In the
+add/edit dialog, press `Esc` to enter Normal mode, then `o` to insert a child
+line. Use `j` / `k` to switch draft lines, `>` / `<` to adjust their indentation,
+and `dd` to remove a draft line. `Enter` saves the whole family as one undoable
+change. In Normal mode, another `Esc` cancels the dialog.
+
 The edit dialog uses vim-style modal editing. Press `i` to edit the current task
 starting in **Insert mode** — start typing immediately. Press `e` to start in
 **Normal mode** so you can navigate before changing anything. The add prompt
@@ -502,6 +569,12 @@ attached to their parent across priority/due sorting. Completing or deleting
 a parent (`x` / `dd`) completes or deletes its whole subtree; `u` undoes it
 all at once.
 
+**Compatibility:** indentation is a fork-specific extension, not part of the
+standard todo.txt hierarchy model. Other clients may display these lines as
+independent tasks or strip their indentation. The CLI's formatted listing/JSON
+does not currently expose the hierarchy; use the TUI or the file itself when you
+need to see parent/child structure.
+
 Recurring example:
 
 ```
@@ -590,8 +663,20 @@ if a producer must be serialized with the TUI drain.
 
 Persisted to `${XDG_CONFIG_HOME:-$HOME/.config}/tuxedo/config.toml`. Cycling
 theme, density, or sort, and toggling sidebars / line-numbers / done-visibility
-all update the file. Unknown keys are ignored, so older binaries don't break
-on newer files.
+all update the file. Active project/context filters are also persisted. Unknown
+keys are ignored.
+
+Fork-specific layout options (unquoted values, as in the existing config):
+
+```toml
+mouse = true
+borders = true
+margin = 0
+```
+
+`mouse` and `borders` default to `true`; `margin` defaults to `0`. Set `mouse = false`
+for terminal-native text selection. Upstream Tuxedo shares this configuration
+location but may not understand fork-only fields.
 
 **Hot-reload.** Edits to `config.toml` are picked up while the TUI is running —
 change the theme, density, sort, layout, saved filters, or any other field and
@@ -648,12 +733,15 @@ plain `cargo` commands if you don't use [mise](https://mise.jdx.dev/).
 
 ## Acknowledgments
 
+- [Tuxedo](https://github.com/webstonehq/tuxedo) by Webstone Technologies Inc and its contributors — the original application this fork is based on.
+- [@IogaMaster's upstream walkthrough](https://www.youtube.com/watch?v=mT1tg6SQ_Ag) — a tour of the original Tuxedo workflow, not a demo of this fork's additions.
 - [todo.txt](http://todotxt.org/) by Gina Trapani — the format that makes a tool like this possible.
 - [ratatui](https://ratatui.rs/) and [crossterm](https://github.com/crossterm-rs/crossterm) — the rendering and terminal-input crates tuxedo is built on.
 
 ## Roadmap
 
-Planned and in-flight work lives in [`todo.txt`](./todo.txt) — eat your own dog food.
+Ideas, bug reports, and proposed improvements belong in
+[this fork's issue tracker](https://github.com/Caracolaracol/tuxedo-task/issues).
 
 ## Contributing
 
@@ -663,4 +751,7 @@ plain cargo equivalents) before submitting.
 
 ## License
 
-Released under the [MIT License](https://opensource.org/licenses/MIT).
+Code and original project assets are released under the [MIT License](LICENSE).
+The original Webstone Technologies Inc copyright notice is preserved. The
+externally hosted Tuxedo Mask character reference above is not an MIT-licensed
+project asset; see its linked source for rights information.

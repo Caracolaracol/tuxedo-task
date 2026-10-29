@@ -8,7 +8,7 @@
 //!    `brew upgrade` or a binary self-replace.
 //!
 //! 2. [`spawn_check`] — background thread invoked at TUI startup that consults
-//!    a cache under `$XDG_CACHE_HOME/tuxedo/latest_version.json`. If the cache
+//!    a cache under `$XDG_CACHE_HOME/tuxedo-task/latest_version.json`. If the cache
 //!    is missing or older than 24h, it shells out to `curl` to read the
 //!    `tag_name` of the latest GitHub release, rewrites the cache, and returns
 //!    the tag through an mpsc channel. The TUI's status bar reads it and
@@ -49,28 +49,30 @@ pub fn run() -> io::Result<()> {
     println!();
     match kind {
         InstallKind::Homebrew => {
-            println!("Looks like a Homebrew install. Update with:");
+            println!("This fork has no Homebrew formula. Install Tuxedo Task from source:");
             println!();
-            println!("    brew update && brew upgrade webstonehq/tap/tuxedo");
+            println!("    cargo install --git {REPOSITORY_URL} --locked --force");
+            println!();
+            println!("The upstream Homebrew package does not include this fork's features.");
         }
         InstallKind::Cargo => {
             println!("Looks like a `cargo install` build. Update with:");
             println!();
-            println!("    cargo install --git https://github.com/webstonehq/tuxedo --force");
+            println!("    cargo install --git {REPOSITORY_URL} --locked --force");
         }
         InstallKind::Binary => {
             println!("Looks like a downloaded binary. Grab the latest from:");
             println!();
-            println!("    https://github.com/webstonehq/tuxedo/releases/latest");
+            println!("    {REPOSITORY_URL}/releases");
             println!();
-            println!("...and replace the file above.");
+            println!("If no binary is published for your platform, build from source:");
+            println!("    cargo install --git {REPOSITORY_URL} --locked --force");
         }
         InstallKind::Unknown => {
             println!("Could not detect the install method. Options:");
             println!();
-            println!("    brew upgrade webstonehq/tap/tuxedo");
-            println!("    cargo install --git https://github.com/webstonehq/tuxedo --force");
-            println!("    https://github.com/webstonehq/tuxedo/releases/latest");
+            println!("    cargo install --git {REPOSITORY_URL} --locked --force");
+            println!("    {REPOSITORY_URL}/releases");
         }
     }
     Ok(())
@@ -118,7 +120,9 @@ const CACHE_TTL: Duration = Duration::from_secs(24 * 60 * 60);
 /// (which is what burned us once during testing).
 const NEGATIVE_CACHE_TTL: Duration = Duration::from_secs(60 * 60);
 const CURL_TIMEOUT_SECS: u64 = 5;
-const RELEASE_URL: &str = "https://api.github.com/repos/webstonehq/tuxedo/releases/latest";
+const REPOSITORY_URL: &str = "https://github.com/Caracolaracol/tuxedo-task";
+const RELEASE_URL: &str = "https://api.github.com/repos/Caracolaracol/tuxedo-task/releases/latest";
+const CACHE_DIR: &str = "tuxedo-task";
 
 fn check_for_update() -> Option<String> {
     let cache_path = cache_path();
@@ -217,7 +221,7 @@ pub fn is_newer(latest: &str, current: &str) -> bool {
 
 fn cache_path() -> Option<PathBuf> {
     let base = xdg_cache_home()?;
-    Some(base.join("tuxedo").join("latest_version.json"))
+    Some(base.join(CACHE_DIR).join("latest_version.json"))
 }
 
 fn xdg_cache_home() -> Option<PathBuf> {
@@ -289,6 +293,16 @@ fn scan_str(body: &str, key: &str) -> Option<String> {
 mod tests {
     use super::*;
     use std::path::PathBuf;
+
+    #[test]
+    fn update_targets_the_fork_and_has_a_separate_cache() {
+        assert_eq!(REPOSITORY_URL, env!("CARGO_PKG_REPOSITORY"));
+        assert_eq!(
+            RELEASE_URL,
+            "https://api.github.com/repos/Caracolaracol/tuxedo-task/releases/latest"
+        );
+        assert_ne!(CACHE_DIR, "tuxedo");
+    }
 
     #[test]
     fn detect_kind_homebrew_paths() {

@@ -29,7 +29,7 @@ Show
 Type "./target/release/tuxedo /tmp/tuxedo-demo.txt"
 Enter
 
-# 1. Empty state — bowtie logo + quickstart panel.
+# 1. Empty state — original Tuxedo Task mask + quickstart panel.
 Sleep 2500ms
 
 # 2. Natural-language add — prose rewrites to canonical todo.txt on the first
