@@ -10,7 +10,7 @@ and plain-text files you own.
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
 [![Rust](https://img.shields.io/badge/rust-2024-orange.svg?logo=rust)](https://www.rust-lang.org)
 
-[Website](https://caracolaracol.github.io/tuxedo-task/) · [Install](#install) · [Fork features](#what-this-fork-adds) · [Keybindings](#keybindings) · [Configuration](#configuration)
+[Website](https://caracolaracol.github.io/tuxedo-task/) · [Documentation](https://caracolaracol.github.io/tuxedo-task/docs/) · [Install](#install) · [Fork features](#what-this-fork-adds) · [Keybindings](#keybindings) · [Configuration](#configuration)
 
 ![Tuxedo Task with nested tasks grouped by project](docs/screenshots/subtasks.svg)
 
@@ -491,6 +491,14 @@ The modal keys below apply in Normal mode:
 | `o` | open the current task's existing `note:<path>` in `$VISUAL` / `$EDITOR` |
 | `O` | create the current task's note if needed, then open it |
 
+### Project grouping
+
+Press `S` until the header shows `sort:project`. Tasks appear under `+project`
+group headings, with untagged families in a final **NO PROJECT** group. A task
+with multiple project tags can appear in more than one group; this does not
+create duplicate lines in the task file. Parent/subtask families stay together.
+Use `fp` to filter by a project instead of grouping the whole list.
+
 ### Layout & theme
 
 | Key | Action |
@@ -519,6 +527,20 @@ Copy uses the OSC 52 terminal escape, so it works locally and over SSH on
 any terminal that supports it (kitty, alacritty, wezterm, iTerm2, foot,
 modern xterm; tmux when `set -g set-clipboard on`). Older terminals will
 silently ignore the keystroke.
+
+## Mouse interaction
+
+Mouse support is enabled by default in the list and archive views:
+
+- Click a task row to move the cursor to it.
+- Click a project or context in the filter pane to toggle that filter.
+- Click a named saved search in the sidebar to apply it.
+- Use the scroll wheel to move the cursor up or down.
+- Drag across task text and release to copy the selection through OSC 52.
+
+Modal dialogs remain keyboard-driven. Copying depends on the terminal's OSC 52
+support. Set `mouse = false` in `config.toml` to use the keyboard only and let
+your terminal handle text selection normally.
 
 ## todo.txt format
 
@@ -725,7 +747,10 @@ hidden characters just aren't drawn.
 The [Tuxedo Task landing page](https://caracolaracol.github.io/tuxedo-task/) is a
 static Astro site in [`website/`](website). Its setup, browser tests, and GitHub
 Pages deployment are documented in [`website/README.md`](website/README.md).
-It is independent of the Rust application and does not change how tasks are stored.
+The [online application guide](https://caracolaracol.github.io/tuxedo-task/docs/)
+includes the reference sections from this README, plus getting-started and
+troubleshooting guidance. It is regenerated when the website builds.
+The website is independent of the Rust application and does not change how tasks are stored.
 
 ## Development
 

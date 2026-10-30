@@ -4,12 +4,14 @@ on:
   push:
     branches: [feat/github-pages-astro, main]
     paths:
+      - "README.md"
       - "website/**"
       - "docs/screenshots/**"
       - "src/serve/assets/icon.svg"
       - ".github/workflows/pages.yml"
   pull_request:
     paths:
+      - "README.md"
       - "website/**"
       - "docs/screenshots/**"
       - "src/serve/assets/icon.svg"

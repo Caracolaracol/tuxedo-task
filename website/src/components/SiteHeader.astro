@@ -1,0 +1,16 @@
+---
+import Icon from './Icon.astro';
+interface Props { page?: 'home' | 'docs'; }
+const { page = 'home' } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const section = (id: string) => page === 'home' ? `#${id}` : `${base}#${id}`;
+---
+<header class="site-header">
+  <a class="brand" href={base} aria-label="Tuxedo Task home"><img src={`${base}brand.svg`} width="38" height="38" alt="" /><span>Tuxedo<span class="brand-task">Task</span><span class="brand-dot">.</span></span></a>
+  <nav aria-label="Main navigation">
+    <a href={section('features')}>Features</a>
+    <a href={`${base}docs/`} aria-current={page === 'docs' ? 'page' : undefined}>Documentation</a>
+    <a href={page === 'docs' ? '#installation' : section('install')}>Installation</a>
+    <a class="nav-github" href="https://github.com/Caracolaracol/tuxedo-task"><Icon name="github" size={17} /><span>GitHub</span><span aria-hidden="true">↗</span></a>
+  </nav>
+</header>

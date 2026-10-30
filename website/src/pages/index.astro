@@ -1,6 +1,8 @@
 ---
 import Icon from '../components/Icon.astro';
 import RoseDivider from '../components/RoseDivider.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
 import '../styles/global.css';
 
 const base = import.meta.env.BASE_URL;
@@ -9,12 +11,12 @@ const upstream = 'https://github.com/webstonehq/tuxedo';
 const install = `cargo install --git ${repo} --locked`;
 const canonical = new URL(base, Astro.site).href;
 const features = [
-  { icon: 'tree' as const, number: '01', title: 'Think in smaller steps.', body: 'Nest subtasks as deep as you need. Complete, move, or delete a parent, and its whole family comes along.', tag: 'Subtree-aware actions' },
-  { icon: 'folder' as const, number: '02', title: 'Give every project a home.', body: 'Group your list by +project without scattering its subtasks. Keep work, life, and the next little idea in view.', tag: 'Family-preserving sort' },
-  { icon: 'file' as const, number: '03', title: 'Edit the whole picture.', body: 'Draft a parent and its children in one dialog. Rework an existing family together, then save it as one undoable change.', tag: 'Multi-line family editing' },
-  { icon: 'mouse' as const, number: '04', title: 'Keys first. Mouse welcome.', body: 'Click to navigate, scroll through your tasks, or drag text to copy. Prefer just the keyboard? Turn mouse support off.', tag: 'Your workflow, your call' },
-  { icon: 'filter' as const, number: '05', title: 'Pick up where you left off.', body: 'Your active project and context filters survive a restart. Less setting things up. More getting back to your work.', tag: 'Remembered filters' },
-  { icon: 'palette' as const, number: '06', title: 'A quieter place to focus.', body: 'Pane borders, outer margins, custom themes, and a refined layout. Make your terminal feel a little more like you.', tag: 'A considered interface' },
+  { icon: 'tree' as const, number: '01', title: 'Subtasks', body: 'Nest tasks with two spaces per level. Move, complete, or delete a parent together with its descendants, and undo the operation as a unit.' },
+  { icon: 'folder' as const, number: '02', title: 'Project grouping', body: 'Group tasks by +project while keeping parent/subtask families together. Tasks with multiple project tags can appear in multiple groups.' },
+  { icon: 'file' as const, number: '03', title: 'Family editing', body: 'Create or edit a parent and its subtasks in one dialog. Save the whole family as a single undoable change.' },
+  { icon: 'mouse' as const, number: '04', title: 'Mouse support', body: 'Click task rows and sidebar filters, navigate with the scroll wheel, and drag task text to copy. Mouse support can be disabled.' },
+  { icon: 'filter' as const, number: '05', title: 'Persistent filters', body: 'Keep the active project and context filters across restarts, separately from named saved searches.' },
+  { icon: 'palette' as const, number: '06', title: 'Layout customization', body: 'Show or hide pane borders, adjust the outer margin, and use the refined task rows and headers alongside inherited theme support.' },
 ];
 const faqs = [
   { question: 'Is this the original Tuxedo?', answer: 'No. Tuxedo Task is an independent community fork of Tuxedo by Webstone Technologies. We preserve the original MIT license and build on the work of its contributors. Our additions include nested subtasks, family editing, project grouping, mouse interaction, and remembered filters.' },
@@ -47,20 +49,13 @@ const faqs = [
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
     <div class="site-shell">
-      <header class="site-header">
-        <a class="brand" href={base} aria-label="Tuxedo Task home"><img src={`${base}brand.svg`} width="38" height="38" alt="" /><span>Tuxedo<span class="brand-task">Task</span><span class="brand-dot">.</span></span></a>
-        <nav aria-label="Main navigation">
-          <a href="#features">The good stuff</a>
-          <a href="#install">Installation</a>
-          <a class="nav-github" href={repo}><Icon name="github" size={17} /><span>GitHub</span><span aria-hidden="true">↗</span></a>
-        </nav>
-      </header>
+      <SiteHeader />
       <main id="main">
         <section class="hero" aria-labelledby="hero-title">
           <div class="hero-copy">
             <p class="eyebrow"><span class="small-star" aria-hidden="true">✳</span> A little structure. A lot more headspace.</p>
             <h1 id="hero-title"><span>for justice.</span>{' '}<em>with your<br /> tasks done</em></h1>
-            <p class="hero-description">A thoughtful task manager for your terminal. Nested tasks, familiar keys, and plain-text files that stay <strong>yours.</strong></p>
+            <p class="hero-description">A rose, a mask, and a mission: bring order to your <code>todo.txt</code>. Break down your tasks, finish the job, and make a <strong>dramatic exit.</strong></p>
             <div class="hero-actions"><a class="button button-primary" href="#install">Meet your new task list <Icon name="arrow" /></a><a class="text-link" href={repo}>Explore the source <span aria-hidden="true">↗</span></a></div>
             <p class="hero-footnote">Free & open source <span aria-hidden="true">/</span> No account required <span aria-hidden="true">/</span> Built with Rust</p>
           </div>
@@ -70,25 +65,25 @@ const faqs = [
               <a href={`${base}screenshots/subtasks.svg`} aria-label="Open full-size application screenshot"><img src={`${base}screenshots/subtasks.svg`} alt="Actual Tuxedo Task interface with nested tasks grouped under personal and tuxedo projects" width="1040" height="512" fetchpriority="high" /></a>
               <p>Rendered by the application itself · sample tasks · default theme</p>
             </div>
-            <figcaption>Actual app interface. <a href={`${base}screenshots/subtasks.svg`}>View full size <span aria-hidden="true">↗</span></a></figcaption>
+            <figcaption>Actual app interface.</figcaption>
           </figure>
         </section>
         <div class="principles" aria-label="Project principles"><span>Small tool. Clear intentions.</span><ul><li><Icon name="file" size={17} /> Plain-text forever</li><li><Icon name="check" size={17} /> Local-first</li><li><Icon name="tree" size={17} /> Room to grow</li><li><Icon name="github" size={17} /> MIT licensed</li></ul></div>
         <RoseDivider />
         <section class="features section-block" id="features" aria-labelledby="features-title">
-          <div class="section-heading"><p class="eyebrow">01 / The good stuff</p><div><h2 id="features-title">Big plans.<br /><em>Manageable pieces.</em></h2><p>Life does not fit in a flat list.<br />Your task manager should understand that.</p></div></div>
-          <div class="feature-grid">{features.map((feature) => <article class="feature-card"><div class="feature-top"><span class="feature-icon"><Icon name={feature.icon} size={24} /></span><span class="feature-number">/{feature.number}</span></div><h3>{feature.title}</h3><p>{feature.body}</p><span class="feature-tag">{feature.tag}</span></article>)}</div>
+          <div class="section-heading"><p class="eyebrow">01 / Features</p><div><h2 id="features-title">Features</h2><p>Additions to the original Tuxedo workflow.<br />Tasks, families, and projects.</p></div></div>
+          <div class="feature-grid">{features.map((feature) => <article class="feature-card"><div class="feature-top"><span class="feature-icon"><Icon name={feature.icon} size={24} /></span><span class="feature-number">/{feature.number}</span></div><h3>{feature.title}</h3><p>{feature.body}</p></article>)}</div>
         </section>
         <RoseDivider />
         <section class="workflow section-block" aria-labelledby="workflow-title">
-          <div class="workflow-copy"><p class="eyebrow">02 / Stay in your flow</p><h2 id="workflow-title">Your terminal.<br /><em>Your kind of calm.</em></h2><p>No new system to maintain. Just a file, a few familiar keys, and a little more clarity about what comes next.</p><div class="key-list"><div><span><kbd>j</kbd> <kbd>k</kbd></span><span>Find your next thing</span></div><div><span><kbd>&gt;</kbd> <kbd>&lt;</kbd></span><span>Break it into smaller things</span></div><div><span><kbd>x</kbd></span><span>Enjoy crossing it off</span></div><div><span><kbd>u</kbd></span><span>Change your mind</span></div></div><a class="text-link" href={`${repo}#keybindings`}>All the shortcuts <Icon name="arrow" size={18} /></a></div>
+          <div class="workflow-copy"><p class="eyebrow">02 / Stay in your flow</p><h2 id="workflow-title">Your terminal.<br /><em>Your kind of calm.</em></h2><p>No new system to maintain. Just a file, a few familiar keys, and a little more clarity about what comes next.</p><div class="key-list"><div><span><kbd>j</kbd> <kbd>k</kbd></span><span>Find your next thing</span></div><div><span><kbd>&gt;</kbd> <kbd>&lt;</kbd></span><span>Break it into smaller things</span></div><div><span><kbd>x</kbd></span><span>Enjoy crossing it off</span></div><div><span><kbd>u</kbd></span><span>Change your mind</span></div></div><a class="text-link" href={`${base}docs/#keybindings`}>All the shortcuts <Icon name="arrow" size={18} /></a></div>
           <div class="real-preview"><div class="capture-label"><span class="live-dot" aria-hidden="true"></span> The actual app <span>List view</span></div><a href={`${base}screenshots/list.svg`} aria-label="Open full-size list view of Tuxedo Task"><img src={`${base}screenshots/list.svg`} alt="Actual Tuxedo Task list view with project filters, tasks, and the detail sidebar" width="1040" height="512" loading="lazy" /></a><p>Rendered by the application itself. Your terminal, theme, and font may look different.</p></div>
         </section>
         <section class="inherited" aria-labelledby="inherited-title"><div><p class="eyebrow">Good roots. New branches.</p><h3 id="inherited-title">Everything we love about Tuxedo,<br />with a little more room to grow.</h3></div><ul><li>Natural-language dates</li><li>Recurring tasks</li><li>Phone capture on your LAN</li><li>Custom themes</li><li>Saved searches</li><li>Atomic file writes</li></ul><a href={upstream}>With thanks to upstream <span aria-hidden="true">↗</span></a></section>
         <RoseDivider />
         <section class="installation section-block" id="install" aria-labelledby="install-title">
           <div class="section-heading"><p class="eyebrow">03 / Make yourself at home</p><div><h2 id="install-title">One command.<br /><em>A fresh start.</em></h2><p>Install this fork from source.<br />No sign-up, no setup wizard, no drama.</p></div></div>
-          <div class="install-box"><div class="install-top"><span><span class="live-dot" aria-hidden="true"></span> Install with Cargo</span><span>macOS / Linux / Windows</span></div><div class="install-command"><span class="command-prompt" aria-hidden="true">$</span><code id="install-command">{install}</code><button class="copy-button" type="button" data-copy hidden aria-label="Copy installation command"><Icon name="copy" size={18} /><span>Copy</span></button></div><p class="copy-feedback" role="status" aria-live="polite" data-copy-status></p><div class="install-bottom"><span>Then run <code>tuxedo /path/to/todo.txt</code></span><a href={`${repo}#install`}>Full installation guide <span aria-hidden="true">↗</span></a></div></div>
+          <div class="install-box"><div class="install-top"><span><span class="live-dot" aria-hidden="true"></span> Install with Cargo</span><span>macOS / Linux / Windows</span></div><div class="install-command"><span class="command-prompt" aria-hidden="true">$</span><code id="install-command">{install}</code><button class="copy-button" type="button" data-copy hidden aria-label="Copy installation command"><Icon name="copy" size={18} /><span>Copy</span></button></div><p class="copy-feedback" role="status" aria-live="polite" data-copy-status></p><div class="install-bottom"><span>Then run <code>tuxedo /path/to/todo.txt</code></span><a href={`${base}docs/#installation`}>Full installation guide <span aria-hidden="true">↗</span></a></div></div>
           <div class="install-notes"><p><strong>Before you begin</strong> You will need <a href="https://rustup.rs/">current stable Rust + Cargo</a>, Git, and your platform’s native build tools. On Windows, use a path such as <code>C:\tasks\todo.txt</code>.</p><p><strong>Coming from Tuxedo?</strong> The executable and config directory are still named <code>tuxedo</code>. Back up your files first. Add <code>--force</code> to replace a Cargo install, and check your PATH if you also use Homebrew.</p></div>
           <p class="install-warning"><span aria-hidden="true">↳</span> <code>brew install tuxedo</code> installs the original project, not this fork. No prebuilt fork releases are published yet.</p>
         </section>
@@ -97,7 +92,7 @@ const faqs = [
         <RoseDivider />
         <section class="closing" aria-labelledby="closing-title"><p class="eyebrow">Less managing the system. More living your life.</p><h2 id="closing-title">sharp enough<br /> to <em>prune crime</em></h2><a class="button button-primary" href="#install">Get Tuxedo Task <Icon name="arrow" /></a></section>
       </main>
-      <footer class="site-footer"><div><a class="brand" href={base}><img src={`${base}brand.svg`} width="32" height="32" alt="" /><span>Tuxedo<span class="brand-task">Task</span><span class="brand-dot">.</span></span></a><p>Plain text. Thoughtfully extended.</p></div><div class="footer-credit"><p>An independent community fork of <a href={upstream}>Tuxedo by Webstone Technologies</a>.<br />Maintained by <a href="https://github.com/Caracolaracol">Caracolaracol</a>. Original credits and MIT license preserved.</p><div><a href={`${repo}/blob/main/LICENSE`}>MIT license</a><a href={`${repo}/issues`}>Say hello / report a bug <span aria-hidden="true">↗</span></a><a href={repo}>Source code <span aria-hidden="true">↗</span></a></div><p class="art-credit">Rose artwork: <a href="https://github.com/jdecked/twemoji/blob/b6b55fef1e8636b540a6d016a4729ca8cdf2e60b/assets/svg/1f339.svg">Twemoji contributors</a>, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. SVG unchanged.</p></div></footer>
+      <SiteFooter />
     </div>
     <script>
       const button = document.querySelector<HTMLButtonElement>('[data-copy]');

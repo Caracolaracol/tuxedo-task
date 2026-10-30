@@ -1,0 +1,71 @@
+---
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import DocsContents from '../components/DocsContents.astro';
+import Icon from '../components/Icon.astro';
+import { Content, getHeadings } from '../generated/manual.md';
+import '../styles/global.css';
+import '../styles/docs.css';
+
+const base = import.meta.env.BASE_URL;
+const canonical = new URL(`${base}docs/`, Astro.site).href;
+const headings = getHeadings();
+const shortcuts = [
+  { title: 'Install the fork', target: 'installation', icon: 'arrow' as const },
+  { title: 'Work with subtasks', target: 'subtasks-nested-tasks', icon: 'tree' as const },
+  { title: 'Learn the shortcuts', target: 'keybindings', icon: 'file' as const },
+  { title: 'Use the CLI', target: 'command-line-interface', icon: 'folder' as const },
+];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f0e8" />
+    <title>Documentation — Tuxedo Task</title>
+    <meta name="description" content="The Tuxedo Task user guide: installation, nested subtasks, project grouping, keyboard shortcuts, CLI commands, configuration, custom themes, and troubleshooting." />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href={`${base}brand.svg`} type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Documentation — Tuxedo Task" />
+    <meta property="og:description" content="From your first task to your own workflow. A complete user guide for the Tuxedo Task community fork." />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL(`${base}social-card.png`, Astro.site).href} />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to documentation</a>
+    <div class="site-shell">
+      <SiteHeader page="docs" />
+      <main id="main" class="docs-page">
+        <header class="docs-intro">
+          <a class="docs-back" href={base}>← Back to Tuxedo Task</a>
+          <p class="eyebrow">Documentation / User guide</p>
+          <h1 id="docs-title">Documentation</h1>
+          <p>Install the fork, find your shortcuts, and give your tasks a little structure. The reference below stays in sync with the application's README.</p>
+          <div class="docs-shortcuts" aria-label="Quick links">
+            {shortcuts.map(shortcut => <a href={`#${shortcut.target}`}><Icon name={shortcut.icon} size={18} />{shortcut.title}<span aria-hidden="true">↘</span></a>)}
+          </div>
+        </header>
+        <div class="docs-layout">
+          <aside class="docs-sidebar" aria-label="Guide navigation">
+            <p class="docs-toc-title"><img src={`${base}third-party/rose.svg`} width="24" height="24" alt="" />In this guide</p>
+            <DocsContents headings={headings} />
+            <p class="docs-find-tip">Looking for a word?<br />Use your browser's <kbd>Ctrl</kbd> / <kbd>⌘</kbd> + <kbd>F</kbd>.</p>
+          </aside>
+          <div class="docs-article">
+            <details class="docs-mobile-nav">
+              <summary>In this guide <span aria-hidden="true">+</span></summary>
+              <DocsContents headings={headings} />
+            </details>
+            <div class="docs-source-note"><span class="live-dot" aria-hidden="true"></span> For Tuxedo Task, the community fork — not the upstream Homebrew package.</div>
+            <article class="docs-prose" aria-label="Tuxedo Task application guide"><Content /></article>
+            <div class="docs-end"><a href="#docs-title">Back to top ↑</a><a href="https://github.com/Caracolaracol/tuxedo-task/blob/feat/github-pages-astro/README.md">Source reference on GitHub ↗</a></div>
+          </div>
+        </div>
+      </main>
+      <SiteFooter />
+    </div>
+  </body>
+</html>

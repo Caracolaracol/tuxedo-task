@@ -6,14 +6,17 @@
   "engines": { "node": ">=22.12.0" },
   "scripts": {
     "prepare-assets": "node scripts/prepare-assets.mjs",
+    "prepare-docs": "node scripts/prepare-docs.mjs",
     "social-image": "npm run prepare-assets && node scripts/social-image.mjs",
-    "predev": "npm run prepare-assets",
+    "predev": "npm run prepare-assets && npm run prepare-docs",
     "dev": "astro dev --host 127.0.0.1",
+    "precheck": "npm run prepare-docs",
     "check": "astro check",
-    "prebuild": "npm run prepare-assets",
+    "prebuild": "npm run prepare-assets && npm run prepare-docs",
     "build": "astro build",
     "preview": "astro preview --host 127.0.0.1",
-    "test": "playwright test"
+    "test:docs": "node --test scripts/manual.test.mjs",
+    "test": "npm run test:docs && playwright test"
   },
   "dependencies": { "astro": "7.3.8" },
   "overrides": { "esbuild": "0.28.1" },

@@ -56,6 +56,7 @@
   .brand-dot { color: var(--accent); }
   .site-header nav { display: flex; align-items: center; gap: 33px; }
   .site-header nav a { text-decoration: none; font-size: 12px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; }
+  .site-header nav a[aria-current='page'] { color: var(--accent); font-weight: 700; }
   .site-header .nav-github { display: flex; gap: 8px; padding: 0 14px; border: 1px solid var(--line); border-radius: 5px; }
   .hero { display: grid; grid-template-columns: 0.88fr 1.12fr; gap: 56px; align-items: center; padding: 92px 0 76px; }
   .hero-copy .eyebrow { display: flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 0.06em; }
@@ -71,7 +72,6 @@
   .hero-footnote span { color: #b0a6a9; }
   .hero-preview { margin: 0; min-width: 0; }
   .hero-preview figcaption { color: var(--muted); font: 10px/1.8 var(--mono); margin: 18px 0 0 8px; }
-  .hero-preview figcaption a { white-space: nowrap; }
   .hero-capture { padding: 16px; }
   .hero-capture a { display: block; }
   .rose-divider { display: flex; align-items: center; gap: 18px; padding: 14px 0; }
@@ -92,8 +92,7 @@
   .feature-icon { display: flex; width: 45px; height: 45px; align-items: center; justify-content: center; color: var(--accent); background: #f1e4e8; border-radius: 9px; }
   .feature-number { color: var(--muted); font: 10px var(--mono); }
   .feature-card h3 { font-size: 20px; letter-spacing: -0.035em; margin-bottom: 12px; }
-  .feature-card p { color: var(--muted); font-size: 13px; line-height: 1.85; padding-bottom: 24px; }
-  .feature-tag { color: #796b75; font: 9px var(--mono); padding-top: 13px; border-top: 1px solid var(--line); width: 100%; margin-top: auto; }
+  .feature-card p { color: var(--muted); font-size: 13px; line-height: 1.85; }
   .workflow { padding-top: 65px; display: grid; grid-template-columns: 0.75fr 1.25fr; gap: 80px; align-items: center; }
   .workflow-copy > .eyebrow { color: var(--accent); margin-bottom: 22px; }
   .workflow h2 { font-size: clamp(35px, 3.6vw, 48px); }
@@ -187,8 +186,8 @@
     .site-shell { padding: 0 22px; }
     .site-header { gap: 14px; padding: 20px 0 13px; flex-wrap: wrap; }
     .brand { font-size: 21px; }
-    .site-header nav { gap: 20px; width: 100%; justify-content: space-between; }
-    .site-header nav a { font-size: 11px; }
+    .site-header nav { gap: 0 12px; width: 100%; justify-content: space-between; flex-wrap: wrap; }
+    .site-header nav a { font-size: 10px; }
     .site-header .nav-github { border: 0; padding: 0; }
     .hero { padding: 45px 0 38px; gap: 42px; }
     .hero-copy .eyebrow { font-size: 8px; gap: 5px; }

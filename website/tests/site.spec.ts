@@ -13,6 +13,14 @@ test('loads at the Pages subpath with working assets, metadata and attribution',
   await expect(page).toHaveTitle('Tuxedo Task — for justice. with your tasks done');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('for justice. with your tasks done');
   await expect(page.locator('#closing-title')).toHaveText('sharp enough to prune crime');
+  await expect(page.getByRole('navigation').getByRole('link', { name: 'Features', exact: true })).toHaveAttribute('href', '#features');
+  await expect(page.locator('#features .eyebrow')).toHaveText('01 / Features');
+  await expect(page.locator('#features-title')).toHaveText('Features');
+  await expect(page.locator('#features h3')).toHaveText(['Subtasks', 'Project grouping', 'Family editing', 'Mouse support', 'Persistent filters', 'Layout customization']);
+  await expect(page.locator('.hero-description')).toHaveText('A rose, a mask, and a mission: bring order to your todo.txt. Break down your tasks, finish the job, and make a dramatic exit.');
+  await expect(page.getByRole('link', { name: /View full size/i })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Full installation guide' })).toHaveAttribute('href', '/tuxedo-task/docs/#installation');
+  await expect(page.getByRole('link', { name: 'All the shortcuts' })).toHaveAttribute('href', '/tuxedo-task/docs/#keybindings');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://caracolaracol.github.io/tuxedo-task/');
   await expect(page.locator('#install-command')).toHaveText(command);
   await expect(page.locator('footer')).toContainText('independent community fork');
