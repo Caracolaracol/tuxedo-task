@@ -34,14 +34,16 @@ npx playwright install chromium
 npm test
 ```
 
-`npm test` runs 4 Node tests for documentation generation, then 32 browser tests.
+`npm test` runs 4 Node tests for documentation generation, then 38 browser tests.
 They cover the landing and `/tuxedo-task/docs/`, source-derived reference content,
 internal anchor integrity, desktop/mobile layouts, assets, metadata, fork
 attribution, real-renderer screenshots, decorative roses and their license,
 native FAQ/reference controls, clipboard success/failure, keyboard walkthrough
 playback/pause/manual selection, reduced-motion defaults, and content/navigation
 with JavaScript disabled. Layout checks include 320, 375, 768, 1024, and 1440px
-widths. Browser tests use the **production build**.
+widths, plus Full HD, 2560px, 4K and ultrawide checks for fluid sizing, real
+screenshot/icon scaling, centered principles and the sticky documentation index.
+Browser tests use the **production build**.
 
 For a manual production preview:
 
@@ -54,6 +56,21 @@ Astro may auto-background dev/preview when run by an AI agent. Playwright uses
 `--ignore-lock` so its own preview remains a foreground child it can clean up.
 An explicitly backgrounded manual preview can be stopped with
 `./node_modules/.bin/astro preview stop`.
+
+## Responsive sizing
+
+The page has **no maximum width**. Layout dimensions, text, spacing, keycaps,
+icons and decorative artwork use `rem`. The root size stays at the browser's
+normal font size up to 1440px, then grows with the viewport (`100vw / 90`).
+Real app screenshots fill their grid columns and preserve their aspect ratios.
+The four project principles are centered without a slogan or separator lines;
+on phones they form a centered 2×2 grid.
+
+Use `rem` for new UI dimensions and keep media-query thresholds in `px`. SVG
+viewBox coordinates and intrinsic image attributes remain unchanged; CSS sizes
+icons and logos relative to the root. No page `zoom`, scale transforms, runtime
+resizing script, or extra dependencies are needed. The documentation shares the
+same scaling; its index scrolls within the viewport even on short ultrawide screens.
 
 ## Assets and content
 

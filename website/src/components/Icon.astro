@@ -14,4 +14,7 @@ const paths = {
   check: 'm5 12 4 4L19 6',
 };
 ---
-<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>
+<svg class="ui-icon" style={{ '--icon-size': `${size / 16}rem` }} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>
+<style is:global>
+  .ui-icon { width: var(--icon-size); height: var(--icon-size); flex-shrink: 0; }
+</style>

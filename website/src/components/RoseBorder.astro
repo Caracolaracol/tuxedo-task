@@ -9,14 +9,14 @@ import RoseIllustration from '../assets/rose-border.svg';
 </div>
 
 <style>
-  .rose-border { display: flex; align-items: center; justify-content: center; gap: 22px; padding: 20px 0 8px; color: var(--accent); }
-  .rose-border > span { height: 1px; background: var(--line); flex: 1; }
-  .rose-border :global(svg) { display: block; flex: 0 1 860px; min-width: 0; width: min(100%, 860px); height: auto; }
+  .rose-border { display: flex; align-items: center; justify-content: center; gap: 1.375rem; padding: 1.25rem 0 0.5rem; color: var(--accent); }
+  .rose-border > span { height: 0.0625rem; background: var(--line); flex: 1; }
+  .rose-border :global(svg) { display: block; flex: 0 1 53.75rem; min-width: 0; width: min(100%, 53.75rem); height: auto; }
   .rose-border :global(path[fill="#FFFFFF"]),
   .rose-border :global(path[fill="#fff"]),
   .rose-border :global(path[fill="#FFF"]) { fill: var(--paper); }
   @media (max-width: 600px) {
-    .rose-border { gap: 0; padding: 14px 0 4px; }
+    .rose-border { gap: 0; padding: 0.875rem 0 0.25rem; }
     .rose-border > span { display: none; }
     .rose-border :global(svg) { flex-basis: 100%; }
   }

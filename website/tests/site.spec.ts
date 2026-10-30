@@ -39,6 +39,30 @@ test('loads at the Pages subpath with working assets, metadata and attribution',
   expect(errors).toEqual([]);
 });
 
+test('four project principles are centered without a slogan or separator lines', async ({ page }) => {
+  await page.goto('./');
+  const principles = page.locator('.principles');
+  await expect(principles.locator('li')).toHaveText(['Plain-text forever', 'Local-first', 'Room to grow', 'MIT licensed']);
+  await expect(page.getByText('Small tool. Clear intentions.', { exact: true })).toHaveCount(0);
+  for (const width of [320, 390, 768, 1440, 2560]) {
+    await page.setViewportSize({ width, height: 1000 });
+    const metrics = await principles.evaluate(element => {
+      const style = getComputedStyle(element);
+      const items = [...element.querySelectorAll('li')].map(item => item.getBoundingClientRect());
+      return { borderTop: style.borderTopWidth, borderBottom: style.borderBottomWidth,
+        center: (Math.min(...items.map(item => item.left)) + Math.max(...items.map(item => item.right))) / 2,
+        separators: [...element.querySelectorAll('li')].some(item => {
+          const css = getComputedStyle(item);
+          return parseFloat(css.borderLeftWidth) > 0 || parseFloat(css.borderRightWidth) > 0;
+        }) };
+    });
+    expect(metrics.borderTop).toBe('0px');
+    expect(metrics.borderBottom).toBe('0px');
+    expect(metrics.separators).toBe(false);
+    expect(Math.abs(metrics.center - width / 2), `principles centered at ${width}px`).toBeLessThan(1);
+  }
+});
+
 test('hero uses the real renderer output and opens it with the keyboard', async ({ page, request }) => {
   await page.goto('./');
   const hero = page.locator('.hero-preview');

@@ -82,34 +82,34 @@ const steps = [
   }
 </script>
 <style>
-  .shortcut-guide { margin: 25px 0 18px; padding: 18px; border: 1px solid var(--line); border-radius: 7px; background: var(--card); }
-  .shortcut-header { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 13px; font: 10px var(--mono); color: var(--muted); }
+  .shortcut-guide { margin: 1.5625rem 0 1.125rem; padding: 1.125rem; border: 0.0625rem solid var(--line); border-radius: 0.4375rem; background: var(--card); }
+  .shortcut-header { display: flex; justify-content: space-between; gap: 0.625rem; margin-bottom: 0.8125rem; font: 0.625rem var(--mono); color: var(--muted); }
   .shortcut-steps { list-style: none; padding: 0; margin: 0; }
-  .shortcut-steps li + li { margin-top: 4px; }
-  .shortcut-row { display: flex; width: 100%; min-height: 54px; align-items: center; gap: 12px; border: 1px solid transparent; border-radius: 5px; padding: 8px; background: transparent; color: var(--ink); text-align: left; transition: background 180ms, border-color 180ms; }
+  .shortcut-steps li + li { margin-top: 0.25rem; }
+  .shortcut-row { display: flex; width: 100%; min-height: 3.375rem; align-items: center; gap: 0.75rem; border: 0.0625rem solid transparent; border-radius: 0.3125rem; padding: 0.5rem; background: transparent; color: var(--ink); text-align: left; transition: background 180ms, border-color 180ms; }
   .shortcut-row:hover:not(:disabled), .shortcut-row.is-active { background: #efe3e6; border-color: #dec6cf; }
   .shortcut-row:disabled { opacity: 1; cursor: default; }
-  .shortcut-keys { display: flex; gap: 5px; width: 78px; flex-shrink: 0; }
-  .shortcut-guide kbd { width: 34px; height: 34px; border-bottom-width: 2px; background: #fffaf6; font-size: 13px; }
-  .is-active kbd { color: var(--accent); border-color: #b7798d; box-shadow: 0 2px 0 #d8b9c4; }
+  .shortcut-keys { display: flex; gap: 0.3125rem; width: 4.875rem; flex-shrink: 0; }
+  .shortcut-guide kbd { width: 2.125rem; height: 2.125rem; border-bottom-width: 0.125rem; background: #fffaf6; font-size: 0.8125rem; }
+  .is-active kbd { color: var(--accent); border-color: #b7798d; box-shadow: 0 0.125rem 0 #d8b9c4; }
   [data-playing='true'] .is-active kbd { animation: keypress 2600ms ease-out infinite; }
-  .shortcut-row:active kbd { transform: translateY(2px); box-shadow: none; }
-  .shortcut-label { font-size: 12px; font-weight: 550; line-height: 1.5; }
+  .shortcut-row:active kbd { transform: translateY(0.125rem); box-shadow: none; }
+  .shortcut-label { font-size: 0.75rem; font-weight: 550; line-height: 1.5; }
   .shortcut-indicator { color: var(--accent); margin-left: auto; opacity: 0; }
   .is-active .shortcut-indicator { opacity: 1; }
-  .shortcut-note { min-height: 84px; margin: 15px 0 10px; font-size: 12px; line-height: 1.8; color: var(--muted); }
-  .shortcut-controls { display: flex; align-items: center; gap: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
-  .shortcut-play { flex-shrink: 0; min-height: 44px; border: 1px solid #cdb7c0; border-radius: 4px; padding: 8px 10px; color: var(--accent); background: transparent; font-size: 11px; }
+  .shortcut-note { min-height: 5.25rem; margin: 0.9375rem 0 0.625rem; font-size: 0.75rem; line-height: 1.8; color: var(--muted); }
+  .shortcut-controls { display: flex; align-items: center; gap: 0.75rem; padding-top: 0.625rem; border-top: 0.0625rem solid var(--line); }
+  .shortcut-play { flex-shrink: 0; min-height: 2.75rem; border: 0.0625rem solid #cdb7c0; border-radius: 0.25rem; padding: 0.5rem 0.625rem; color: var(--accent); background: transparent; font-size: 0.6875rem; }
   .shortcut-play:hover { background: #efe3e6; }
-  .shortcut-controls > span { font-size: 10px; color: var(--muted); line-height: 1.7; }
-  .shortcut-context { margin-top: 10px; font-size: 10px; line-height: 1.8; color: var(--muted); }
+  .shortcut-controls > span { font-size: 0.625rem; color: var(--muted); line-height: 1.7; }
+  .shortcut-context { margin-top: 0.625rem; font-size: 0.625rem; line-height: 1.8; color: var(--muted); }
   @keyframes keypress {
     0%, 28%, 100% { transform: translateY(0); }
-    12%, 20% { transform: translateY(2px); box-shadow: none; }
+    12%, 20% { transform: translateY(0.125rem); box-shadow: none; }
   }
   @media (max-width: 600px) {
-    .shortcut-guide { padding: 14px; }
-    .shortcut-note { min-height: 84px; }
+    .shortcut-guide { padding: 0.875rem; }
+    .shortcut-note { min-height: 5.25rem; }
   }
   @media (prefers-reduced-motion: reduce) {
     .shortcut-row { transition: none; }
