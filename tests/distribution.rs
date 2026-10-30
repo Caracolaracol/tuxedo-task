@@ -5,7 +5,22 @@ use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn stdout_at(exe: &Path, arg: &str) -> String {
-    let output = Command::new(exe).arg(arg).output().expect("run tuxedo");
+    // Linux can transiently return ETXTBSY for a freshly copied executable
+    // while parallel test children finish inheriting/closing file handles.
+    // Retry that specific condition briefly, never other execution failures.
+    let mut retries = 0;
+    let output = loop {
+        match Command::new(exe).arg(arg).output() {
+            Ok(output) => break output,
+            Err(error)
+                if error.kind() == std::io::ErrorKind::ExecutableFileBusy && retries < 20 =>
+            {
+                retries += 1;
+                std::thread::sleep(std::time::Duration::from_millis(25));
+            }
+            Err(error) => panic!("run tuxedo: {error}"),
+        }
+    };
     assert!(output.status.success(), "{output:?}");
     String::from_utf8(output.stdout).expect("UTF-8 output")
 }
