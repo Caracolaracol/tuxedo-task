@@ -34,11 +34,12 @@ npx playwright install chromium
 npm test
 ```
 
-`npm test` runs 4 Node tests for documentation generation, then 26 browser tests.
+`npm test` runs 4 Node tests for documentation generation, then 32 browser tests.
 They cover the landing and `/tuxedo-task/docs/`, source-derived reference content,
 internal anchor integrity, desktop/mobile layouts, assets, metadata, fork
 attribution, real-renderer screenshots, decorative roses and their license,
-native FAQ/reference controls, clipboard success/failure, and content/navigation
+native FAQ/reference controls, clipboard success/failure, keyboard walkthrough
+playback/pause/manual selection, reduced-motion defaults, and content/navigation
 with JavaScript disabled. Layout checks include 320, 375, 768, 1024, and 1440px
 widths. Browser tests use the **production build**.
 
@@ -59,7 +60,14 @@ An explicitly backgrounded manual preview can be stopped with
 - `src/pages/index.astro`: content, metadata, install command and clipboard logic.
 - `src/components/SiteHeader.astro` and `SiteFooter.astro`: shared navigation and
   credits, including local documentation links.
-- `src/components/RoseDivider.astro`: decorative, locally hosted Twemoji roses.
+- `src/components/RoseBorder.astro` and `src/assets/rose-border.svg`: the complete
+  CC0 Openclipart illustration used for the first divider, tinted with CSS.
+- `src/components/RoseDivider.astro`: the other four decorative Twemoji roses.
+- `src/components/ShortcutGuide.astro`: keyboard walkthrough, including `n` to add
+  a task. Autoplay runs only while visible and the tab is active; pause/play and
+  manual row buttons work with the keyboard. Reduced motion starts paused.
+  Static shortcut labels remain visible without JavaScript. This guide does
+  not intercept application keys or pretend to run the app in the browser.
 - `src/styles/global.css`: responsive, paper/plum/cerise visual identity.
 - `scripts/prepare-assets.mjs`: copies the app's original mask and real UI renders
   from the repository into `public/` before development/builds. The hero uses
@@ -72,10 +80,12 @@ An explicitly backgrounded manual preview can be stopped with
 
 No analytics, external fonts, cookies, hosted backend, or UI framework runtime.
 Installation, screenshots, and docs work without JavaScript. A small native
-script enhances copy-to-clipboard; reduced-motion and keyboard users are supported.
-The site preserves attribution to upstream Tuxedo and uses no third-party
-character artwork. Rose illustrations were sourced online from Twemoji, are
-hosted locally without modifications, and remain under CC BY 4.0 rather than MIT.
+script enhances copy-to-clipboard and another animates the keyboard walkthrough;
+reduced-motion and keyboard users are supported. The site preserves attribution
+to upstream Tuxedo and uses no third-party character artwork. The first rose
+border is by johnny_automatic / Openclipart under CC0; the other roses are
+Twemoji under CC BY 4.0. All artwork is bundled locally, not remotely embedded,
+and its original licensing is preserved rather than replaced with MIT.
 See [`THIRD_PARTY.md`](THIRD_PARTY.md) for pinned source URLs and license details;
 the footer also credits the creators.
 

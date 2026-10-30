@@ -1,0 +1,118 @@
+---
+const steps = [
+  { keys: ['N'], shortcut: 'n', label: 'Add a new task', note: 'In Tuxedo Task, press n to open the add-task dialog. Type your task and confirm with Enter.' },
+  { keys: ['J', 'K'], shortcut: 'j / k', label: 'Navigate tasks', note: 'Press j to move down the list or k to move up to the previous task.' },
+  { keys: ['>', '<'], shortcut: '> / <', label: 'Nest or unnest a task', note: 'Use > to indent a task and its subtree, or < to move the family back out.' },
+  { keys: ['X'], shortcut: 'x', label: 'Complete a task', note: 'Press x to toggle completion. Completing a parent also completes its subtasks.' },
+  { keys: ['U'], shortcut: 'u', label: 'Undo the last change', note: 'Press u to undo a change, including a whole family operation.' },
+];
+---
+<div class="shortcut-guide" data-shortcut-guide data-playing="false">
+  <div class="shortcut-header"><span>Keyboard walkthrough</span><span data-shortcut-counter aria-hidden="true">01 / {String(steps.length).padStart(2, '0')}</span></div>
+  <ol class="shortcut-steps" id="shortcut-steps">
+    {steps.map((step, index) => <li>
+      <button type="button" class:list={['shortcut-row', { 'is-active': index === 0 }]} data-shortcut={step.shortcut} data-description={step.note} aria-label={`${step.shortcut}: ${step.label}`} aria-pressed={index === 0 ? 'true' : 'false'} title={step.note} disabled>
+        <span class="shortcut-keys" aria-hidden="true">{step.keys.map(key => <kbd>{key}</kbd>)}</span>
+        <span class="shortcut-label">{step.label}</span><span class="shortcut-indicator" aria-hidden="true">↵</span>
+      </button>
+    </li>)}
+  </ol>
+  <p class="shortcut-note" data-shortcut-note>{steps[0].note}</p>
+  <div class="shortcut-controls" data-shortcut-controls hidden>
+    <button type="button" class="shortcut-play" data-shortcut-toggle aria-controls="shortcut-steps">Pause animation</button>
+    <span>Click a row to explore a shortcut.</span>
+  </div>
+  <p class="shortcut-context">These keys run in the app. Letter shortcuts are lowercase; no Shift needed.</p>
+</div>
+<script>
+  for (const guide of document.querySelectorAll<HTMLElement>('[data-shortcut-guide]')) {
+    const rows = [...guide.querySelectorAll<HTMLButtonElement>('[data-shortcut]')];
+    const toggle = guide.querySelector<HTMLButtonElement>('[data-shortcut-toggle]');
+    const controls = guide.querySelector<HTMLElement>('[data-shortcut-controls]');
+    const note = guide.querySelector<HTMLElement>('[data-shortcut-note]');
+    const counter = guide.querySelector<HTMLElement>('[data-shortcut-counter]');
+    if (!toggle || !controls || !note || !counter || !rows.length) continue;
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let playing = !motion.matches;
+    let visible = false;
+    let current = 0;
+    let timer: ReturnType<typeof setInterval> | undefined;
+
+    const select = (index: number) => {
+      current = index;
+      rows.forEach((row, i) => {
+        row.classList.toggle('is-active', i === current);
+        row.setAttribute('aria-pressed', String(i === current));
+      });
+      note.textContent = rows[current].dataset.description ?? '';
+      counter.textContent = `${String(current + 1).padStart(2, '0')} / ${String(rows.length).padStart(2, '0')}`;
+    };
+    const schedule = () => {
+      if (timer !== undefined) clearInterval(timer);
+      timer = undefined;
+      const running = playing && visible && !document.hidden;
+      guide.dataset.playing = String(running);
+      toggle.textContent = playing ? 'Pause animation' : 'Play animation';
+      if (running) timer = setInterval(() => select((current + 1) % rows.length), 2600);
+    };
+    const setPlaying = (value: boolean) => {
+      playing = value;
+      schedule();
+    };
+    controls.hidden = false;
+    rows.forEach((row, index) => {
+      row.disabled = false;
+      row.addEventListener('focus', () => setPlaying(false));
+      row.addEventListener('click', () => {
+        setPlaying(false);
+        select(index);
+      });
+    });
+    toggle.addEventListener('click', () => setPlaying(!playing));
+    motion.addEventListener('change', () => {
+      if (motion.matches) setPlaying(false);
+    });
+    document.addEventListener('visibilitychange', schedule);
+    const observer = new IntersectionObserver(entries => {
+      visible = entries.some(entry => entry.isIntersecting);
+      schedule();
+    }, { threshold: 0.25 });
+    observer.observe(guide);
+    schedule();
+  }
+</script>
+<style>
+  .shortcut-guide { margin: 25px 0 18px; padding: 18px; border: 1px solid var(--line); border-radius: 7px; background: var(--card); }
+  .shortcut-header { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 13px; font: 10px var(--mono); color: var(--muted); }
+  .shortcut-steps { list-style: none; padding: 0; margin: 0; }
+  .shortcut-steps li + li { margin-top: 4px; }
+  .shortcut-row { display: flex; width: 100%; min-height: 54px; align-items: center; gap: 12px; border: 1px solid transparent; border-radius: 5px; padding: 8px; background: transparent; color: var(--ink); text-align: left; transition: background 180ms, border-color 180ms; }
+  .shortcut-row:hover:not(:disabled), .shortcut-row.is-active { background: #efe3e6; border-color: #dec6cf; }
+  .shortcut-row:disabled { opacity: 1; cursor: default; }
+  .shortcut-keys { display: flex; gap: 5px; width: 78px; flex-shrink: 0; }
+  .shortcut-guide kbd { width: 34px; height: 34px; border-bottom-width: 2px; background: #fffaf6; font-size: 13px; }
+  .is-active kbd { color: var(--accent); border-color: #b7798d; box-shadow: 0 2px 0 #d8b9c4; }
+  [data-playing='true'] .is-active kbd { animation: keypress 2600ms ease-out infinite; }
+  .shortcut-row:active kbd { transform: translateY(2px); box-shadow: none; }
+  .shortcut-label { font-size: 12px; font-weight: 550; line-height: 1.5; }
+  .shortcut-indicator { color: var(--accent); margin-left: auto; opacity: 0; }
+  .is-active .shortcut-indicator { opacity: 1; }
+  .shortcut-note { min-height: 84px; margin: 15px 0 10px; font-size: 12px; line-height: 1.8; color: var(--muted); }
+  .shortcut-controls { display: flex; align-items: center; gap: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .shortcut-play { flex-shrink: 0; min-height: 44px; border: 1px solid #cdb7c0; border-radius: 4px; padding: 8px 10px; color: var(--accent); background: transparent; font-size: 11px; }
+  .shortcut-play:hover { background: #efe3e6; }
+  .shortcut-controls > span { font-size: 10px; color: var(--muted); line-height: 1.7; }
+  .shortcut-context { margin-top: 10px; font-size: 10px; line-height: 1.8; color: var(--muted); }
+  @keyframes keypress {
+    0%, 28%, 100% { transform: translateY(0); }
+    12%, 20% { transform: translateY(2px); box-shadow: none; }
+  }
+  @media (max-width: 600px) {
+    .shortcut-guide { padding: 14px; }
+    .shortcut-note { min-height: 84px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .shortcut-row { transition: none; }
+    .shortcut-guide kbd { animation: none !important; }
+  }
+</style>

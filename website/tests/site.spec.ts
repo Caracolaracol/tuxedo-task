@@ -57,13 +57,22 @@ test('hero uses the real renderer output and opens it with the keyboard', async 
 test('rose dividers are local, decorative, and credited under their own license', async ({ page, request }) => {
   await page.goto('./');
   const dividers = page.locator('.rose-divider');
-  await expect(dividers).toHaveCount(5);
+  await expect(dividers).toHaveCount(4);
+  const border = page.locator('[data-rose-border]');
+  await expect(border).toHaveCount(1);
+  await expect(page.locator('.rose-divider, [data-rose-border]').first()).toHaveAttribute('data-rose-border', '');
+  await expect(border).toHaveAttribute('aria-hidden', 'true');
+  await expect(border.locator('svg')).toHaveAttribute('viewBox', '0 0 618.603 186');
+  expect(await border.locator('path').count()).toBeGreaterThan(10);
+  await expect(border.locator('img[src$="rose.svg"]')).toHaveCount(0);
   for (const divider of await dividers.all()) {
     await expect(divider).toHaveAttribute('aria-hidden', 'true');
     await expect(divider.locator('img')).toHaveAttribute('src', '/tuxedo-task/third-party/rose.svg');
     await expect(divider.locator('img')).toHaveAttribute('alt', '');
   }
   await expect(page.locator('footer .art-credit')).toContainText('Twemoji contributors');
+  await expect(page.locator('footer .art-credit')).toContainText('johnny_automatic / Openclipart');
+  await expect(page.locator('footer a[href="https://creativecommons.org/publicdomain/zero/1.0/"]')).toBeVisible();
   await expect(page.locator('footer .art-credit a').last()).toHaveAttribute('href', 'https://creativecommons.org/licenses/by/4.0/');
   const rose = await request.get('third-party/rose.svg');
   expect(rose.ok()).toBeTruthy();
@@ -89,6 +98,68 @@ test('clipboard failure selects the command and explains manual copying', async 
   await page.getByRole('button', { name: 'Copy installation command', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Command selected.');
   expect(await page.evaluate(() => window.getSelection()?.toString())).toBe(command);
+});
+
+test('keyboard walkthrough includes lowercase n and supports manual keyboard selection', async ({ page }) => {
+  await page.goto('./');
+  const guide = page.locator('[data-shortcut-guide]');
+  const addTask = guide.getByRole('button', { name: 'n: Add a new task', exact: true });
+  await expect(addTask.locator('kbd')).toHaveText('N');
+  await addTask.focus();
+  await expect(guide).toHaveAttribute('data-playing', 'false');
+  await addTask.press('Enter');
+  await expect(addTask).toHaveAttribute('aria-pressed', 'true');
+  await expect(guide.locator('[data-shortcut-note]')).toContainText('press n to open the add-task dialog');
+  await expect(guide.getByRole('button', { name: 'Play animation', exact: true })).toBeVisible();
+  const undo = guide.getByRole('button', { name: 'u: Undo the last change', exact: true });
+  await undo.focus();
+  await undo.press('Space');
+  await expect(undo).toHaveAttribute('aria-pressed', 'true');
+  await expect(guide.locator('[data-shortcut-counter]')).toHaveText('05 / 05');
+  await expect(guide.locator('[aria-pressed="true"]')).toHaveCount(1);
+});
+
+test('keyboard animation advances, pauses completely, and resumes', async ({ page }) => {
+  await page.goto('./');
+  const guide = page.locator('[data-shortcut-guide]');
+  await guide.scrollIntoViewIfNeeded();
+  await expect(guide).toHaveAttribute('data-playing', 'true');
+  const active = () => guide.locator('[aria-pressed="true"]').getAttribute('data-shortcut');
+  const initial = await active();
+  await expect.poll(active, { timeout: 5000 }).not.toBe(initial);
+  await guide.getByRole('button', { name: 'Pause animation', exact: true }).click();
+  await expect(guide).toHaveAttribute('data-playing', 'false');
+  const paused = await active();
+  await page.waitForTimeout(2800);
+  expect(await active()).toBe(paused);
+  await guide.getByRole('button', { name: 'Play animation', exact: true }).click();
+  await expect(guide).toHaveAttribute('data-playing', 'true');
+  await expect.poll(active, { timeout: 5000 }).not.toBe(paused);
+  await page.getByRole('heading', { level: 1 }).scrollIntoViewIfNeeded();
+  await expect(guide).toHaveAttribute('data-playing', 'false');
+  const offscreen = await active();
+  await page.waitForTimeout(2800);
+  expect(await active()).toBe(offscreen);
+  await guide.scrollIntoViewIfNeeded();
+  await expect(guide).toHaveAttribute('data-playing', 'true');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(guide).toHaveAttribute('data-playing', 'false');
+  await expect(guide.getByRole('button', { name: 'Play animation', exact: true })).toBeVisible();
+});
+
+test('reduced motion disables autoplay while keeping every shortcut explorable', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('./');
+  const guide = page.locator('[data-shortcut-guide]');
+  await guide.scrollIntoViewIfNeeded();
+  await expect(guide).toHaveAttribute('data-playing', 'false');
+  await expect(guide.getByRole('button', { name: 'Play animation', exact: true })).toBeVisible();
+  await page.waitForTimeout(2800);
+  await expect(guide.locator('[data-shortcut="n"]')).toHaveAttribute('aria-pressed', 'true');
+  expect(await guide.locator('kbd').first().evaluate(element => getComputedStyle(element).animationName)).toBe('none');
+  await guide.getByRole('button', { name: 'x: Complete a task', exact: true }).click();
+  await expect(guide.locator('[data-shortcut-counter]')).toHaveText('04 / 05');
+  await expect(guide).toHaveAttribute('data-playing', 'false');
 });
 
 test('FAQ uses native keyboard-accessible disclosure', async ({ page }) => {
@@ -117,6 +188,8 @@ test('content and navigation still work without JavaScript', async ({ browser })
     await expect(page.getByRole('button', { name: 'Copy installation command', exact: true })).toBeHidden();
     await expect(page.locator('.hero-preview img')).toBeVisible();
     await expect(page.locator('[data-terminal-demo]')).toHaveCount(0);
+    await expect(page.locator('[data-shortcut="n"]')).toBeDisabled();
+    await expect(page.locator('[data-shortcut-controls]')).toBeHidden();
     await page.locator('summary').filter({ hasText: 'Can I keep using my todo.txt files?' }).click();
     await expect(page.locator('details[open]')).toContainText('fork-specific extension');
   } finally {

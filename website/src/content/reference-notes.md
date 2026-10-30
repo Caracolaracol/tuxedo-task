@@ -74,8 +74,8 @@ before posting logs or configuration.
 Tuxedo Task is maintained by [Caracolaracol](https://github.com/Caracolaracol) and
 builds on [Tuxedo by Webstone Technologies and its contributors](https://github.com/webstonehq/tuxedo).
 The [MIT license and original copyright](https://github.com/Caracolaracol/tuxedo-task/blob/main/LICENSE)
-are preserved. The app's mask is original artwork; the website's decorative
-Twemoji roses remain under their separate CC BY 4.0 license, as credited below.
+are preserved. The app's mask is original artwork. The website's Openclipart rose
+border is CC0; its Twemoji roses remain under CC BY 4.0, as credited below.
 
 The feature comparison describes additions relative to the upstream revision
 this fork started from, not a guarantee about every later upstream release.

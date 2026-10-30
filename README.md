@@ -837,5 +837,5 @@ Code and original project assets are released under the [MIT License](LICENSE).
 The original Webstone Technologies Inc copyright notice is preserved. The
 externally hosted Tuxedo Mask character reference above is not an MIT-licensed
 project asset; see its linked source for rights information. The website's
-Twemoji rose illustrations are separately licensed under CC BY 4.0; see
+Openclipart rose border is CC0; its Twemoji roses are CC BY 4.0. See
 [`website/THIRD_PARTY.md`](website/THIRD_PARTY.md).

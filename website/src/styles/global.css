@@ -97,9 +97,6 @@
   .workflow-copy > .eyebrow { color: var(--accent); margin-bottom: 22px; }
   .workflow h2 { font-size: clamp(35px, 3.6vw, 48px); }
   .workflow-copy > p:not(.eyebrow) { color: var(--muted); font-size: 14px; line-height: 1.9; margin-top: 23px; }
-  .key-list { margin: 22px 0; }
-  .key-list > div { display: flex; align-items: center; gap: 20px; padding: 9px 0; font-size: 12px; }
-  .key-list > div > span:first-child { display: flex; gap: 5px; width: 68px; }
   kbd { display: inline-flex; align-items: center; justify-content: center; width: 27px; height: 27px; background: #fbf8f2; border: 1px solid #d3c9c3; border-bottom-width: 3px; border-radius: 5px; font-size: 11px; }
   .real-preview { min-width: 0; padding: 20px; border: 1px solid #443b4e; border-radius: 8px; background: var(--plum); box-shadow: 7px 9px 0 #e4dcd4; }
   .capture-label { display: flex; align-items: center; gap: 7px; color: #e8cfd4; font: 9px var(--mono); margin: 0 0 18px; }

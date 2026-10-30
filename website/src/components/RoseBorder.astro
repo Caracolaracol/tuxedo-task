@@ -1,0 +1,23 @@
+---
+import RoseIllustration from '../assets/rose-border.svg';
+---
+<!-- Complete CC0 rose-border artwork by johnny_automatic / Openclipart #1352. -->
+<div class="rose-border" aria-hidden="true" data-rose-border>
+  <span></span>
+  <RoseIllustration class="rose-garland" width={860} height={259} fill="currentColor" />
+  <span></span>
+</div>
+
+<style>
+  .rose-border { display: flex; align-items: center; justify-content: center; gap: 22px; padding: 20px 0 8px; color: var(--accent); }
+  .rose-border > span { height: 1px; background: var(--line); flex: 1; }
+  .rose-border :global(svg) { display: block; flex: 0 1 860px; min-width: 0; width: min(100%, 860px); height: auto; }
+  .rose-border :global(path[fill="#FFFFFF"]),
+  .rose-border :global(path[fill="#fff"]),
+  .rose-border :global(path[fill="#FFF"]) { fill: var(--paper); }
+  @media (max-width: 600px) {
+    .rose-border { gap: 0; padding: 14px 0 4px; }
+    .rose-border > span { display: none; }
+    .rose-border :global(svg) { flex-basis: 100%; }
+  }
+</style>

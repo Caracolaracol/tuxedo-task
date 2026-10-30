@@ -1,6 +1,8 @@
 ---
 import Icon from '../components/Icon.astro';
 import RoseDivider from '../components/RoseDivider.astro';
+import RoseBorder from '../components/RoseBorder.astro';
+import ShortcutGuide from '../components/ShortcutGuide.astro';
 import SiteHeader from '../components/SiteHeader.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import '../styles/global.css';
@@ -69,14 +71,14 @@ const faqs = [
           </figure>
         </section>
         <div class="principles" aria-label="Project principles"><span>Small tool. Clear intentions.</span><ul><li><Icon name="file" size={17} /> Plain-text forever</li><li><Icon name="check" size={17} /> Local-first</li><li><Icon name="tree" size={17} /> Room to grow</li><li><Icon name="github" size={17} /> MIT licensed</li></ul></div>
-        <RoseDivider />
+        <RoseBorder />
         <section class="features section-block" id="features" aria-labelledby="features-title">
           <div class="section-heading"><p class="eyebrow">01 / Features</p><div><h2 id="features-title">Features</h2><p>Additions to the original Tuxedo workflow.<br />Tasks, families, and projects.</p></div></div>
           <div class="feature-grid">{features.map((feature) => <article class="feature-card"><div class="feature-top"><span class="feature-icon"><Icon name={feature.icon} size={24} /></span><span class="feature-number">/{feature.number}</span></div><h3>{feature.title}</h3><p>{feature.body}</p></article>)}</div>
         </section>
         <RoseDivider />
         <section class="workflow section-block" aria-labelledby="workflow-title">
-          <div class="workflow-copy"><p class="eyebrow">02 / Stay in your flow</p><h2 id="workflow-title">Your terminal.<br /><em>Your kind of calm.</em></h2><p>No new system to maintain. Just a file, a few familiar keys, and a little more clarity about what comes next.</p><div class="key-list"><div><span><kbd>j</kbd> <kbd>k</kbd></span><span>Find your next thing</span></div><div><span><kbd>&gt;</kbd> <kbd>&lt;</kbd></span><span>Break it into smaller things</span></div><div><span><kbd>x</kbd></span><span>Enjoy crossing it off</span></div><div><span><kbd>u</kbd></span><span>Change your mind</span></div></div><a class="text-link" href={`${base}docs/#keybindings`}>All the shortcuts <Icon name="arrow" size={18} /></a></div>
+          <div class="workflow-copy"><p class="eyebrow">02 / Stay in your flow</p><h2 id="workflow-title">Your terminal.<br /><em>Your kind of calm.</em></h2><p>No new system to maintain. Just a file, a few familiar keys, and a little more clarity about what comes next.</p><ShortcutGuide /><a class="text-link" href={`${base}docs/#keybindings`}>All the shortcuts <Icon name="arrow" size={18} /></a></div>
           <div class="real-preview"><div class="capture-label"><span class="live-dot" aria-hidden="true"></span> The actual app <span>List view</span></div><a href={`${base}screenshots/list.svg`} aria-label="Open full-size list view of Tuxedo Task"><img src={`${base}screenshots/list.svg`} alt="Actual Tuxedo Task list view with project filters, tasks, and the detail sidebar" width="1040" height="512" loading="lazy" /></a><p>Rendered by the application itself. Your terminal, theme, and font may look different.</p></div>
         </section>
         <section class="inherited" aria-labelledby="inherited-title"><div><p class="eyebrow">Good roots. New branches.</p><h3 id="inherited-title">Everything we love about Tuxedo,<br />with a little more room to grow.</h3></div><ul><li>Natural-language dates</li><li>Recurring tasks</li><li>Phone capture on your LAN</li><li>Custom themes</li><li>Saved searches</li><li>Atomic file writes</li></ul><a href={upstream}>With thanks to upstream <span aria-hidden="true">↗</span></a></section>

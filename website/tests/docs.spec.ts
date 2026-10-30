@@ -21,6 +21,7 @@ test('documentation is linked from the landing and contains the full application
   await expect(page.locator('.docs-prose')).toContainText('Both command names are available');
   await expect(page.locator('.docs-prose')).toContainText('fork-specific extension');
   await expect(page.locator('.docs-prose')).toContainText('trusted networks only');
+  await expect(page.getByRole('link', { name: /^Source reference on GitHub/ })).toHaveAttribute('href', 'https://github.com/Caracolaracol/tuxedo-task/blob/main/README.md');
   expect(errors).toEqual([]);
 });
 
