@@ -65,8 +65,15 @@ pub fn run() -> io::Result<()> {
             println!();
             println!("    {REPOSITORY_URL}/releases");
             println!();
-            println!("If no binary is published for your platform, build from source:");
-            println!("    cargo install --git {REPOSITORY_URL} --locked --force");
+            if cfg!(windows) {
+                println!("On Windows, run the latest Setup.exe to update in place.");
+                println!(
+                    "Your task files and configuration are kept. Portable ZIPs are also available."
+                );
+            } else {
+                println!("If no binary is published for your platform, build from source:");
+                println!("    cargo install --git {REPOSITORY_URL} --locked --force");
+            }
         }
         InstallKind::Unknown => {
             println!("Could not detect the install method. Options:");
@@ -227,16 +234,7 @@ fn cache_path() -> Option<PathBuf> {
 }
 
 fn xdg_cache_home() -> Option<PathBuf> {
-    if let Some(v) = std::env::var_os("XDG_CACHE_HOME")
-        && !v.is_empty()
-    {
-        let p = PathBuf::from(&v);
-        if p.is_absolute() {
-            return Some(p);
-        }
-    }
-    let home = std::env::var_os("HOME")?;
-    Some(PathBuf::from(home).join(".cache"))
+    crate::xdg::cache_home()
 }
 
 fn now_epoch() -> u64 {

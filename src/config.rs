@@ -125,7 +125,8 @@ impl Config {
     }
 
     /// Resolve `${XDG_CONFIG_HOME:-$HOME/.config}/tuxedo/config.toml`.
-    /// Returns None only when neither XDG_CONFIG_HOME nor HOME is set.
+    /// On Windows, also supports APPDATA/USERPROFILE and preserves an existing
+    /// legacy ~/.config/tuxedo directory. Returns None when no base is available.
     pub fn path() -> Option<PathBuf> {
         let base = crate::xdg::config_home()?;
         Some(Self::path_in(&base))

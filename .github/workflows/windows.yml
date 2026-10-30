@@ -1,0 +1,81 @@
+name: Windows installer
+
+on:
+  push:
+    branches: [main, feat/windows-installer]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'Cargo.*'
+      - 'packaging/windows/**'
+      - '.github/workflows/windows.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'Cargo.*'
+      - 'packaging/windows/**'
+      - '.github/workflows/windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    runs-on: windows-2025
+    timeout-minutes: 25
+    env:
+      CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS: '-C target-feature=+crt-static'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - uses: Swatinem/rust-cache@v2
+      - name: Read package version
+        id: version
+        shell: pwsh
+        run: |
+          $version = [regex]::Match((Get-Content Cargo.toml -Raw), '(?m)^version = "([^"]+)"').Groups[1].Value
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid version' }
+          "version=$version" >> $env:GITHUB_OUTPUT
+      - name: Test Rust on native Windows
+        run: cargo test --all-targets --locked --target x86_64-pc-windows-msvc
+      - name: Build self-contained Windows binaries
+        run: cargo build --release --locked --target x86_64-pc-windows-msvc
+      - name: Verify no Visual C++ redistributable is required
+        shell: pwsh
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -property installationPath
+          $dumpbin = Get-ChildItem "$vs\VC\Tools\MSVC\*\bin\Hostx64\x64\dumpbin.exe" | Sort-Object FullName -Descending | Select-Object -First 1
+          if (-not $dumpbin) { throw 'dumpbin missing' }
+          $imports = & $dumpbin.FullName /DEPENDENTS target/x86_64-pc-windows-msvc/release/tuxedo.exe
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect PE imports' }
+          if (($imports -join "`n") -match '(?i)(VCRUNTIME|MSVCP|ucrtbased)\d*[^\s]*\.dll') { throw 'Unexpected VC runtime dependency' }
+      - name: Stage binaries
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist/stage | Out-Null
+          Copy-Item target/x86_64-pc-windows-msvc/release/tuxedo.exe dist/stage/tuxedo.exe
+          Copy-Item dist/stage/tuxedo.exe dist/stage/tuxedotask.exe
+      - name: Compile installer with preinstalled Inno Setup
+        shell: pwsh
+        run: ./packaging/windows/Build-Installer.ps1 -Version '${{ steps.version.outputs.version }}' -BinaryDir dist/stage -OutputDir dist
+      - name: Build checksum-verified older upgrade fixture
+        shell: pwsh
+        run: ./packaging/windows/Build-UpgradeFixture.ps1
+      - name: Authorized install, upgrade and uninstall tests in disposable Windows
+        shell: pwsh
+        run: pwsh -NoProfile -File packaging/windows/Test-Installer.ps1 -InstallerPath dist/tuxedo-task-v${{ steps.version.outputs.version }}-windows-x86_64-setup.exe -ExpectedVersion ${{ steps.version.outputs.version }}
+      - name: Upload installer and diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-installer-${{ steps.version.outputs.version }}
+          path: |
+            dist/*-setup.exe
+            dist/*-setup.exe.sha256
+            dist/installer-test-*.log
+          if-no-files-found: warn
