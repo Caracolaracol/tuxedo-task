@@ -8,6 +8,10 @@ if ($env:GITHUB_ACTIONS -ne 'true' -or $env:OS -ne 'Windows_NT') {
     throw 'Installation tests are authorized only on a disposable Windows GitHub Actions runner.'
 }
 $InstallerPath = (Resolve-Path -LiteralPath $InstallerPath).Path
+$checksum = [IO.File]::ReadAllText("$InstallerPath.sha256")
+if ($checksum.Contains("`r")) { throw 'Checksum files must use portable LF line endings.' }
+$expectedHash = ([regex]::Match($checksum, '^([a-f0-9]{64})  ')).Groups[1].Value
+if (-not $expectedHash -or (Get-FileHash -LiteralPath $InstallerPath -Algorithm SHA256).Hash -ine $expectedHash) { throw 'Installer checksum mismatch.' }
 $output = Split-Path $InstallerPath
 $previous = Join-Path $output 'test-fixtures/previous-installer.exe'
 if (-not (Test-Path -LiteralPath $previous)) { throw 'Build the synthetic upgrade fixture first.' }

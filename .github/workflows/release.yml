@@ -112,7 +112,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Alias smoke test failed" }
           Compress-Archive -Path "dist/$stage/*" -DestinationPath "dist/$stage.zip"
           $sha = (Get-FileHash "dist/$stage.zip" -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$sha  $stage.zip" | Set-Content -Encoding ascii "dist/$stage.zip.sha256"
+          [IO.File]::WriteAllText((Join-Path $PWD.Path "dist/$stage.zip.sha256"), "$sha  $stage.zip`n", [Text.Encoding]::ASCII)
       - name: Build Windows per-user installer (preinstalled Inno Setup)
         if: matrix.archive == 'zip'
         shell: pwsh
@@ -128,7 +128,7 @@ jobs:
           Move-Item -LiteralPath $versioned -Destination "dist/$name"
           Remove-Item -LiteralPath "$versioned.sha256"
           $sha = (Get-FileHash "dist/$name" -Algorithm SHA256).Hash.ToLowerInvariant()
-          "$sha  $name" | Set-Content -Encoding ascii "dist/$name.sha256"
+          [IO.File]::WriteAllText((Join-Path $PWD.Path "dist/$name.sha256"), "$sha  $name`n", [Text.Encoding]::ASCII)
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:

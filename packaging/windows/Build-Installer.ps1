@@ -19,4 +19,4 @@ foreach ($name in @('tuxedo.exe', 'tuxedotask.exe')) {
 if ($LASTEXITCODE -ne 0) { throw 'Inno Setup compilation failed' }
 $name = "tuxedo-task-v$Version-windows-x86_64-setup.exe"
 $hash = (Get-FileHash -LiteralPath (Join-Path $OutputDir $name) -Algorithm SHA256).Hash.ToLowerInvariant()
-"$hash  $name" | Set-Content -LiteralPath (Join-Path $OutputDir "$name.sha256") -Encoding ascii
+[IO.File]::WriteAllText((Join-Path $OutputDir "$name.sha256"), "$hash  $name`n", [Text.Encoding]::ASCII)
