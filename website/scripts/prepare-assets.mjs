@@ -4,6 +4,7 @@ import { copyFile, mkdir } from 'node:fs/promises';
 const assets = [
   ['../../src/serve/assets/icon.svg', '../public/brand.svg'],
   ['../../docs/screenshots/subtasks.svg', '../public/screenshots/subtasks.svg'],
+  ['../../docs/screenshots/list.svg', '../public/screenshots/list.svg'],
 ];
 
 for (const [source, destination] of assets) {

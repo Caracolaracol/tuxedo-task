@@ -5,13 +5,13 @@ on:
     branches: [feat/github-pages-astro, main]
     paths:
       - "website/**"
-      - "docs/screenshots/subtasks.svg"
+      - "docs/screenshots/**"
       - "src/serve/assets/icon.svg"
       - ".github/workflows/pages.yml"
   pull_request:
     paths:
       - "website/**"
-      - "docs/screenshots/subtasks.svg"
+      - "docs/screenshots/**"
       - "src/serve/assets/icon.svg"
       - ".github/workflows/pages.yml"
   workflow_dispatch:

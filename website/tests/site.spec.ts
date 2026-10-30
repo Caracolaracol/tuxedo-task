@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 
 const command = 'cargo install --git https://github.com/Caracolaracol/tuxedo-task --locked';
 
@@ -9,8 +10,8 @@ test('loads at the Pages subpath with working assets, metadata and attribution',
     if (response.url().startsWith('http://127.0.0.1:4321/') && response.status() >= 400) errors.push(response.url());
   });
   await page.goto('./');
-  await expect(page).toHaveTitle('Tuxedo Task — Less noise. More done.');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Less noise.More done.✳');
+  await expect(page).toHaveTitle('Tuxedo Task — for justice. with your tasks done');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('for justice. with your tasks done');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://caracolaracol.github.io/tuxedo-task/');
   await expect(page.locator('#install-command')).toHaveText(command);
   await expect(page.locator('footer')).toContainText('independent community fork');
@@ -26,25 +27,38 @@ test('loads at the Pages subpath with working assets, metadata and attribution',
   expect(errors).toEqual([]);
 });
 
-test('preview tabs work with pointer and keyboard', async ({ page }) => {
+test('hero uses the real renderer output and opens it with the keyboard', async ({ page, request }) => {
   await page.goto('./');
-  const subtasks = page.getByRole('tab', { name: '01 / Subtasks' });
-  const projects = page.getByRole('tab', { name: '02 / Projects' });
-  const text = page.getByRole('tab', { name: '03 / Plain text' });
-  await projects.click();
-  await expect(projects).toHaveAttribute('aria-selected', 'true');
-  await expect(page.locator('#panel-projects')).toBeVisible();
-  await expect(page.locator('#panel-subtasks')).toBeHidden();
-  await projects.press('ArrowRight');
-  await expect(text).toBeFocused();
-  await expect(page.locator('#panel-text')).toBeVisible();
-  await text.press('Home');
-  await expect(subtasks).toBeFocused();
-  await expect(page.locator('#panel-subtasks')).toBeVisible();
-  await subtasks.press('End');
-  await expect(text).toBeFocused();
-  await text.press('ArrowRight');
-  await expect(subtasks).toBeFocused();
+  const hero = page.locator('.hero-preview');
+  await expect(hero.locator('img')).toHaveAttribute('src', '/tuxedo-task/screenshots/subtasks.svg');
+  await expect(hero).toContainText('Rendered by the application itself');
+  await expect(page.locator('[data-terminal-demo]')).toHaveCount(0);
+  await expect(page.getByRole('tablist')).toHaveCount(0);
+  const image = await request.get('screenshots/subtasks.svg');
+  expect(await image.body()).toEqual(await readFile(new URL('../../docs/screenshots/subtasks.svg', import.meta.url)));
+  const fullSize = page.getByRole('link', { name: 'Open full-size application screenshot', exact: true });
+  await fullSize.focus();
+  await fullSize.press('Enter');
+  await expect(page).toHaveURL('http://127.0.0.1:4321/tuxedo-task/screenshots/subtasks.svg');
+});
+
+test('rose dividers are local, decorative, and credited under their own license', async ({ page, request }) => {
+  await page.goto('./');
+  const dividers = page.locator('.rose-divider');
+  await expect(dividers).toHaveCount(5);
+  for (const divider of await dividers.all()) {
+    await expect(divider).toHaveAttribute('aria-hidden', 'true');
+    await expect(divider.locator('img')).toHaveAttribute('src', '/tuxedo-task/third-party/rose.svg');
+    await expect(divider.locator('img')).toHaveAttribute('alt', '');
+  }
+  await expect(page.locator('footer .art-credit')).toContainText('Twemoji contributors');
+  await expect(page.locator('footer .art-credit a').last()).toHaveAttribute('href', 'https://creativecommons.org/licenses/by/4.0/');
+  const rose = await request.get('third-party/rose.svg');
+  expect(rose.ok()).toBeTruthy();
+  expect(await rose.body()).toEqual(await readFile(new URL('../public/third-party/rose.svg', import.meta.url)));
+  const license = await request.get('third-party/LICENSE-Twemoji-graphics.txt');
+  expect(license.ok()).toBeTruthy();
+  expect(await license.text()).toContain('Attribution 4.0 International');
 });
 
 test('copies the exact fork installation command', async ({ page, context }) => {
@@ -89,7 +103,8 @@ test('content and navigation still work without JavaScript', async ({ browser })
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await expect(page.locator('#install-command')).toHaveText(command);
     await expect(page.getByRole('button', { name: 'Copy installation command', exact: true })).toBeHidden();
-    await expect(page.getByRole('tablist')).toBeHidden();
+    await expect(page.locator('.hero-preview img')).toBeVisible();
+    await expect(page.locator('[data-terminal-demo]')).toHaveCount(0);
     await page.locator('summary').filter({ hasText: 'Can I keep using my todo.txt files?' }).click();
     await expect(page.locator('details[open]')).toContainText('fork-specific extension');
   } finally {

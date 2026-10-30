@@ -32,9 +32,10 @@ npx playwright install chromium
 npm test
 ```
 
-The 14 browser tests cover desktop/mobile layouts, the `/tuxedo-task/` subpath,
-assets, metadata, fork attribution, accessible preview tabs, native FAQ controls,
-clipboard success/failure, and content with JavaScript disabled. Layout checks
+The 16 browser tests cover desktop/mobile layouts, the `/tuxedo-task/` subpath,
+assets, metadata, fork attribution, real-renderer screenshots, decorative rose
+separators and their license, native FAQ controls, clipboard success/failure,
+and content with JavaScript disabled. Layout checks
 include 320, 375, 768, 1024, and 1440px widths. They test the **production build**.
 
 For a manual production preview:
@@ -52,21 +53,25 @@ An explicitly backgrounded manual preview can be stopped with
 ## Assets and content
 
 - `src/pages/index.astro`: content, metadata, install command and clipboard logic.
-- `src/components/TerminalPreview.astro`: illustrative sample, not an embedded app.
+- `src/components/RoseDivider.astro`: decorative, locally hosted Twemoji roses.
 - `src/styles/global.css`: responsive, paper/plum/cerise visual identity.
-- `scripts/prepare-assets.mjs`: copies the app's original mask and the real
-  screenshot from the repository into `public/` before development/builds.
-  Generated copies are ignored; edit the originals in `src/serve/assets/icon.svg`
-  and `docs/screenshots/subtasks.svg` at the repository root.
+- `scripts/prepare-assets.mjs`: copies the app's original mask and real UI renders
+  from the repository into `public/` before development/builds. The hero uses
+  `docs/screenshots/subtasks.svg`; the workflow section uses `docs/screenshots/list.svg`.
+  These come from the application's actual Ratatui renderer with sample tasks,
+  not an HTML/CSS mockup. Generated copies are ignored; edit the originals.
 - `public/social-card.svg` and `.png`: original social preview. After editing the
   SVG, run `npm run social-image` (requires the Playwright browser), then commit
   both files.
 
 No analytics, external fonts, cookies, hosted backend, or UI framework runtime.
-Installation and docs work without JavaScript. Small native scripts enhance
-preview tabs and copy-to-clipboard; reduced-motion and keyboard users are supported.
+Installation, screenshots, and docs work without JavaScript. A small native
+script enhances copy-to-clipboard; reduced-motion and keyboard users are supported.
 The site preserves attribution to upstream Tuxedo and uses no third-party
-character artwork.
+character artwork. Rose illustrations were sourced online from Twemoji, are
+hosted locally without modifications, and remain under CC BY 4.0 rather than MIT.
+See [`THIRD_PARTY.md`](THIRD_PARTY.md) for pinned source URLs and license details;
+the footer also credits the creators.
 
 ## GitHub Pages
 
