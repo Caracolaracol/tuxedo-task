@@ -12,6 +12,7 @@ test('loads at the Pages subpath with working assets, metadata and attribution',
   await page.goto('./');
   await expect(page).toHaveTitle('Tuxedo Task — for justice. with your tasks done');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('for justice. with your tasks done');
+  await expect(page.locator('#closing-title')).toHaveText('sharp enough to prune crime');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://caracolaracol.github.io/tuxedo-task/');
   await expect(page.locator('#install-command')).toHaveText(command);
   await expect(page.locator('footer')).toContainText('independent community fork');
