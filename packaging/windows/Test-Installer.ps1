@@ -63,9 +63,18 @@ function Uninstall {
     $process = Start-Process -FilePath $uninstaller -ArgumentList ('/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LOG="' + $log + '"') -PassThru
     if (-not $process.WaitForExit(90000)) { $process.Kill(); throw 'Uninstaller timed out.' }
     Assert ($process.ExitCode -eq 0) 'Uninstaller failed.'
-    # Inno may finish removing the original uninstaller from a temporary process.
-    $deadline = [DateTime]::UtcNow.AddSeconds(15)
-    while ((Test-Path -LiteralPath $uninstaller) -and [DateTime]::UtcNow -lt $deadline) { Start-Sleep -Milliseconds 100 }
+    # The original process/file can disappear before the temporary second phase
+    # finishes usPostUninstall (including our PATH helper). Wait for that worker,
+    # not just for unins000.exe to vanish, before checking registry state.
+    $deadline = [DateTime]::UtcNow.AddSeconds(25)
+    do {
+        $workers = @(Get-CimInstance Win32_Process -Filter "Name = '_unins.tmp'" | Where-Object {
+            $_.CommandLine -and $_.CommandLine.Contains($directory, [StringComparison]::OrdinalIgnoreCase)
+        })
+        $pending = (Test-Path -LiteralPath $uninstaller) -or $workers.Count -gt 0
+        if ($pending) { Start-Sleep -Milliseconds 100 }
+    } while ($pending -and [DateTime]::UtcNow -lt $deadline)
+    Assert (-not $pending) 'Uninstaller second phase did not finish.'
 }
 function AssertData {
     Assert ([IO.File]::ReadAllText($configFile) -ceq $sentinel) 'User configuration changed.'
