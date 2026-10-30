@@ -11,6 +11,7 @@ const base = import.meta.env.BASE_URL;
 const repo = 'https://github.com/Caracolaracol/tuxedo-task';
 const upstream = 'https://github.com/webstonehq/tuxedo';
 const install = 'brew install caracolaracol/tap/tuxedotask';
+const windowsInstaller = `${repo}/releases/latest/download/tuxedo-task-windows-x86_64-setup.exe`;
 const canonical = new URL(base, Astro.site).href;
 const features = [
   { icon: 'tree' as const, number: '01', title: 'Subtasks', body: 'Nest tasks with two spaces per level. Move, complete, or delete a parent together with its descendants, and undo the operation as a unit.' },
@@ -85,7 +86,9 @@ const faqs = [
         <section class="installation section-block" id="install" aria-labelledby="install-title">
           <div class="section-heading"><p class="eyebrow">03 / Make yourself at home</p><div><h2 id="install-title">One command.<br /><em>A fresh start.</em></h2><p>Install a precompiled binary.<br />No Rust or Cargo required.</p></div></div>
           <div class="install-box"><div class="install-top"><span><span class="live-dot" aria-hidden="true"></span> Install with Homebrew</span><span>macOS / Linux</span></div><div class="install-command"><span class="command-prompt" aria-hidden="true">$</span><code id="install-command">{install}</code><button class="copy-button" type="button" data-copy hidden aria-label="Copy installation command"><Icon name="copy" size={18} /><span>Copy</span></button></div><p class="copy-feedback" role="status" aria-live="polite" data-copy-status></p><div class="install-bottom"><span>Then run <code>tuxedo /path/to/todo.txt</code></span><a href={`${base}docs/#installation`}>Full installation guide <span aria-hidden="true">↗</span></a></div></div>
-          <div class="install-notes"><p><strong>Both command names work</strong> Use <code>tuxedo</code> or <code>tuxedotask</code>. They open the same application and keep the existing task files and <code>~/.config/tuxedo</code> configuration. Homebrew must already be available.</p><p><strong>Windows or manual install?</strong> Download a <a href={`${repo}/releases/latest`}>precompiled release</a> for your OS and CPU. No Cargo is required. Source installation remains an optional alternative in the documentation.</p></div>
+          <div class="windows-download"><a class="button button-primary" href={windowsInstaller}>Download Windows installer <Icon name="arrow" size={18} /></a><p>Windows 10 / 11 · x86-64<br />Per-user Setup.exe. No administrator, Rust or Cargo required.</p></div>
+          <p class="install-warning">The initial Windows installer is unsigned; SmartScreen may warn. Download from the official release and verify the <a href={`${windowsInstaller}.sha256`}>SHA-256 checksum</a>. Do not disable Windows security.</p>
+          <div class="install-notes"><p><strong>Both command names work</strong> Use <code>tuxedo</code> or <code>tuxedotask</code>. They open the same application and keep the existing task files and your configuration. Homebrew must already be available for the command above.</p><p><strong>Prefer a portable download?</strong> <a href={`${repo}/releases/latest`}>ZIP / tar.gz archives</a> remain available for your OS and CPU. The Windows installer adds optional user PATH integration and a terminal shortcut; uninstall keeps your tasks and settings. See the <a href={`${base}docs/#windows-installer-recommended`}>Windows installation guide</a>.</p></div>
           <p class="install-warning"><span aria-hidden="true">↳</span> <code>brew install tuxedo</code> installs upstream, not this fork. The Homebrew formulas conflict; choose which owns that command instead of forcing an overwrite.</p>
         </section>
         <RoseDivider showRose={false} />

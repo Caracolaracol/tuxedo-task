@@ -123,6 +123,8 @@
   .install-bottom { display: flex; justify-content: space-between; gap: 0.9375rem; padding: 1.0625rem 1.5rem; background: #2c2639; color: #bdb0ca; font-size: 0.6875rem; }
   .install-bottom code { color: #e8cfd4; font-size: 0.625rem; }
   .install-bottom a { color: #e8cfd4; text-decoration: none; }
+  .windows-download { display: flex; align-items: center; gap: 1.5rem; margin-top: 1.5rem; }
+  .windows-download p { color: var(--muted); font-size: 0.75rem; line-height: 1.8; }
   .install-notes { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-top: 1.5625rem; color: var(--muted); font-size: 0.6875rem; line-height: 1.9; }
   .install-notes strong { display: block; font-size: 0.75rem; color: var(--ink); margin-bottom: 0.3125rem; }
   .install-notes code, .install-warning code { font-size: 0.625rem; }
@@ -221,6 +223,7 @@
     .copy-button > span { display: none; }
     .copy-feedback { font-size: 0.5625rem; padding: 0.625rem 0.9375rem; min-height: 2.625rem; }
     .install-bottom { flex-direction: column; padding: 0.9375rem; font-size: 0.625rem; gap: 0.625rem; }
+    .windows-download { flex-direction: column; align-items: stretch; gap: 0.875rem; }
     .install-notes { grid-template-columns: 1fr; gap: 1.25rem; font-size: 0.75rem; }
     .install-warning { font-size: 0.6875rem; line-height: 1.8; }
     .faq { grid-template-columns: 1fr; gap: 1.5625rem; padding-top: 3.125rem; }

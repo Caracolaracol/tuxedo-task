@@ -6,6 +6,11 @@ For a Homebrew install, confirm that Homebrew's `bin` directory is on PATH (see
 Homebrew's `brew shellenv` setup instructions), then reopen your terminal.
 `tuxedotask` is an alternative name for the same app.
 
+For Windows Setup, close and reopen your terminal after installation. The
+optional PATH checkbox affects your user PATH, not terminals already running.
+The **Tuxedo Task** Start menu shortcut works even when PATH integration is
+unchecked. Re-run Setup to change that option; no Rust/Cargo setup is needed.
+
 For optional Cargo installs, executables normally go into `~/.cargo/bin` on
 macOS/Linux or `%USERPROFILE%\.cargo\bin` on Windows, unless `CARGO_HOME` or an
 install root was customized. Add the relevant `bin` directory to PATH. For

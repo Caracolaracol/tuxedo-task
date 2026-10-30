@@ -26,6 +26,9 @@ test('loads at the Pages subpath with working assets, metadata and attribution',
   await expect(page.locator('.install-top')).toContainText('Install with Homebrew');
   await expect(page.locator('.installation')).toContainText('No Rust or Cargo required.');
   await expect(page.locator('.install-notes')).toContainText('tuxedotask');
+  await expect(page.getByRole('link', { name: 'Download Windows installer', exact: true })).toHaveAttribute('href', 'https://github.com/Caracolaracol/tuxedo-task/releases/latest/download/tuxedo-task-windows-x86_64-setup.exe');
+  await expect(page.getByRole('link', { name: 'SHA-256 checksum', exact: true })).toHaveAttribute('href', 'https://github.com/Caracolaracol/tuxedo-task/releases/latest/download/tuxedo-task-windows-x86_64-setup.exe.sha256');
+  await expect(page.locator('.installation')).toContainText('unsigned');
   await expect(page.locator('footer')).toContainText('independent community fork');
   await expect(page.locator('footer a[href="https://github.com/webstonehq/tuxedo"]')).toBeVisible();
   for (const image of await page.locator('img').all()) {

@@ -164,6 +164,9 @@ another theme is skipped with a warning at startup.
 
 ## Install
 
+Choose your system: Homebrew for macOS/Linux, or the Windows installer below.
+Neither option needs Rust or Cargo.
+
 ### Recommended: Homebrew (macOS and Linux, no Cargo required)
 
 With [Homebrew](https://brew.sh/) available:
@@ -191,7 +194,35 @@ rather than forcing an overwrite. Homebrew does not remove an existing Cargo or
 manual copy. Check `command -v tuxedo` / `command -v tuxedotask` to confirm PATH
 precedence. Back up your task files and config before switching clients.
 
-### Precompiled downloads (including Windows)
+### Windows installer (recommended)
+
+1. Download [Tuxedo Task Setup.exe](https://github.com/Caracolaracol/tuxedo-task/releases/latest/download/tuxedo-task-windows-x86_64-setup.exe)
+   from our official GitHub release. Windows 10 (1809+) / Windows 11, x86-64.
+2. Run the setup wizard. It installs for **your user only** in
+   `%LOCALAPPDATA%\Programs\TuxedoTask`, without an administrator prompt.
+   Leave the optional user PATH checkbox selected to use `tuxedo` and
+   `tuxedotask` in a new terminal; a Start menu shortcut is also created.
+3. Open **Tuxedo Task** from Start, or close/reopen your terminal and follow
+   [Usage](#usage) to choose your task file.
+
+The shortcut opens a terminal in your Documents folder, not the program folder.
+Installing alone does not create a personal `todo.txt`: choose a path when
+opening the app, or choose `c` on the first-run welcome screen. Setup never
+removes another Cargo/manual/upstream copy. The shortcut always opens this
+installation even if another copy appears earlier on PATH.
+
+To update, close Tuxedo Task and run the newer Setup.exe in the same location.
+Uninstall through Windows Settings → Apps. Tasks, configuration, notes and
+unregistered files are kept; uninstall removes only this installer's PATH
+entry, not entries you already had or changes made by other software.
+
+**Unsigned initial release:** Windows SmartScreen may show an unknown-publisher
+warning. Download only from the official release and compare its
+[SHA-256 file](https://github.com/Caracolaracol/tuxedo-task/releases/latest/download/tuxedo-task-windows-x86_64-setup.exe.sha256).
+Do not disable Windows security. An optional checksum command is in the
+[late CLI reference](#verify-a-windows-installer); it is not an installation step.
+
+### Precompiled downloads (portable option, including Windows)
 
 Download your platform archive and its `.sha256` file from
 [this fork's Releases](https://github.com/Caracolaracol/tuxedo-task/releases/latest).
@@ -772,6 +803,19 @@ tuxedo update
 `--version` identifies the fork as **Tuxedo Task**. `--help` lists available
 options and commands. `tuxedo update` (or `tuxedotask update`) only prints upgrade
 instructions for your install method; it never installs anything automatically.
+
+### Verify a Windows installer
+
+This PowerShell command only checks a download; it does not install anything:
+
+```powershell
+Get-FileHash .\tuxedo-task-windows-x86_64-setup.exe -Algorithm SHA256
+```
+
+Compare the hash with the adjacent `.sha256` file from the same official release;
+uppercase/lowercase hexadecimal letters mean the same hash.
+Signing/SmartScreen reputation and a future WinGet submission are separate from
+these checks; no WinGet package is currently advertised as published.
 
 ### Task commands and automation
 

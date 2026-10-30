@@ -33,6 +33,10 @@ test('documentation is linked from the landing and contains the full application
   await expect(page.locator('.docs-prose')).toContainText('brew install caracolaracol/tap/tuxedotask');
   await expect(page.locator('.docs-prose')).toContainText('cargo install --git https://github.com/Caracolaracol/tuxedo-task --locked');
   await expect(page.locator('.docs-prose')).toContainText('Both command names are available');
+  await expect(page.locator('#windows-installer-recommended')).toBeVisible();
+  await expect(page.locator('.docs-prose a[href="https://github.com/Caracolaracol/tuxedo-task/releases/latest/download/tuxedo-task-windows-x86_64-setup.exe"]')).toBeVisible();
+  await expect(page.locator('.docs-prose')).toContainText('without an administrator prompt');
+  await expect(page.locator('.docs-prose')).toContainText('APPDATA');
   await expect(page.locator('.docs-prose')).toContainText('fork-specific extension');
   await expect(page.locator('.docs-prose')).toContainText('trusted networks only');
   await expect(page.getByRole('link', { name: /^Source reference on GitHub/ })).toHaveAttribute('href', 'https://github.com/Caracolaracol/tuxedo-task/blob/main/README.md');

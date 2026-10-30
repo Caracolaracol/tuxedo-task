@@ -2,7 +2,7 @@
 
 Once [installation](#installation) is complete, open Tuxedo Task and create your
 first task. `tuxedo` and `tuxedotask` open the same app when installed through
-Homebrew or a precompiled download.
+Homebrew, the Windows installer, or a portable download.
 
 ### Your first task
 
@@ -29,6 +29,12 @@ tuxedo "$HOME\Documents\tasks\todo.txt"
 These examples open or create `Documents/tasks/todo.txt` in your home folder.
 There is no need to run `touch` or create an empty file beforehand. Back up
 existing task files and configuration before switching from another client.
+
+**Installed with Windows Setup?** Reopen your terminal after installing so it
+sees the new PATH entry. You can also open **Tuxedo Task** from Start; that
+shortcut starts in Documents and uses the same file lookup. If nothing is
+configured there, choose `c` on the welcome screen to create `todo.txt`, as
+explained below.
 
 2. Press `n`, type a task, and press `Enter` to save. If natural-language parsing
    rewrites your draft, review it and press `Enter` again to confirm.
