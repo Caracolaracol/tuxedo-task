@@ -105,9 +105,12 @@ rights for other projects.
 ### Custom themes
 
 Beyond the built-ins, tuxedo loads any `*.toml` file you drop in
-`${XDG_CONFIG_HOME:-$HOME/.config}/tuxedo/themes/`. Each one joins the `T`
+`${XDG_CONFIG_HOME:-$HOME/.config}/tuxedo/themes/` (native Windows 2026.10.2+:
+`%APPDATA%\tuxedo\themes`, respecting XDG/legacy settings as described under
+[Configuration](#configuration)). Each one joins the `T`
 picker in sorted filename order. Ready-made themes live in
-[`docs/themes/`](docs/themes) — copy one in and press `T`:
+[`docs/themes/`](docs/themes) — copy one into your platform's theme directory
+and press `T`. macOS/Linux example:
 
 ```sh
 mkdir -p ~/.config/tuxedo/themes
@@ -202,12 +205,12 @@ Rust and Cargo are **not** needed for these downloads either.
 | Linux x86-64 | `x86_64-unknown-linux-gnu` |
 | Windows x86-64 | `x86_64-pc-windows-msvc` |
 
-For example, after downloading the Apple Silicon archive and checksum into the
-same directory:
+For example, for the v2026.10.2 Apple Silicon archive and checksum in the same
+directory (match the version in your own downloaded filenames):
 
 ```sh
-shasum -a 256 -c tuxedo-task-v2026.10.1-aarch64-apple-darwin.tar.gz.sha256
-tar -xzf tuxedo-task-v2026.10.1-aarch64-apple-darwin.tar.gz
+shasum -a 256 -c tuxedo-task-v2026.10.2-aarch64-apple-darwin.tar.gz.sha256
+tar -xzf tuxedo-task-v2026.10.2-aarch64-apple-darwin.tar.gz
 ```
 
 Extract the matching archive and place `tuxedo` and `tuxedotask` in a directory
@@ -342,7 +345,9 @@ can browse, un-archive, or permanently delete past tasks.
 ## Keybindings
 
 Custom normal-mode keybindings can be added in
-`${XDG_CONFIG_HOME:-$HOME/.config}/tuxedo/keybinds.toml`:
+`${XDG_CONFIG_HOME:-$HOME/.config}/tuxedo/keybinds.toml`. On native Windows
+2026.10.2+, the default is `%APPDATA%\tuxedo\keybinds.toml`; explicit XDG and
+existing legacy settings are respected (see [Configuration](#configuration)).
 
 The block below lists every rebindable action with the key it ships with —
 copy it, then change the keys you care about and delete the rest (anything you
@@ -680,8 +685,17 @@ if a producer must be serialized with the TUI drain.
 
 ## Configuration
 
-Persisted to `${XDG_CONFIG_HOME:-$HOME/.config}/tuxedo/config.toml`. Cycling
-theme, density, or sort, and toggling sidebars / line-numbers / done-visibility
+On macOS/Linux, persisted to
+`${XDG_CONFIG_HOME:-$HOME/.config}/tuxedo/config.toml`. Native Windows from
+2026.10.2 uses `%APPDATA%\tuxedo\config.toml` by default. For home-relative
+paths, `%USERPROFILE%` supplies the home directory when `HOME` is absent.
+An explicit absolute `XDG_CONFIG_HOME` takes priority;
+an existing legacy `~/.config/tuxedo` directory is kept in place rather than
+silently migrated. Keybindings and user themes share that configuration base.
+The update-check cache uses `%LOCALAPPDATA%\tuxedo-task` on native Windows
+(or the explicit `XDG_CACHE_HOME`). Task files stay at the paths you choose.
+
+Cycling theme, density, or sort, and toggling sidebars / line-numbers / done-visibility
 all update the file. Active project/context filters are also persisted. Unknown
 keys are ignored.
 
