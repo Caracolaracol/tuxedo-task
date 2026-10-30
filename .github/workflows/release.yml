@@ -2,96 +2,116 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v*"
+    tags: ["v*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to release (e.g. v2026.5.1)"
+        description: "Existing version tag to release (for example v2026.10.1)"
         required: true
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
 
 jobs:
+  validate:
+    name: Validate release source
+    runs-on: ubuntu-22.04
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Check version tag matches Cargo
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          version=$(python3 -c 'import re; print(re.search(r"^version = \"([^\"]+)\"", open("Cargo.toml").read(), re.M)[1])')
+          test "$RELEASE_TAG" = "v$version"
+      - run: cargo fmt --all --check
+      - run: cargo clippy --all-targets --locked -- -D warnings
+      - run: cargo test --all-targets --locked
+
   build:
     name: Build ${{ matrix.target }}
+    needs: validate
     runs-on: ${{ matrix.os }}
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+      MACOSX_DEPLOYMENT_TARGET: "12.0"
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             archive: tar.gz
-          - os: ubuntu-latest
+          - os: ubuntu-22.04-arm
             target: aarch64-unknown-linux-gnu
             archive: tar.gz
-            linker: aarch64-linux-gnu-gcc
-            apt_packages: gcc-aarch64-linux-gnu
-          - os: macos-latest
+          - os: macos-15-intel
             target: x86_64-apple-darwin
             archive: tar.gz
-          - os: macos-latest
+          - os: macos-15
             target: aarch64-apple-darwin
             archive: tar.gz
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             archive: zip
-
+            executable_suffix: .exe
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.tag || github.ref_name }}
-
-      - name: Install mise
-        uses: jdx/mise-action@v4
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          install: true
-          cache: true
-
-      - name: Add Rust target
-        run: rustup target add ${{ matrix.target }}
-
-      - name: Install cross-compilation toolchain
-        if: matrix.apt_packages
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ${{ matrix.apt_packages }}
-
-      - name: Configure cross linker
-        if: matrix.linker
-        run: |
-          target_upper=$(echo "${{ matrix.target }}" | tr '[:lower:]-' '[:upper:]_')
-          echo "CARGO_TARGET_${target_upper}_LINKER=${{ matrix.linker }}" >> "$GITHUB_ENV"
-
+          targets: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@v2
       - name: Build
         run: cargo build --release --locked --target ${{ matrix.target }}
-
+      - name: Smoke-test native executable
+        shell: bash
+        run: |
+          set -euo pipefail
+          binary="target/${{ matrix.target }}/release/tuxedo${{ matrix.executable_suffix }}"
+          test "$("$binary" --version)" = "Tuxedo Task ${RELEASE_TAG#v}"
+          "$binary" --help
       - name: Package (unix)
         if: matrix.archive == 'tar.gz'
         shell: bash
         run: |
-          version="${{ inputs.tag || github.ref_name }}"
-          stage="tuxedo-task-${version}-${{ matrix.target }}"
+          set -euo pipefail
+          stage="tuxedo-task-${RELEASE_TAG}-${{ matrix.target }}"
           mkdir -p "dist/${stage}"
           cp "target/${{ matrix.target }}/release/tuxedo" "dist/${stage}/"
+          ln -s tuxedo "dist/${stage}/tuxedotask"
           cp README.md LICENSE "dist/${stage}/"
+          "dist/${stage}/tuxedotask" --version
           tar -C dist -czf "dist/${stage}.tar.gz" "${stage}"
-          shasum -a 256 "dist/${stage}.tar.gz" > "dist/${stage}.tar.gz.sha256"
-
+          (cd dist && shasum -a 256 "${stage}.tar.gz" > "${stage}.tar.gz.sha256")
       - name: Package (windows)
         if: matrix.archive == 'zip'
         shell: pwsh
         run: |
-          $version = "${{ inputs.tag || github.ref_name }}"
-          $stage = "tuxedo-task-$version-${{ matrix.target }}"
+          $stage = "tuxedo-task-$($env:RELEASE_TAG)-${{ matrix.target }}"
           New-Item -ItemType Directory -Force -Path "dist/$stage" | Out-Null
           Copy-Item "target/${{ matrix.target }}/release/tuxedo.exe" "dist/$stage/"
+          Copy-Item "target/${{ matrix.target }}/release/tuxedo.exe" "dist/$stage/tuxedotask.exe"
           Copy-Item README.md, LICENSE "dist/$stage/"
+          & "dist/$stage/tuxedotask.exe" --version
+          if ($LASTEXITCODE -ne 0) { throw "Alias smoke test failed" }
           Compress-Archive -Path "dist/$stage/*" -DestinationPath "dist/$stage.zip"
-          (Get-FileHash "dist/$stage.zip" -Algorithm SHA256).Hash | Out-File -Encoding ascii "dist/$stage.zip.sha256"
-
+          $sha = (Get-FileHash "dist/$stage.zip" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$sha  $stage.zip" | Set-Content -Encoding ascii "dist/$stage.zip.sha256"
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -106,22 +126,32 @@ jobs:
     name: Publish release
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
     steps:
-      - uses: actions/checkout@v6
-
-      - name: Download artifacts
-        uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
-
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-          name: ${{ github.event.inputs.tag || github.ref_name }}
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          name: Tuxedo Task ${{ inputs.tag || github.ref_name }}
           generate_release_notes: true
           fail_on_unmatched_files: true
+          body: |
+            Precompiled Tuxedo Task binaries. End users do not need Rust or Cargo.
+
+            Each archive includes both `tuxedo` and `tuxedotask`, plus the MIT license.
+            Download the archive for your OS/CPU and verify its `.sha256` checksum.
+
+            macOS and Linux users can also install through our own Homebrew tap:
+            `brew install caracolaracol/tap/tuxedotask`
+
+            Documentation: https://caracolaracol.github.io/tuxedo-task/docs/
+            This is an independent community fork of https://github.com/webstonehq/tuxedo.
           files: |
             dist/*.tar.gz
             dist/*.zip

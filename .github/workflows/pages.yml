@@ -2,7 +2,7 @@ name: Website / GitHub Pages
 
 on:
   push:
-    branches: [feat/github-pages-astro, main]
+    branches: [main]
     paths:
       - "README.md"
       - "website/**"
@@ -53,7 +53,7 @@ jobs:
 
   deploy:
     name: Publish GitHub Pages
-    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/feat/github-pages-astro' || github.ref == 'refs/heads/main')
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     permissions:

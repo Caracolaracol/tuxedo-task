@@ -152,6 +152,9 @@ fn print_usage() {
     println!("       tuxedo <command> [args]       run a one-shot command");
     println!("       tuxedo update");
     println!();
+    println!("Homebrew and prebuilt releases also provide `tuxedotask` as an alias.");
+    println!("Both commands use the same task files and ~/.config/tuxedo configuration.");
+    println!();
     println!("Without FILE or a command, opens ./todo.txt if present; otherwise");
     println!("prompts to create ./todo.txt here or open a sample todo.txt, in");
     println!("the interactive TUI.");

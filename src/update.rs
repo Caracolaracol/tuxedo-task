@@ -49,11 +49,11 @@ pub fn run() -> io::Result<()> {
     println!();
     match kind {
         InstallKind::Homebrew => {
-            println!("This fork has no Homebrew formula. Install Tuxedo Task from source:");
+            println!("Looks like a Homebrew install. Update this fork with:");
             println!();
-            println!("    cargo install --git {REPOSITORY_URL} --locked --force");
+            println!("    brew update && brew upgrade {HOMEBREW_FORMULA}");
             println!();
-            println!("The upstream Homebrew package does not include this fork's features.");
+            println!("Both `tuxedo` and `tuxedotask` run the same application.");
         }
         InstallKind::Cargo => {
             println!("Looks like a `cargo install` build. Update with:");
@@ -71,6 +71,7 @@ pub fn run() -> io::Result<()> {
         InstallKind::Unknown => {
             println!("Could not detect the install method. Options:");
             println!();
+            println!("    brew upgrade {HOMEBREW_FORMULA}");
             println!("    cargo install --git {REPOSITORY_URL} --locked --force");
             println!("    {REPOSITORY_URL}/releases");
         }
@@ -121,6 +122,7 @@ const CACHE_TTL: Duration = Duration::from_secs(24 * 60 * 60);
 const NEGATIVE_CACHE_TTL: Duration = Duration::from_secs(60 * 60);
 const CURL_TIMEOUT_SECS: u64 = 5;
 const REPOSITORY_URL: &str = "https://github.com/Caracolaracol/tuxedo-task";
+const HOMEBREW_FORMULA: &str = "caracolaracol/tap/tuxedotask";
 const RELEASE_URL: &str = "https://api.github.com/repos/Caracolaracol/tuxedo-task/releases/latest";
 const CACHE_DIR: &str = "tuxedo-task";
 
@@ -297,6 +299,7 @@ mod tests {
     #[test]
     fn update_targets_the_fork_and_has_a_separate_cache() {
         assert_eq!(REPOSITORY_URL, env!("CARGO_PKG_REPOSITORY"));
+        assert_eq!(HOMEBREW_FORMULA, "caracolaracol/tap/tuxedotask");
         assert_eq!(
             RELEASE_URL,
             "https://api.github.com/repos/Caracolaracol/tuxedo-task/releases/latest"

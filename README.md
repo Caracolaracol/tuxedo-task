@@ -161,32 +161,82 @@ another theme is skipped with a warning at startup.
 
 ## Install
 
-### Recommended: install this fork with Cargo
+### Recommended: Homebrew (macOS and Linux, no Cargo required)
 
-Prerequisites: **Git**, a **current stable Rust toolchain** (Rust 2024 edition,
-including Cargo), and your platform's native linker/build tools. Use
-[rustup](https://rustup.rs/) if you need Rust; on macOS the native tools come with
-Xcode Command Line Tools, on Linux with your distribution's C build toolchain,
-and on Windows with Visual Studio C++ Build Tools for the MSVC toolchain.
+With [Homebrew](https://brew.sh/) available:
 
 ```sh
-cargo install --git https://github.com/Caracolaracol/tuxedo-task --locked
+brew install caracolaracol/tap/tuxedotask
 tuxedo --version
 tuxedo --help
 ```
 
-The package and executable are still named **`tuxedo`** for compatibility;
-`--version` identifies it as **Tuxedo Task**. Cargo puts the executable in
-`$CARGO_HOME/bin` (normally `~/.cargo/bin`, or `%USERPROFILE%\.cargo\bin` on
-Windows). Make sure that directory is on `PATH`; restart your shell after
-installing Rust if necessary.
+Homebrew downloads a **precompiled binary** and verifies its SHA-256 checksum.
+It does not install Rust or Cargo or compile the application on your machine.
+The tap supports Apple Silicon / Intel Macs (macOS 12+) and ARM64 / x86-64 Linux.
+Linux binaries are built on Ubuntu 22.04 and require glibc 2.35 or newer.
 
-**Already have upstream Tuxedo installed?** Both applications use the same
-executable name and configuration directory. Back up your task files and config
-first. Add `--force` to the Cargo install command to replace a Cargo-installed
-`tuxedo`. If you also have a Homebrew/manual copy, check `command -v tuxedo`
-(macOS/Linux) or `where.exe tuxedo` (Windows) to confirm which one your shell runs.
-Installing the fork does not migrate or delete your task files.
+Both command names are available and run the **same application**:
+
+```sh
+tuxedo /path/to/todo.txt
+tuxedotask /path/to/todo.txt
+```
+
+The config stays under `~/.config/tuxedo` (or your XDG config directory), and
+existing task files are not migrated or deleted.
+
+**Already have upstream Tuxedo installed?** `brew install tuxedo` installs the
+original application, not this fork. Our formula conflicts with the upstream
+Homebrew formula because both provide `tuxedo`; choose which one you want linked
+rather than forcing an overwrite. Homebrew does not remove an existing Cargo or
+manual copy. Check `command -v tuxedo` / `command -v tuxedotask` to confirm PATH
+precedence. Back up your task files and config before switching clients.
+
+### Precompiled downloads (including Windows)
+
+Download your platform archive and its `.sha256` file from
+[this fork's Releases](https://github.com/Caracolaracol/tuxedo-task/releases/latest).
+Rust and Cargo are **not** needed for these downloads either.
+
+| Platform | Archive target |
+| --- | --- |
+| macOS Apple Silicon | `aarch64-apple-darwin` |
+| macOS Intel | `x86_64-apple-darwin` |
+| Linux ARM64 | `aarch64-unknown-linux-gnu` |
+| Linux x86-64 | `x86_64-unknown-linux-gnu` |
+| Windows x86-64 | `x86_64-pc-windows-msvc` |
+
+For example, after downloading the Apple Silicon archive and checksum into the
+same directory:
+
+```sh
+shasum -a 256 -c tuxedo-task-v2026.10.1-aarch64-apple-darwin.tar.gz.sha256
+tar -xzf tuxedo-task-v2026.10.1-aarch64-apple-darwin.tar.gz
+```
+
+Extract the matching archive and place `tuxedo` and `tuxedotask` in a directory
+on PATH, keeping the Unix symlink beside its target. On Windows, the ZIP contains
+`tuxedo.exe` and `tuxedotask.exe`; compare `Get-FileHash -Algorithm SHA256` with the
+provided checksum before extracting. Both names share the same tasks and config.
+
+### Optional: install from source with Cargo
+
+Only source builds need **Git**, a **current stable Rust toolchain** (Rust 2024
+edition, including Cargo), and native linker/build tools. Use
+[rustup](https://rustup.rs/) for Rust; native tools come from Xcode Command Line
+Tools on macOS, your distribution's C build tools on Linux, or Visual Studio C++
+Build Tools for the MSVC toolchain on Windows.
+
+```sh
+cargo install --git https://github.com/Caracolaracol/tuxedo-task --locked
+```
+
+The Cargo package/executable remains named **`tuxedo`** for compatibility. The
+`tuxedotask` alias is supplied by Homebrew and the precompiled archives, not by
+`cargo install`. Cargo installs into `$CARGO_HOME/bin` (normally `~/.cargo/bin`
+or `%USERPROFILE%\.cargo\bin`); make sure it is on PATH. To replace an existing
+Cargo-installed copy, add `--force`. No install method moves your task files.
 
 ### Alternatively: clone and run without installing
 
@@ -204,24 +254,24 @@ The selected file and its parent directory are created if missing.
 
 ### Updates
 
+For Homebrew installations:
+
+```sh
+brew update
+brew upgrade caracolaracol/tap/tuxedotask
+```
+
+For Cargo installations:
+
 ```sh
 cargo install --git https://github.com/Caracolaracol/tuxedo-task --locked --force
 ```
 
-For a cloned checkout, run `git pull --ff-only` and `cargo build --release --locked`
-from that checkout, then use the newly built executable. `tuxedo update` only
-prints instructions; it never installs anything automatically.
-
-### Binary releases and Homebrew
-
-There are **no published fork binary releases yet**. Source installation above is
-the supported route today. Future binaries will appear under
-[this repository's Releases](https://github.com/Caracolaracol/tuxedo-task/releases),
-with platform archives and SHA-256 checksums.
-
-**`brew install tuxedo` and Webstone's releases install upstream Tuxedo, not
-Tuxedo Task.** They do not include this fork's additions. This fork does not
-currently publish a Homebrew formula.
+For manual downloads, replace the executable and alias from the latest matching
+release archive after checking its checksum. For cloned checkouts, run
+`git pull --ff-only` and `cargo build --release --locked` in the checkout.
+`tuxedo update` (or `tuxedotask update`) only prints instructions appropriate to
+its install method; it never installs anything automatically.
 
 ## Usage
 

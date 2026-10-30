@@ -2,10 +2,14 @@
 
 ### The shell cannot find tuxedo
 
-Cargo normally installs executables into `~/.cargo/bin` on macOS/Linux or
-`%USERPROFILE%\.cargo\bin` on Windows, unless `CARGO_HOME` or an install root was
-customized. Add the relevant `bin` directory to your shell's PATH and open a new
-terminal after installing Rust.
+For a Homebrew install, confirm that Homebrew's `bin` directory is on PATH (see
+Homebrew's `brew shellenv` setup instructions), then reopen your terminal.
+`tuxedotask` is an alternative name for the same app.
+
+For optional Cargo installs, executables normally go into `~/.cargo/bin` on
+macOS/Linux or `%USERPROFILE%\.cargo\bin` on Windows, unless `CARGO_HOME` or an
+install root was customized. Add the relevant `bin` directory to PATH. For
+manual downloads, keep the extracted executable and alias together on PATH.
 
 ### The wrong application opens
 
@@ -18,8 +22,10 @@ tuxedo --version
 
 On Windows, use `where.exe tuxedo` instead of `command -v`. The version output for
 this fork begins with **Tuxedo Task**. A Homebrew copy may take precedence over a
-Cargo copy depending on PATH. See [installation](#installation) before replacing
-an existing executable.
+Cargo copy depending on PATH. Our Homebrew formula explicitly conflicts with
+upstream's formula because both expose `tuxedo`; it does not remove your Cargo
+copy or migrate data. See [installation](#installation) before replacing an
+existing executable.
 
 ### Subtasks look flat in another client
 

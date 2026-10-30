@@ -9,6 +9,8 @@ remembered filters added on top of the original application.
 
 1. Follow the [installation instructions](#installation) below. The executable is
    still called `tuxedo`; `tuxedo --version` identifies the fork as **Tuxedo Task**.
+   Homebrew and precompiled downloads also include `tuxedotask` as an alias. You
+   do not need Rust or Cargo for those install methods.
 2. Open a task file. On macOS or Linux, for example:
 
 ```sh

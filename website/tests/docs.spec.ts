@@ -16,7 +16,9 @@ test('documentation is linked from the landing and contains the full application
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://caracolaracol.github.io/tuxedo-task/docs/');
   await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Documentation', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('.docs-prose h2')).toHaveText(docSections);
+  await expect(page.locator('.docs-prose')).toContainText('brew install caracolaracol/tap/tuxedotask');
   await expect(page.locator('.docs-prose')).toContainText('cargo install --git https://github.com/Caracolaracol/tuxedo-task --locked');
+  await expect(page.locator('.docs-prose')).toContainText('Both command names are available');
   await expect(page.locator('.docs-prose')).toContainText('fork-specific extension');
   await expect(page.locator('.docs-prose')).toContainText('trusted networks only');
   expect(errors).toEqual([]);

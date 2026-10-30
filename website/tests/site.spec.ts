@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
-const command = 'cargo install --git https://github.com/Caracolaracol/tuxedo-task --locked';
+const command = 'brew install caracolaracol/tap/tuxedotask';
 
 test('loads at the Pages subpath with working assets, metadata and attribution', async ({ page, request }) => {
   const errors: string[] = [];
@@ -23,6 +23,9 @@ test('loads at the Pages subpath with working assets, metadata and attribution',
   await expect(page.getByRole('link', { name: 'All the shortcuts' })).toHaveAttribute('href', '/tuxedo-task/docs/#keybindings');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://caracolaracol.github.io/tuxedo-task/');
   await expect(page.locator('#install-command')).toHaveText(command);
+  await expect(page.locator('.install-top')).toContainText('Install with Homebrew');
+  await expect(page.locator('.installation')).toContainText('No Rust or Cargo required.');
+  await expect(page.locator('.install-notes')).toContainText('tuxedotask');
   await expect(page.locator('footer')).toContainText('independent community fork');
   await expect(page.locator('footer a[href="https://github.com/webstonehq/tuxedo"]')).toBeVisible();
   for (const image of await page.locator('img').all()) {

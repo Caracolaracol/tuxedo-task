@@ -3,7 +3,8 @@
 Static Astro website for **https://caracolaracol.github.io/tuxedo-task/**, with an
 application guide at **https://caracolaracol.github.io/tuxedo-task/docs/**.
 The website lives in `website/`, independently of the Rust application. The
-`feat/github-pages-astro` branch can deploy it without merging into `main`.
+`main` branch publishes production. Changes can be developed in feature branches
+and validated in pull requests before merging.
 
 ## Local development
 
@@ -105,7 +106,7 @@ upstream releases.
 
 The workflow is **`.github/workflows/pages.yml`**:
 
-1. Pushes to `feat/github-pages-astro` or `main` affecting the README or site/shared assets trigger
+1. Pushes to `main` affecting the README or site/shared assets trigger
    installation, dependency audit, type checks, static build and browser tests.
 2. Pull requests run the same validation but **cannot deploy**.
 3. Successful branch builds upload `website/dist` and deploy to GitHub Pages with
@@ -113,9 +114,7 @@ The workflow is **`.github/workflows/pages.yml`**:
 
 Repository **Settings → Pages → Build and deployment → Source** must be set to
 **GitHub Actions**. The `github-pages` environment must allow the deployment
-branch. It is intentionally configured to allow `feat/github-pages-astro` (and
-`main` for a future merge), not arbitrary branches.
-
-After merging the website into `main`, remove the feature-branch trigger and its
-environment rule, or delete the feature branch, so only `main` publishes updates.
+branch. Production is configured to allow `main`, not arbitrary branches.
+The original `feat/github-pages-astro` branch is retained as history; it no longer
+publishes directly after integration into `main`.
 The application release workflow and Rust source are unchanged by the website.
