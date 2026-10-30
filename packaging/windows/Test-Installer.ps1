@@ -121,7 +121,7 @@ try {
     $environment.SetValue('Path', ((UserPath) + $external), [Microsoft.Win32.RegistryValueKind]::ExpandString)
     Uninstall
     Assert (-not (Test-Path -LiteralPath (Join-Path $directory 'tuxedo.exe'))) 'Executable survived uninstall.'
-    Assert ((UserPath) -ceq ($baseline + $external)) 'Uninstall removed another PATH entry or rewrote its value.'
+    Assert ((UserPath) -ceq ($baseline + $external)) ("Uninstall PATH mismatch. Expected: [$($baseline + $external)] Actual: [$(UserPath)]")
     AssertData
     Assert (Test-Path -LiteralPath $extraData) 'Uninstall removed an unregistered personal file.'
     Remove-Item -LiteralPath $extraData

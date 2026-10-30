@@ -121,6 +121,9 @@ jobs:
           $stage = "dist/tuxedo-task-$($env:RELEASE_TAG)-${{ matrix.target }}"
           ./packaging/windows/Build-Installer.ps1 -Version $version -BinaryDir $stage -OutputDir dist
           $versioned = "dist/tuxedo-task-v$version-windows-x86_64-setup.exe"
+          ./packaging/windows/Build-UpgradeFixture.ps1
+          pwsh -NoProfile -File packaging/windows/Test-Installer.ps1 -InstallerPath $versioned -ExpectedVersion $version
+          if ($LASTEXITCODE -ne 0) { throw 'Windows installer lifecycle validation failed' }
           $name = 'tuxedo-task-windows-x86_64-setup.exe'
           Move-Item -LiteralPath $versioned -Destination "dist/$name"
           Remove-Item -LiteralPath "$versioned.sha256"

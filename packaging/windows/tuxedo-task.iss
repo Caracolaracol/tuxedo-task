@@ -111,9 +111,13 @@ var
 begin
   Arguments := '-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ' +
     AddQuotes(Script) + ' -Action ' + Operation + ' -InstallDir ' + AddQuotes(ExpandConstant('{app}'));
+  Log('Tuxedo PATH operation ' + Operation + ' using ' + Script);
   Result := Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
     Arguments, '', SW_HIDE, ewWaitUntilTerminated, ExitCode);
-  if Result then Result := ExitCode = 0;
+  if Result then begin
+    Log('Tuxedo PATH helper exit code: ' + IntToStr(ExitCode));
+    Result := ExitCode = 0;
+  end else Log('Tuxedo PATH helper could not be executed');
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -137,6 +141,7 @@ end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
+  Log('Tuxedo uninstall event: ' + IntToStr(Ord(CurUninstallStep)));
   if CurUninstallStep = usPostUninstall then begin
     if not RunPathScript(UninstallPathScript, 'Remove') then
       SuppressibleMsgBox('The application was removed, but its user PATH entry could not be cleaned up automatically. Your task files and configuration were not removed.', mbInformation, MB_OK, IDOK);
