@@ -53,6 +53,7 @@ pub fn start(todo_path: PathBuf, token: String, port: u16) -> Result<ShareInfo> 
     let server = Server::http(bind.as_str()).map_err(|e| anyhow!("bind {bind} failed: {e}"))?;
     let actual_port = match server.server_addr() {
         tiny_http::ListenAddr::IP(addr) => addr.port(),
+        #[cfg(unix)]
         other => return Err(anyhow!("unexpected listen address: {other:?}")),
     };
     let lan_ip = net::discover_lan_ip();

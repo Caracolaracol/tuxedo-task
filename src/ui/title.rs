@@ -53,8 +53,16 @@ fn split_display(path: &Path, home: Option<&Path>) -> (String, Vec<String>) {
             return ("~/".to_string(), rest);
         }
     }
-    let prefix = if path.is_absolute() { "/" } else { "" };
-    (prefix.to_string(), components(path))
+    let mut prefix = match path.components().next() {
+        Some(std::path::Component::Prefix(value)) => {
+            value.as_os_str().to_string_lossy().replace('\\', "/")
+        }
+        _ => String::new(),
+    };
+    if path.has_root() {
+        prefix.push('/');
+    }
+    (prefix, components(path))
 }
 
 /// Collect a path's `Normal`/`CurDir`/`ParentDir` components as strings,
@@ -160,6 +168,23 @@ mod tests {
             28,
         );
         assert_eq!(title, "Tuxedo Task ~/.c/n/notes.txt");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn preserves_windows_drive_and_unc_prefixes() {
+        assert_eq!(
+            terminal_title(Path::new(r"C:\Work\todo.txt"), None, DEFAULT_BUDGET),
+            "Tuxedo Task C:/Work/todo.txt"
+        );
+        assert_eq!(
+            terminal_title(
+                Path::new(r"\\server\share\folder\todo.txt"),
+                None,
+                DEFAULT_BUDGET
+            ),
+            "Tuxedo Task //server/share/folder/todo.txt"
+        );
     }
 
     #[test]

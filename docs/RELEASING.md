@@ -35,6 +35,26 @@ plus an adjacent `.sha256` checksum. Unix archives use a relative symlink;
 Windows ZIPs include a second copy of the executable. Packaging smoke-tests the
 alias before uploading. Release publication waits for **all** targets.
 
+### Windows installer gate
+
+Before tagging, wait for `.github/workflows/windows.yml` to pass on the exact
+source revision. It runs native Rust tests, static-CRT import checks and the
+explicitly authorized installer lifecycle tests in disposable Windows. It uses
+preinstalled Inno Setup 6; no local installer tools are required. See
+[`packaging/windows/README.md`](../packaging/windows/README.md) for safety rules
+and the synthetic older-version fixture. Never publish a test fixture.
+
+The release's Windows job also compiles the installer and publishes its stable
+filename plus SHA-256, alongside the portable ZIP. Initial releases are unsigned:
+keep the SmartScreen notice accurate; do not imply code signing or WinGet
+acceptance. Test installation, upgrade/repair and uninstall without deleting
+any task files/configuration. The user PATH entry must be reversible and must
+not remove a preexisting entry or other software's subsequent edits.
+
+After release publication, update the website/README to offer the installer
+through `releases/latest/download/tuxedo-task-windows-x86_64-setup.exe`.
+Do not advertise a download that has not been published yet.
+
 ## 3. Update the Homebrew tap
 
 The formula lives in `caracolaracol/homebrew-tap`, not in the upstream Webstone
@@ -57,7 +77,8 @@ conflict. Task data and `~/.config/tuxedo` stay unchanged.
 
 ## 4. Verify delivery
 
-- Verify all five release archives and checksums are present.
+- Verify all five release archives/checksums and the Windows Setup.exe/checksum
+  are present. The installer asset is `tuxedo-task-windows-x86_64-setup.exe`.
 - On a machine authorized for installation, test the formula and both command
   names. Confirm `--version` identifies Tuxedo Task and `update` recommends the
   fork's formula, not upstream.
