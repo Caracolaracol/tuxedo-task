@@ -83,9 +83,14 @@ fn help_uses_the_compatible_executable_name() {
 #[test]
 fn source_upgrade_instructions_install_the_fork_not_upstream() {
     let output = stdout("update");
-    assert!(output.contains(
-        "cargo install --git https://github.com/Caracolaracol/tuxedo-task --locked --force"
-    ));
+    if cfg!(windows) {
+        assert!(output.contains("Setup.exe"));
+        assert!(output.contains("https://github.com/Caracolaracol/tuxedo-task/releases"));
+    } else {
+        assert!(output.contains(
+            "cargo install --git https://github.com/Caracolaracol/tuxedo-task --locked --force"
+        ));
+    }
     assert!(!output.contains("github.com/webstonehq"));
     assert!(!output.contains("brew upgrade"));
 }

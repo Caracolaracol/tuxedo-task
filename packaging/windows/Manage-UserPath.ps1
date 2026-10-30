@@ -71,3 +71,11 @@ try {
     $environment.Dispose()
     $state.Dispose()
 }
+if ($Action -eq 'Remove') {
+    $remainingState = [Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($statePath)
+    if ($remainingState) {
+        $empty = $remainingState.ValueCount -eq 0 -and $remainingState.SubKeyCount -eq 0
+        $remainingState.Dispose()
+        if ($empty) { [Microsoft.Win32.Registry]::CurrentUser.DeleteSubKey($statePath, $false) }
+    }
+}

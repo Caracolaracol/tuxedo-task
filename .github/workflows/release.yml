@@ -48,6 +48,7 @@ jobs:
     env:
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
       MACOSX_DEPLOYMENT_TARGET: "12.0"
+      CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS: "-C target-feature=+crt-static"
     strategy:
       fail-fast: false
       matrix:
@@ -64,7 +65,7 @@ jobs:
           - os: macos-15
             target: aarch64-apple-darwin
             archive: tar.gz
-          - os: windows-latest
+          - os: windows-2025
             target: x86_64-pc-windows-msvc
             archive: zip
             executable_suffix: .exe
@@ -112,6 +113,19 @@ jobs:
           Compress-Archive -Path "dist/$stage/*" -DestinationPath "dist/$stage.zip"
           $sha = (Get-FileHash "dist/$stage.zip" -Algorithm SHA256).Hash.ToLowerInvariant()
           "$sha  $stage.zip" | Set-Content -Encoding ascii "dist/$stage.zip.sha256"
+      - name: Build Windows per-user installer (preinstalled Inno Setup)
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        run: |
+          $version = $env:RELEASE_TAG.TrimStart('v')
+          $stage = "dist/tuxedo-task-$($env:RELEASE_TAG)-${{ matrix.target }}"
+          ./packaging/windows/Build-Installer.ps1 -Version $version -BinaryDir $stage -OutputDir dist
+          $versioned = "dist/tuxedo-task-v$version-windows-x86_64-setup.exe"
+          $name = 'tuxedo-task-windows-x86_64-setup.exe'
+          Move-Item -LiteralPath $versioned -Destination "dist/$name"
+          Remove-Item -LiteralPath "$versioned.sha256"
+          $sha = (Get-FileHash "dist/$name" -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$sha  $name" | Set-Content -Encoding ascii "dist/$name.sha256"
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -119,6 +133,7 @@ jobs:
           path: |
             dist/*.tar.gz
             dist/*.zip
+            dist/*-setup.exe
             dist/*.sha256
           if-no-files-found: error
 
@@ -144,6 +159,10 @@ jobs:
           body: |
             Precompiled Tuxedo Task binaries. End users do not need Rust or Cargo.
 
+            Windows: [Download Setup.exe](https://github.com/Caracolaracol/tuxedo-task/releases/download/${{ inputs.tag || github.ref_name }}/tuxedo-task-windows-x86_64-setup.exe) for a per-user installation with optional user PATH integration and a Start menu shortcut. No administrator account, Rust or Cargo required. Windows 10 (1809+) / 11, x86-64.
+
+            This initial installer is unsigned: Windows SmartScreen may show an unknown-publisher warning. Check the official source and adjacent SHA-256 checksum; do not disable Windows security.
+
             Each archive includes both `tuxedo` and `tuxedotask`, plus the MIT license.
             Download the archive for your OS/CPU and verify its `.sha256` checksum.
 
@@ -155,4 +174,5 @@ jobs:
           files: |
             dist/*.tar.gz
             dist/*.zip
+            dist/*-setup.exe
             dist/*.sha256

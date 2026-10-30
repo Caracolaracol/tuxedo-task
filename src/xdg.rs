@@ -105,16 +105,17 @@ mod tests {
             let config = crate::config::Config::path().expect("native Windows config");
             assert_eq!(config, base.join("tuxedo/config.toml"));
             let settings = crate::config::Config {
-                mouse: false,
+                mouse: Some(false),
                 ..Default::default()
             };
             settings
                 .save_to(&config)
                 .expect("persist native configuration");
-            assert!(
-                !crate::config::Config::load_strict(&config)
+            assert_eq!(
+                crate::config::Config::load_strict(&config)
                     .expect("read native config")
-                    .mouse
+                    .mouse,
+                Some(false)
             );
             return;
         }

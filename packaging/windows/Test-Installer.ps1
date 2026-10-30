@@ -18,6 +18,7 @@ $root = Join-Path $env:RUNNER_TEMP ('tuxedo-installer-' + [guid]::NewGuid().ToSt
 $directory = Join-Path $root 'Tuxedo Task & QA'
 New-Item -ItemType Directory -Force -Path $root | Out-Null
 $environment = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Environment')
+$originalProcessPath = $env:Path
 $originalHasPath = $environment.GetValueNames() -icontains 'Path'
 $originalPath = [string]$environment.GetValue('Path', '', [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
 $originalKind = [Microsoft.Win32.RegistryValueKind]::ExpandString
@@ -97,6 +98,10 @@ try {
     RunSetup $InstallerPath $directory
     AssertVersion $ExpectedVersion
     Assert ((PathCount) -eq 1) 'Repair/reinstall duplicated PATH.'
+    $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::ExpandEnvironmentVariables((UserPath))
+    foreach ($command in @('tuxedo.exe', 'tuxedotask.exe')) {
+        Assert ((Get-Command $command -CommandType Application).Source -ieq (Join-Path $directory $command)) 'New terminal PATH does not resolve the installed command.'
+    }
     Assert ((UserPath).StartsWith($baseline, [StringComparison]::Ordinal)) 'Original PATH text/variables changed.'
     Assert ($environment.GetValueKind('Path') -eq [Microsoft.Win32.RegistryValueKind]::ExpandString) 'PATH registry type changed.'
 
@@ -131,6 +136,11 @@ try {
     Assert ((UserPath) -ceq $preexisting) 'User-owned PATH entry removed.'
     Assert ($environment.GetValueKind('Path') -eq [Microsoft.Win32.RegistryValueKind]::String) 'REG_SZ was not preserved.'
     AssertData
+    $environment.SetValue('Path', $baseline, [Microsoft.Win32.RegistryValueKind]::ExpandString)
+    RunSetup $InstallerPath $directory
+    Uninstall
+    Assert ((UserPath) -ceq $baseline) 'Uninstall did not restore the exact original PATH.'
+    AssertData
     Write-Host 'PASS: foreign-folder protection, install, actual older-binary upgrade, repair, aliases, shortcuts, PATH ownership/type, tasks/config and uninstall preservation.'
 } finally {
     # Cleanup affects only this ephemeral runner and the unique test directory.
@@ -140,6 +150,7 @@ try {
     if ($originalHasPath) { $environment.SetValue('Path', $originalPath, $originalKind) }
     else { $environment.DeleteValue('Path', $false) }
     $environment.Dispose()
+    $env:Path = $originalProcessPath
     if ($configExisted) { [IO.File]::WriteAllBytes($configFile, $originalConfig) }
     else { Remove-Item -LiteralPath $configFile -ErrorAction SilentlyContinue }
     if (Test-Path -LiteralPath $root) { Remove-Item -LiteralPath $root -Recurse -Force }
