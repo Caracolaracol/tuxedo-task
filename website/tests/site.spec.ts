@@ -68,6 +68,8 @@ test('hero uses the real renderer output and opens it with the keyboard', async 
   const hero = page.locator('.hero-preview');
   await expect(hero.locator('img')).toHaveAttribute('src', '/tuxedo-task/screenshots/subtasks.svg');
   await expect(hero).toContainText('Rendered by the application itself');
+  await expect(hero.locator('figcaption')).toHaveCount(0);
+  await expect(page.getByText('Actual app interface.', { exact: true })).toHaveCount(0);
   await expect(page.locator('[data-terminal-demo]')).toHaveCount(0);
   await expect(page.getByRole('tablist')).toHaveCount(0);
   const image = await request.get('screenshots/subtasks.svg');
