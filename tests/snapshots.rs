@@ -32,16 +32,24 @@ use tuxedo::ui;
 const COLS: u16 = 100;
 const ROWS: u16 = 32;
 
-/// File path used in every fixture. Hard-coded (not `temp_dir()`) so the
-/// header line that displays it stays byte-identical across runs and
-/// machines. The file is never actually written; `App::new` only stores it.
-const FIXTURE_PATH: &str = "/tmp/tuxedo-snapshot.txt";
+/// Stable relative fixture paths keep rendered headers identical on Unix and
+/// Windows. Use the ignored, writable build directory rather than /tmp, which
+/// need not exist (and may require administrator rights) on Windows.
+const FIXTURE_PATH: &str = "target/tuxedo-snapshot.txt";
 
 /// Config-file path for the settings-overlay fixture. Hard-coded for the
 /// same reason as `FIXTURE_PATH`: `Config::path()` resolves `$HOME` at
 /// runtime, which would otherwise bake the author's home directory into
 /// the snapshot and break on any other machine (CI included).
-const FIXTURE_CONFIG_PATH: &str = "/tmp/tuxedo-snapshot.toml";
+const FIXTURE_CONFIG_PATH: &str = "target/tuxedo-snapshot.toml";
+
+fn seed_fixture(body: &str) {
+    let parent = std::path::Path::new(FIXTURE_PATH)
+        .parent()
+        .expect("fixture parent");
+    std::fs::create_dir_all(parent).expect("fixture directory");
+    std::fs::write(FIXTURE_PATH, body).expect("seed fixture file");
+}
 
 fn make_app() -> App {
     // Seed the fixture file on disk so any snapshot test that exercises a
@@ -49,7 +57,7 @@ fn make_app() -> App {
     // `last_disk`) sees a consistent state. The file contents match what
     // we hand `App::new` as the in-memory body, so the comparison passes
     // without forcing a reload.
-    std::fs::write(FIXTURE_PATH, sample::TODO_RAW).expect("seed fixture file");
+    seed_fixture(sample::TODO_RAW);
     let mut app = App::new(
         PathBuf::from(FIXTURE_PATH),
         sample::TODO_RAW.to_string(),
@@ -288,7 +296,7 @@ fn list_sidebar_empty_hints() {
     // should fall back to the "tag with +project" / "tag with @context" hints
     // instead of leaving the PROJECTS / CONTEXTS sections blank.
     let body = "(A) Buy milk\n(B) Call mom\nWrite up notes\n";
-    std::fs::write(FIXTURE_PATH, body).expect("seed fixture file");
+    seed_fixture(body);
     let mut app = App::new(
         PathBuf::from(FIXTURE_PATH),
         body.to_string(),

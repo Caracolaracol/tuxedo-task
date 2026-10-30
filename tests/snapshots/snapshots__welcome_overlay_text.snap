@@ -2,7 +2,7 @@
 source: tests/snapshots.rs
 expression: buffer_to_text(&buf)
 ---
-╭ フ ィ ル タ ー  ────────────╮╭Tuxedo Task  /tmp/tuxedo-snapshot.txt ╮╭ デ ィ テ ー ル  ────────────────────╮
+╭ フ ィ ル タ ー  ────────────╮╭Tuxedo Task  target/tuxedo-snapshot.tx╮╭ デ ィ テ ー ル  ────────────────────╮
 │                        ││                                      ││                                │
 │ プ ロ ジ ェ ク ト            ││                                      ││ (no task)                      │
 │   tag with +project    ││                                      ││                                │

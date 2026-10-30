@@ -2,7 +2,7 @@
 source: tests/snapshots.rs
 expression: buffer_to_text(&buf)
 ---
-╭Tuxedo Task  /tmp/tuxedo-snapshot.txt  •  0 tasks  •  sort:priority───────────────────────────────╮
+╭Tuxedo Task  target/tuxedo-snapshot.txt  •  0 tasks  •  sort:priority─────────────────────────────╮
 │                                                                                                  │
 │                                                                                                  │
 │                                                                                                  │

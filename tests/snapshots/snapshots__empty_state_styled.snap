@@ -2,7 +2,7 @@
 source: tests/snapshots.rs
 expression: buffer_to_styled(&buf)
 ---
-{fg=#2a2f38 bg=#1a1d23}╭{/}{fg=#8aa9c9 bg=#1a1d23 mod=bold}Tuxedo Task{/}{fg=#2a2f38 bg=#1a1d23}  {/}{fg=#c8ccd4 bg=#1a1d23 mod=bold}/tmp/tuxedo-snapshot.txt{/}{fg=#6b7280 bg=#1a1d23}  •  0 tasks  •  {/}{fg=#8aa9c9 bg=#1a1d23}sort:priority{/}{fg=#2a2f38 bg=#1a1d23}───────────────────────────────╮{/}
+{fg=#2a2f38 bg=#1a1d23}╭{/}{fg=#8aa9c9 bg=#1a1d23 mod=bold}Tuxedo Task{/}{fg=#2a2f38 bg=#1a1d23}  {/}{fg=#c8ccd4 bg=#1a1d23 mod=bold}target/tuxedo-snapshot.txt{/}{fg=#6b7280 bg=#1a1d23}  •  0 tasks  •  {/}{fg=#8aa9c9 bg=#1a1d23}sort:priority{/}{fg=#2a2f38 bg=#1a1d23}─────────────────────────────╮{/}
 {fg=#2a2f38 bg=#1a1d23}│{/}{bg=#1a1d23}                                                                                                  {/}{fg=#2a2f38 bg=#1a1d23}│{/}
 {fg=#2a2f38 bg=#1a1d23}│{/}{bg=#1a1d23}                                                                                                  {/}{fg=#2a2f38 bg=#1a1d23}│{/}
 {fg=#2a2f38 bg=#1a1d23}│{/}{bg=#1a1d23}                                                                                                  {/}{fg=#2a2f38 bg=#1a1d23}│{/}
