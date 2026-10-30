@@ -153,7 +153,14 @@ fn print_usage() {
     println!("       tuxedo update");
     println!();
     println!("Homebrew and prebuilt releases also provide `tuxedotask` as an alias.");
-    println!("Both commands use the same task files and ~/.config/tuxedo configuration.");
+    println!("Both commands use the same task files and configuration.");
+    if cfg!(windows) {
+        println!(
+            "Windows configuration uses APPDATA/tuxedo, respecting XDG and existing legacy settings."
+        );
+    } else {
+        println!("Configuration stays under ~/.config/tuxedo (or XDG_CONFIG_HOME).");
+    }
     println!();
     println!("Without FILE or a command, opens ./todo.txt if present; otherwise");
     println!("prompts to create ./todo.txt here or open a sample todo.txt, in");

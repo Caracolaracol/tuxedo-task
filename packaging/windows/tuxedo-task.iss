@@ -109,6 +109,11 @@ var
   ExitCode: Integer;
   Arguments: String;
 begin
+  if (Script = '') or not FileExists(Script) then begin
+    Log('Tuxedo PATH helper is missing: ' + Script);
+    Result := False;
+    Exit;
+  end;
   Arguments := '-NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File ' +
     AddQuotes(Script) + ' -Action ' + Operation + ' -InstallDir ' + AddQuotes(ExpandConstant('{app}'));
   Log('Tuxedo PATH operation ' + Operation + ' using ' + Script);
@@ -131,17 +136,16 @@ begin
   end;
 end;
 
-function InitializeUninstall(): Boolean;
-begin
-  UninstallPathScript := ExpandConstant('{tmp}\tuxedo-manage-path.ps1');
-  Result := FileCopy(ExpandConstant('{app}\Manage-UserPath.ps1'), UninstallPathScript, False);
-  if not Result then
-    SuppressibleMsgBox('Cannot prepare PATH cleanup. Repair this installation with Setup before uninstalling.', mbError, MB_OK, IDOK);
-end;
-
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   Log('Tuxedo uninstall event: ' + IntToStr(Ord(CurUninstallStep)));
+  if CurUninstallStep = usUninstall then begin
+    { InitializeUninstall runs in the first process. Its variables do not
+      survive Inno's second-phase relaunch, so prepare this copy here. }
+    UninstallPathScript := ExpandConstant('{tmp}\tuxedo-manage-path.ps1');
+    if not FileCopy(ExpandConstant('{app}\Manage-UserPath.ps1'), UninstallPathScript, False) then
+      RaiseException('Cannot prepare PATH cleanup. Repair with Setup before uninstalling.');
+  end;
   if CurUninstallStep = usPostUninstall then begin
     if not RunPathScript(UninstallPathScript, 'Remove') then
       SuppressibleMsgBox('The application was removed, but its user PATH entry could not be cleaned up automatically. Your task files and configuration were not removed.', mbInformation, MB_OK, IDOK);
