@@ -167,8 +167,6 @@ With [Homebrew](https://brew.sh/) available:
 
 ```sh
 brew install caracolaracol/tap/tuxedotask
-tuxedo --version
-tuxedo --help
 ```
 
 Homebrew downloads a **precompiled binary** and verifies its SHA-256 checksum.
@@ -176,12 +174,9 @@ It does not install Rust or Cargo or compile the application on your machine.
 The tap supports Apple Silicon / Intel Macs (macOS 12+) and ARM64 / x86-64 Linux.
 Linux binaries are built on Ubuntu 22.04 and require glibc 2.35 or newer.
 
-Both command names are available and run the **same application**:
-
-```sh
-tuxedo /path/to/todo.txt
-tuxedotask /path/to/todo.txt
-```
+Both command names are available: **`tuxedo` and `tuxedotask` run the same
+application**. After installation, follow [Usage](#usage) to open or create your
+task file.
 
 The config stays under `~/.config/tuxedo` (or your XDG config directory), and
 existing task files are not migrated or deleted.
@@ -244,13 +239,11 @@ Cargo-installed copy, add `--force`. No install method moves your task files.
 git clone https://github.com/Caracolaracol/tuxedo-task.git
 cd tuxedo-task
 cargo build --release --locked
-./target/release/tuxedo --version
-./target/release/tuxedo --help
 ```
 
-On macOS/Linux, launch `./target/release/tuxedo /path/to/todo.txt`.
-On Windows, use `.\target\release\tuxedo.exe C:\path\to\todo.txt`.
-The selected file and its parent directory are created if missing.
+The executable is in `target/release/`. Follow [Usage](#usage) to launch the
+interface with a task file; replace `tuxedo` with `./target/release/tuxedo` on
+macOS/Linux or `.\target\release\tuxedo.exe` on Windows.
 
 ### Updates
 
@@ -270,24 +263,40 @@ cargo install --git https://github.com/Caracolaracol/tuxedo-task --locked --forc
 For manual downloads, replace the executable and alias from the latest matching
 release archive after checking its checksum. For cloned checkouts, run
 `git pull --ff-only` and `cargo build --release --locked` in the checkout.
-`tuxedo update` (or `tuxedotask update`) only prints instructions appropriate to
-its install method; it never installs anything automatically.
 
 ## Usage
 
-`tuxedo` is two things in one binary: an interactive TUI, and a one-shot
-command line. With no subcommand it launches the TUI; with a recognized
-subcommand it runs the [command line](#command-line-interface) and exits.
+`tuxedo` opens the interactive terminal interface. **You do not need to create
+`todo.txt` by hand.** Choose where to keep your tasks and open that path:
 
 ```sh
-tuxedo [FILE]      # launch the TUI on FILE (created if missing)
-tuxedo             # TUI on the default file (see resolution below)
-tuxedo --sample    # open the bundled sample file in the temp dir
-tuxedo <command>   # run a one-shot CLI command — see "Command-line interface"
-tuxedo update      # print upgrade instructions for your install
-tuxedo --help
-tuxedo --version
+tuxedo "$HOME/Documents/tasks/todo.txt"
 ```
+
+On Windows PowerShell:
+
+```powershell
+tuxedo "$HOME\Documents\tasks\todo.txt"
+```
+
+The app creates the file **and missing parent folders** when the path does not
+exist. If it already exists, its contents are kept. You need write permission
+to that location. Installing the program alone does not create a personal task
+file; launching it with a path does.
+
+To open an already configured/default file or see the first-run welcome screen:
+
+```sh
+tuxedo
+```
+
+On a true first run, press `c` to create `todo.txt` in your terminal's current
+folder, or `s` to try a temporary sample. No manual `touch` or file setup is
+needed. You can also open that sample directly with `tuxedo --sample`.
+
+Inside the app, press `n` to add a task, `Enter` to confirm, `?` for help and
+`q` to quit. Changes are saved automatically. The optional shell-command and
+scripting reference is [near the end](#command-line-interface).
 
 When a newer release is available, the status bar shows `↑ <version> (tuxedo
 update)` next to the version. The check runs in the background, is cached at
@@ -296,7 +305,7 @@ fails silently when offline. Set `TUXEDO_NO_UPDATE_CHECK=1` to disable.
 
 ### Which file tuxedo opens
 
-Both the TUI and the CLI resolve the todo file the same way, in order:
+The interactive app chooses a task file in this order:
 
 1. An explicit `FILE` argument (TUI only).
 2. `$TODO_FILE`, if set.
@@ -304,13 +313,13 @@ Both the TUI and the CLI resolve the todo file the same way, in order:
 4. `./todo.txt` in the current directory, if it exists.
 5. Otherwise the TUI shows a first-run prompt — press `c` to create
    `./todo.txt` here, or `s` to open a sample todo.txt in the system temp
-   directory so you can poke around without committing to a path. (The
-   one-shot CLI is non-interactive and uses the sample directly.)
+   directory so you can try the app without choosing a permanent path.
 
 The archive file is `$DONE_FILE` if set, otherwise a sibling `done.txt` next
 to the todo file. The file (and any missing parent directories) is created on
-first use. These are the same `TODO_DIR` / `TODO_FILE` / `DONE_FILE` variables
-todo.txt-cli uses, so an existing `todo.cfg` works as-is:
+first use. These variable names are compatible with todo.txt-cli. Export them
+from your shell configuration as below; Tuxedo Task reads the environment,
+**not the `todo.cfg` file itself**:
 
 ```sh
 export TODO_DIR="$HOME/Documents/todo"
@@ -329,59 +338,6 @@ Pressing `A` appends every completed task to a sibling `done.txt` and
 removes them from the working file (atomically: `done.txt` is written
 before the originals are dropped). `a` toggles the archive view so you
 can browse, un-archive, or permanently delete past tasks.
-
-## Command-line interface
-
-When the first argument is a recognized subcommand, tuxedo runs a one-shot
-command instead of launching the TUI. The surface mirrors
-[todo.txt-cli](https://github.com/todotxt/todo.txt-cli/wiki/Usage) — same
-commands, aliases, task numbering, and output — so it's a drop-in for scripts
-and aliases.
-
-```sh
-tuxedo add "Pay rent +home @bank due:2026-07-01"   # or: tuxedo a "..."
-tuxedo ls @bank                                     # filter by context
-tuxedo do 3                                          # mark task 3 complete
-tuxedo pri 3 A                                        # set priority
-tuxedo archive                                        # move done tasks to done.txt
-tuxedo ls --json | jq .                              # machine-readable output
-```
-
-| Command | Aliases | Arguments | Description |
-| --- | --- | --- | --- |
-| `add` | `a` | `TEXT...` | Add a task (natural-language dates supported, same as the `n` prompt). |
-| `append` | `app` | `N TEXT...` | Append text to task `N`. |
-| `prepend` | `prep` | `N TEXT...` | Prepend text to task `N`. |
-| `replace` | | `N TEXT...` | Replace task `N` entirely. |
-| `pri` | `p` | `N PRIORITY` | Set priority `A`–`Z` on task `N`. |
-| `depri` | `dp` | `N...` | Remove priority from the given tasks. |
-| `do` | `done`, `complete` | `N...` | Mark tasks complete (recurring tasks spawn their next instance). |
-| `del` | `rm` | `N [TERM]` | Delete task `N`, or remove just `TERM` from it. Prompts unless `-f`. |
-| `archive` | | | Move completed tasks to the done file. |
-| `list` | `ls` | `[TERM...]` | List tasks. `TERM` is `+project`, `@context`, or free text. |
-| `listall` | `lsa` | `[TERM...]` | List the todo file and the done file. |
-| `listpri` | `lsp` | `[PRIORITY]` | List prioritized tasks (optionally a single priority). |
-| `listproj` | `lsprj` | | List all `+projects`. |
-| `listcon` | `lsc` | | List all `@contexts`. |
-
-**Task numbers** are 1-based line numbers in the file, exactly as printed by
-`list` — stable regardless of how the list is filtered or sorted. `list`
-sorts by the full line (case-insensitive) and prints a `TODO: X of Y tasks
-shown` footer, matching todo.txt-cli.
-
-**Options:**
-
-- `-f`, `--force` — skip confirmation prompts (e.g. for `del`).
-- `--json` — emit machine-readable JSON instead of text. `list`-style commands
-  print an array of task objects; mutating commands print a result object.
-  No prompts or footers are written in this mode.
-
-Global flags may appear before the subcommand (`tuxedo -f del 3`).
-
-**Differences from todo.txt-cli:** `do` marks a task complete but does **not**
-auto-archive it — completed tasks stay in the file until you run `archive` (or
-press `A` in the TUI), matching tuxedo's interactive model. There is no `-d`
-config-file flag; configure paths with the environment variables above.
 
 ## Keybindings
 
@@ -697,17 +653,8 @@ is run through the same natural-language pipeline as the `n` add prompt,
 given a creation date if missing, and merged into `todo.txt` as a single
 undoable batch (`u` rolls back the whole drain at once).
 
-That makes `inbox.txt` a general capture endpoint, not just a PWA backend.
-Anything that can append a line works as a producer:
-
-```sh
-echo "Refill prescription tomorrow" >> ~/notes/inbox.txt
-echo "Call dentist due:2026-06-01" >> ~/notes/inbox.txt
-```
-
-Shell aliases, iOS Shortcuts writing to a synced folder, cron jobs,
-email-to-file gateways — pick your producer. As long as it appends a line
-to the sibling `inbox.txt`, tuxedo picks it up.
+Advanced file-based producers and shell automation are covered in the
+[command-line reference](#capture-from-scripts), near the end.
 
 The server:
 
@@ -791,6 +738,103 @@ Matching is case-insensitive. Hiding is purely visual — the tags stay on
 disk untouched, still serialize, and still show in the detail pane's **RAW**
 section (a deliberate escape hatch). Searches still match hidden text; the
 hidden characters just aren't drawn.
+
+## Command-line interface
+
+**Optional reference for shell commands and automation.** You do not need these
+commands to use the interactive app. With no subcommand, `tuxedo` opens the TUI.
+
+### Help, version and update instructions
+
+These commands inspect the installed application or show instructions; they
+**do not install it**:
+
+```sh
+tuxedo --version
+tuxedo --help
+tuxedo update
+```
+
+`--version` identifies the fork as **Tuxedo Task**. `--help` lists available
+options and commands. `tuxedo update` (or `tuxedotask update`) only prints upgrade
+instructions for your install method; it never installs anything automatically.
+
+### Task commands and automation
+
+The CLI uses `$TODO_FILE`, `$TODO_DIR/todo.txt`, or an existing `./todo.txt` in
+that order. With none available, it uses a temporary sample instead of asking.
+Set `TODO_FILE` explicitly when scripting your own files; use a copy while
+trying commands that modify tasks.
+
+When the first argument is a recognized subcommand, tuxedo runs a one-shot
+command instead of launching the TUI. The surface mirrors
+[todo.txt-cli](https://github.com/todotxt/todo.txt-cli/wiki/Usage) — same
+commands, aliases, task numbering, and output — so it's a drop-in for scripts
+and aliases.
+
+Examples for macOS/Linux shells:
+
+```sh
+export TODO_FILE="$HOME/Documents/tasks/todo.txt"
+tuxedo add "Pay rent +home @bank due:2026-07-01"   # or: tuxedo a "..."
+tuxedo ls @bank                                     # filter by context
+tuxedo do 3                                          # mark task 3 complete
+tuxedo pri 3 A                                        # set priority
+tuxedo archive                                        # move done tasks to done.txt
+tuxedo ls --json | jq .                              # machine-readable output
+```
+
+| Command | Aliases | Arguments | Description |
+| --- | --- | --- | --- |
+| `add` | `a` | `TEXT...` | Add a task (natural-language dates supported, same as the `n` prompt). |
+| `append` | `app` | `N TEXT...` | Append text to task `N`. |
+| `prepend` | `prep` | `N TEXT...` | Prepend text to task `N`. |
+| `replace` | | `N TEXT...` | Replace task `N` entirely. |
+| `pri` | `p` | `N PRIORITY` | Set priority `A`–`Z` on task `N`. |
+| `depri` | `dp` | `N...` | Remove priority from the given tasks. |
+| `do` | `done`, `complete` | `N...` | Mark tasks complete (recurring tasks spawn their next instance). |
+| `del` | `rm` | `N [TERM]` | Delete task `N`, or remove just `TERM` from it. Prompts unless `-f`. |
+| `archive` | | | Move completed tasks to the done file. |
+| `list` | `ls` | `[TERM...]` | List tasks. `TERM` is `+project`, `@context`, or free text. |
+| `listall` | `lsa` | `[TERM...]` | List the todo file and the done file. |
+| `listpri` | `lsp` | `[PRIORITY]` | List prioritized tasks (optionally a single priority). |
+| `listproj` | `lsprj` | | List all `+projects`. |
+| `listcon` | `lsc` | | List all `@contexts`. |
+
+**Task numbers** are 1-based line numbers in the file, exactly as printed by
+`list` — stable regardless of how the list is filtered or sorted. `list`
+sorts by the full line (case-insensitive) and prints a `TODO: X of Y tasks
+shown` footer, matching todo.txt-cli.
+
+**Options:**
+
+- `-f`, `--force` — skip confirmation prompts (e.g. for `del`).
+- `--json` — emit machine-readable JSON instead of text. `list`-style commands
+  print an array of task objects; mutating commands print a result object.
+  No prompts or footers are written in this mode.
+
+Global flags may appear before the subcommand (`tuxedo -f del 3`).
+
+**Differences from todo.txt-cli:** `do` marks a task complete but does **not**
+auto-archive it — completed tasks stay in the file until you run `archive` (or
+press `A` in the TUI), matching tuxedo's interactive model. There is no `-d`
+config-file flag; configure paths with the environment variables above.
+
+### Capture from scripts
+
+The sibling `inbox.txt` described under [Phone capture](#phone-capture) also
+accepts file-based producers. The example below assumes the running app opened
+`$HOME/Documents/tasks/todo.txt`, so its inbox is in that same directory:
+
+```sh
+echo "Refill prescription tomorrow" >> "$HOME/Documents/tasks/inbox.txt"
+echo "Call dentist due:2026-06-01" >> "$HOME/Documents/tasks/inbox.txt"
+```
+
+Shell aliases, Shortcuts writing to a synced folder, cron jobs and email-to-file
+gateways can append lines to that inbox. The running app picks them up on its
+next poll. Plain shell appends do not acquire the app's lock; use the capture
+server or the same lock when producers must be serialized with the TUI drain.
 
 ## Website
 

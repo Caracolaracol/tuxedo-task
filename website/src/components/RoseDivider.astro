@@ -1,8 +1,10 @@
 ---
+interface Props { showRose?: boolean; }
+const { showRose = true } = Astro.props;
 const rose = `${import.meta.env.BASE_URL}third-party/rose.svg`;
 ---
-<div class="rose-divider" aria-hidden="true">
+<div class:list={['rose-divider', { 'rose-divider--plain': !showRose }]} aria-hidden="true">
   <span></span>
-  <img src={rose} width="46" height="46" alt="" loading="lazy" />
+  {showRose && <img src={rose} width="46" height="46" alt="" loading="lazy" />}
   <span></span>
 </div>

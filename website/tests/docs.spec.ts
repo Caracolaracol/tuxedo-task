@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const docSections = ['Getting started', 'Installation', 'Usage', 'Tasks and subtasks', 'Keybindings', 'Mouse interaction', 'Command-line interface', 'Natural-language add', 'Phone capture', 'Configuration', 'Themes', 'Fork additions', 'Troubleshooting', 'Support and credits'];
+const docSections = ['Installation', 'Getting started', 'Usage', 'Tasks and subtasks', 'Keybindings', 'Mouse interaction', 'Natural-language add', 'Phone capture', 'Configuration', 'Themes', 'Fork additions', 'Troubleshooting', 'Command-line interface', 'Support and credits'];
 
 test('documentation is linked from the landing and contains the full application guide', async ({ page }) => {
   const errors: string[] = [];
@@ -16,6 +16,20 @@ test('documentation is linked from the landing and contains the full application
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://caracolaracol.github.io/tuxedo-task/docs/');
   await expect(page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Documentation', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.locator('.docs-prose h2')).toHaveText(docSections);
+  const installationCommands = await page.locator('#installation').evaluate(heading => {
+    const blocks: string[] = [];
+    let sibling = heading.nextElementSibling;
+    while (sibling && sibling.tagName !== 'H2') {
+      if (sibling.tagName === 'PRE') blocks.push(sibling.textContent?.trim() ?? '');
+      sibling = sibling.nextElementSibling;
+    }
+    return blocks;
+  });
+  expect(installationCommands[0]).toBe('brew install caracolaracol/tap/tuxedotask');
+  expect(installationCommands.join('\n')).not.toMatch(/tuxedo(?:task)? (?:--help|--version|update\b)/);
+  await expect(page.locator('#your-first-task + blockquote')).toContainText('You do not need to create todo.txt yourself.');
+  await expect(page.locator('#your-first-task + blockquote')).toContainText('any missing parent folders');
+  await expect(page.locator('.docs-shortcuts a').nth(1)).toHaveAttribute('href', '#your-first-task');
   await expect(page.locator('.docs-prose')).toContainText('brew install caracolaracol/tap/tuxedotask');
   await expect(page.locator('.docs-prose')).toContainText('cargo install --git https://github.com/Caracolaracol/tuxedo-task --locked');
   await expect(page.locator('.docs-prose')).toContainText('Both command names are available');

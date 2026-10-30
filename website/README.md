@@ -34,7 +34,7 @@ npx playwright install chromium
 npm test
 ```
 
-`npm test` runs 4 Node tests for documentation generation, then 38 browser tests.
+`npm test` runs 7 Node tests for documentation generation, then 38 browser tests.
 They cover the landing and `/tuxedo-task/docs/`, source-derived reference content,
 internal anchor integrity, desktop/mobile layouts, assets, metadata, fork
 attribution, real-renderer screenshots, decorative roses and their license,
@@ -64,7 +64,8 @@ icons and decorative artwork use `rem`. The root size stays at the browser's
 normal font size up to 1440px, then grows with the viewport (`100vw / 90`).
 Real app screenshots fill their grid columns and preserve their aspect ratios.
 The four project principles are centered without a slogan or separator lines;
-on phones they form a centered 2×2 grid.
+on phones they form a centered 2×2 grid. The hero uses matching top/bottom
+padding at every breakpoint to keep its content vertically balanced.
 
 Use `rem` for new UI dimensions and keep media-query thresholds in `px`. SVG
 viewBox coordinates and intrinsic image attributes remain unchanged; CSS sizes
@@ -79,7 +80,8 @@ same scaling; its index scrolls within the viewport even on short ultrawide scre
   credits, including local documentation links.
 - `src/components/RoseBorder.astro` and `src/assets/rose-border.svg`: the complete
   CC0 Openclipart illustration used for the first divider, tinted with CSS.
-- `src/components/RoseDivider.astro`: the other four decorative Twemoji roses.
+- `src/components/RoseDivider.astro`: section dividers; only the final divider
+  before the closing keeps its Twemoji rose. The other three are plain lines.
 - `src/components/ShortcutGuide.astro`: keyboard walkthrough, including `n` to add
   a task. Autoplay runs only while visible and the tab is active; pause/play and
   manual row buttons work with the keyboard. Reduced motion starts paused.
@@ -111,6 +113,14 @@ the footer also credits the creators.
 `src/pages/docs.astro` renders a user guide with a sticky desktop index, a native
 collapsible mobile index, reference tables, and highlighted code examples. It
 uses Astro's native Markdown support, with no client-side documentation framework.
+
+The guide is ordered for first-time interactive use: **Installation → Getting
+started / Your first task → TUI reference → Troubleshooting → optional CLI →
+Support**. Installation blocks contain actual install steps, not `--version` or
+`--help`; those checks and script examples live in the late CLI section.
+Onboarding explicitly explains automatic file/folder creation and the `c`/`s`
+choices when starting without a path. Top quick links prioritize the first task,
+not command-line automation.
 
 The technical reference is **generated from the repository's `README.md`**:
 

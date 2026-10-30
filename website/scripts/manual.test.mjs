@@ -34,6 +34,42 @@ test('manual includes all application references and excludes marketing artwork'
   assert.ok(!manual.includes('docs/screenshots/theme-'));
 });
 
+test('installation contains installation commands, not version or help checks', () => {
+  const installation = readmeSection(buildManual(readme, start, notes), 'Installation');
+  const firstBlock = /```sh\n([\s\S]*?)```/.exec(installation)?.[1].trim();
+  assert.equal(firstBlock, 'brew install caracolaracol/tap/tuxedotask');
+  assert.doesNotMatch(installation, /tuxedo(?:task)?\s+(?:--help|--version|update\b)/);
+  assert.ok(installation.includes('cargo install --git'));
+});
+
+test('first task clearly explains automatic files, folders and first-run choices', () => {
+  const gettingStarted = readmeSection(buildManual(readme, start, notes), 'Getting started');
+  assert.ok(gettingStarted.includes('You do not need to create `todo.txt` yourself'));
+  assert.ok(gettingStarted.includes('any missing parent folders'));
+  assert.ok(gettingStarted.includes('without clearing its'));
+  assert.ok(gettingStarted.includes('no need to run `touch`'));
+  assert.ok(gettingStarted.includes('Press `c` to create'));
+  assert.ok(gettingStarted.includes('current terminal folder'));
+  assert.ok(gettingStarted.includes('Press `s` to try a sample'));
+  assert.ok(gettingStarted.includes('tuxedo "$HOME/Documents/tasks/todo.txt"'));
+});
+
+test('installation comes first and optional CLI stays after the interactive guide', () => {
+  const manual = buildManual(readme, start, notes);
+  const titles = [...manual.matchAll(/^## (.+)$/gm)].map(match => match[1]);
+  assert.equal(titles[0], 'Installation');
+  assert.ok(manual.indexOf('## Installation') < manual.indexOf('### Your first task'));
+  assert.ok(titles.indexOf('Command-line interface') > titles.indexOf('Troubleshooting'));
+  assert.equal(titles.at(-1), 'Support and credits');
+  const usage = readmeSection(manual, 'Usage');
+  assert.doesNotMatch(usage, /tuxedo (?:--version|--help|<command>)/);
+  assert.doesNotMatch(readmeSection(manual, 'Phone capture'), /echo "/);
+  const cli = readmeSection(manual, 'Command-line interface');
+  assert.ok(cli.includes('tuxedo --version'));
+  assert.ok(cli.includes('tuxedo --help'));
+  assert.ok(cli.includes('### Capture from scripts'));
+});
+
 test('generated links are suitable for the documentation route', () => {
   const manual = buildManual(readme, start, notes);
   assert.ok(manual.includes('](#installation)'));

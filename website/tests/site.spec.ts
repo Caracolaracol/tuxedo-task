@@ -74,6 +74,20 @@ test('hero uses the real renderer output and opens it with the keyboard', async 
   await expect(page.getByRole('tablist')).toHaveCount(0);
   const image = await request.get('screenshots/subtasks.svg');
   expect(await image.body()).toEqual(await readFile(new URL('../../docs/screenshots/subtasks.svg', import.meta.url)));
+  for (const width of [320, 600, 768, 1024, 1440, 1920, 2560, 3840]) {
+    await page.setViewportSize({ width, height: Math.max(900, Math.round(width * 9 / 16)) });
+    const geometry = await page.locator('.hero').evaluate(element => {
+      const style = getComputedStyle(element);
+      const outer = element.getBoundingClientRect();
+      const copy = element.querySelector('.hero-copy')!.getBoundingClientRect();
+      const preview = element.querySelector('.hero-preview')!.getBoundingClientRect();
+      return { paddingTop: parseFloat(style.paddingTop), paddingBottom: parseFloat(style.paddingBottom),
+        spaceAbove: Math.min(copy.top, preview.top) - outer.top,
+        spaceBelow: outer.bottom - Math.max(copy.bottom, preview.bottom) };
+    });
+    expect(geometry.paddingTop, `balanced hero padding at ${width}px`).toBeCloseTo(geometry.paddingBottom, 1);
+    expect(geometry.spaceAbove, `centered hero content at ${width}px`).toBeCloseTo(geometry.spaceBelow, 1);
+  }
   const fullSize = page.getByRole('link', { name: 'Open full-size application screenshot', exact: true });
   await fullSize.focus();
   await fullSize.press('Enter');
@@ -91,11 +105,20 @@ test('rose dividers are local, decorative, and credited under their own license'
   await expect(border.locator('svg')).toHaveAttribute('viewBox', '0 0 618.603 186');
   expect(await border.locator('path').count()).toBeGreaterThan(10);
   await expect(border.locator('img[src$="rose.svg"]')).toHaveCount(0);
-  for (const divider of await dividers.all()) {
+  for (let index = 0; index < 4; index++) {
+    const divider = dividers.nth(index);
     await expect(divider).toHaveAttribute('aria-hidden', 'true');
-    await expect(divider.locator('img')).toHaveAttribute('src', '/tuxedo-task/third-party/rose.svg');
-    await expect(divider.locator('img')).toHaveAttribute('alt', '');
+    if (index < 3) {
+      await expect(divider.locator('img')).toHaveCount(0);
+      await expect(divider).toHaveCSS('gap', '0px');
+      await expect(divider.locator('span')).toHaveCount(2);
+    } else {
+      await expect(divider.locator('img')).toHaveAttribute('src', '/tuxedo-task/third-party/rose.svg');
+      await expect(divider.locator('img')).toHaveAttribute('alt', '');
+    }
   }
+  await expect(page.locator('.rose-divider img')).toHaveCount(1);
+  await expect(page.locator('.rose-divider:not(.rose-divider--plain) + .closing')).toHaveCount(1);
   await expect(page.locator('footer .art-credit')).toContainText('Twemoji contributors');
   await expect(page.locator('footer .art-credit')).toContainText('johnny_automatic / Openclipart');
   await expect(page.locator('footer a[href="https://creativecommons.org/publicdomain/zero/1.0/"]')).toBeVisible();
