@@ -203,6 +203,7 @@ impl App {
         let active_filter = Filter {
             project: cfg.active_project.clone(),
             context: cfg.active_context.clone(),
+            person: cfg.active_person.clone(),
             search: String::new(),
         };
         let mut app = Self {
@@ -626,7 +627,15 @@ impl App {
         self.save_filter();
     }
 
-    /// Persist the active project/context filter to config so it survives a
+    /// Set or clear the active Persona filter, independently of other filters.
+    pub fn set_person_filter(&mut self, person: Option<String>) {
+        self.filter.person = person;
+        self.cursor = 0;
+        self.recompute_visible();
+        self.save_filter();
+    }
+
+    /// Persist the active project/context/person filter to config so it survives a
     /// restart. Load-modify-save keeps unrelated keys (share token, prefs,
     /// saved searches) intact and routes through `config_path` in tests.
     pub(crate) fn save_filter(&mut self) {
@@ -635,12 +644,14 @@ impl App {
                 let mut cfg = Config::load_from(path);
                 cfg.active_project = self.filter.project.clone();
                 cfg.active_context = self.filter.context.clone();
+                cfg.active_person = self.filter.person.clone();
                 cfg.save_to(path)
             }
             None => {
                 let mut cfg = Config::load();
                 cfg.active_project = self.filter.project.clone();
                 cfg.active_context = self.filter.context.clone();
+                cfg.active_person = self.filter.person.clone();
                 cfg.save()
             }
         };
@@ -663,7 +674,7 @@ impl App {
         }
     }
 
-    /// Drop every filter component (project + context + search).
+    /// Drop every filter component (project + context + person + search).
     pub fn clear_filter(&mut self) {
         if !self.filter.has_any() {
             return;

@@ -136,12 +136,15 @@ pub fn draw(frame: &mut Frame, app: &App) {
             frame.render_widget(Clear, body_area);
             settings::render(frame, body_area, app);
         }
-        Mode::PromptProject | Mode::PromptContext | Mode::PromptSaveFilter => {
+        Mode::PromptProject | Mode::PromptContext | Mode::PromptPerson | Mode::PromptSaveFilter => {
             let w: u16 = PROMPT_MAX_W.min(area.width.saturating_sub(4));
             let r = centered_in(area, w, PROMPT_H);
             frame.render_widget(Clear, r);
             dialog::render_prompt(frame, r, app);
-            if matches!(app.mode, Mode::PromptProject | Mode::PromptContext) {
+            if matches!(
+                app.mode,
+                Mode::PromptProject | Mode::PromptContext | Mode::PromptPerson
+            ) {
                 dialog::render_autocomplete(frame, r, area, app);
             }
         }

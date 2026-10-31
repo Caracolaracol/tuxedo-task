@@ -1,0 +1,34 @@
+---
+source: tests/people.rs
+expression: text
+---
+╭ フ ィ ル タ ー  ────────────╮╭Tuxedo Task  target/tuxedo-people-snapshot.txt  •  4 tasks  •  sort:╮╭ デ ィ テ ー ル  ────────────────────╮
+│                        ││                                                                    ││                                │
+│ プ ロ ジ ェ ク ト            ││ (3)  PRIORITY A  ──────────────────────────────────────────────────││ priority  (A)                  │
+│   +home             1  ││  1 ▸ (A) Launch +work @office ::maria                              ││ created   2026-05-01           │
+│   +work             1  ││    2       • Write copy ::ana                                      ││ projects  +work                │
+│                        ││    3       • Review ::José                                         ││ contexts  @office              │
+│ コ ン テ キ ス ト            ││ (1)  NO PRIORITY  ─────────────────────────────────────────────────││ ペ ル ソ ナ   ::maria              │
+│   @office           1  ││  4       Call +home @phone ::ana                                   ││                                │
+│   @phone            1  ││                                                                    ││ ロ ー                            │
+│                        ││                                                                    ││                                │
+│ ペ ル ソ ナ                ││                                                                    ││ (A) 2026-05-01 Launch +work    │
+│ ▸ ::ana             2  ││                                                                    ││ @office ::maria                │
+│   ::José            1  ││                                                                    ││                                │
+│   ::maria           1  ││                                                                    ││                                │
+│                        ││                                                                    ││                                │
+│                        ││                                                                    ││                                │
+│                        ││                                                                    ││                                │
+│                        ││                                                                    ││                                │
+│                        ││                                                                    ││                                │
+│                        ││                                                                    ││                                │
+│                        ││                                                                    ││                                │
+│                        ││                                                                    ││                                │
+│                        ││                                                                    ││                                │
+│                        ││                                                                    ││                                │
+│                        ││                                                                    ││                                │
+│                        ││                                                                    ││                                │
+│                        ││                                                                    ││                                │
+│                        ││                                                                    ││                                │
+╰────────────────────────╯╰────────────────────────────────────────────────────────────────────╯╰────────────────────────────────╯
+ NORMAL   j/k · n new · r reschedule · x done · / search · ? help · u undo · q quit   4 open · 2026-05-06 · Tuxedo Task 2026.10.3

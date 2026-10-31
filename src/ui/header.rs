@@ -7,19 +7,23 @@ use ratatui::widgets::Paragraph;
 use crate::app::Filter;
 use crate::theme::Theme;
 
-/// Build the human-readable filter chip shown in the header. `+project` /
-/// `@context` / `/search` precedence matches what the sidebar shows. Returns
-/// `None` when no filter is active.
+/// Show every active filter, so a Persona filter is never hidden behind a
+/// project or context chip. Returns `None` when no filter is active.
 pub fn filter_label(filter: &Filter) -> Option<String> {
+    let mut parts = Vec::new();
     if let Some(p) = &filter.project {
-        Some(format!("+{p}"))
-    } else if let Some(c) = &filter.context {
-        Some(format!("@{c}"))
-    } else if !filter.search.is_empty() {
-        Some(format!("/{}", filter.search))
-    } else {
-        None
+        parts.push(format!("+{p}"));
     }
+    if let Some(c) = &filter.context {
+        parts.push(format!("@{c}"));
+    }
+    if let Some(person) = &filter.person {
+        parts.push(format!("::{person}"));
+    }
+    if !filter.search.is_empty() {
+        parts.push(format!("/{}", filter.search));
+    }
+    (!parts.is_empty()).then(|| parts.join(" "))
 }
 
 /// Inputs for the top-of-screen header bar. Grouped into a struct so call

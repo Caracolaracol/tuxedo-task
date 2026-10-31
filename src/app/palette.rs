@@ -58,6 +58,11 @@ pub const ENTRIES: &[PaletteEntry] = &[
         action: Action::BeginPromptContext,
     },
     PaletteEntry {
+        label: "ペルソナ (Persona): assign or remove person",
+        keys: "m",
+        action: Action::BeginPromptPerson,
+    },
+    PaletteEntry {
         label: "copy line to clipboard",
         keys: "yy",
         action: Action::CopyLine,
@@ -126,6 +131,11 @@ pub const ENTRIES: &[PaletteEntry] = &[
         label: "filter by context",
         keys: "fc",
         action: Action::PickContext,
+    },
+    PaletteEntry {
+        label: "ペルソナ (Persona): filter by person",
+        keys: "fm",
+        action: Action::PickPerson,
     },
     PaletteEntry {
         label: "pick saved filter",

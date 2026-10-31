@@ -46,6 +46,26 @@ impl App {
         self.flash_pick_context();
     }
 
+    pub fn enter_pick_person(&mut self) {
+        let all = unique_values(self.store.tasks(), |t| &t.people);
+        if all.is_empty() {
+            self.flash("ペルソナ: no assignments");
+            return;
+        }
+        let seed = self
+            .cur_abs()
+            .and_then(|i| self.store.tasks()[i].people.first().cloned())
+            .filter(|p| all.contains(p))
+            .or_else(|| self.filter.person.clone())
+            .filter(|p| all.contains(p))
+            .unwrap_or_else(|| all[0].clone());
+        self.filter.person = Some(seed);
+        self.cursor = 0;
+        self.mode = Mode::PickPerson;
+        self.recompute_visible();
+        self.flash_pick_person();
+    }
+
     /// Enter saved-filter picker mode. Seeds to the saved filter whose query
     /// equals the active search (so reopening highlights the current one),
     /// else the first. Stashes the pre-picker search so `pick_cancel` can
@@ -79,7 +99,7 @@ impl App {
             Mode::PickSavedFilter => {
                 self.saved_pick_restore = None;
             }
-            Mode::PickProject | Mode::PickContext => {
+            Mode::PickProject | Mode::PickContext | Mode::PickPerson => {
                 self.save_filter();
             }
             _ => {}
@@ -100,6 +120,10 @@ impl App {
             }
             Mode::PickContext => {
                 self.filter.context = None;
+                self.save_filter();
+            }
+            Mode::PickPerson => {
+                self.filter.person = None;
                 self.save_filter();
             }
             Mode::PickSavedFilter => {
@@ -135,6 +159,16 @@ impl App {
                 self.recompute_visible();
                 self.flash_pick_context();
             }
+            Mode::PickPerson => {
+                let all = unique_values(self.store.tasks(), |t| &t.people);
+                if all.is_empty() {
+                    return;
+                }
+                self.filter.person = Some(step(&all, self.filter.person.as_deref(), forward));
+                self.cursor = 0;
+                self.recompute_visible();
+                self.flash_pick_person();
+            }
             Mode::PickSavedFilter => {
                 let len = self.saved_filters.len();
                 if len == 0 {
@@ -167,6 +201,14 @@ impl App {
         if let Some(cur) = self.filter.context.clone() {
             let pos = position_of(&all, &cur);
             self.flash(format!("@{}  ({}/{})", cur, pos + 1, all.len()));
+        }
+    }
+
+    fn flash_pick_person(&mut self) {
+        let all = unique_values(self.store.tasks(), |t| &t.people);
+        if let Some(cur) = self.filter.person.clone() {
+            let pos = position_of(&all, &cur);
+            self.flash(format!("::{cur}  ({}/{})", pos + 1, all.len()));
         }
     }
 

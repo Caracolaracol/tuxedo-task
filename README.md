@@ -32,7 +32,8 @@ Compared with the upstream revision this fork started from:
 | **Family editing** | Add a parent with child tasks in one dialog, or edit an existing parent's subtree together. |
 | **Project grouping** | `S` cycles to project sort; grouping preserves families and supports multiple project tags. |
 | **Mouse interaction** | Click task rows or sidebar filters, navigate with the wheel, and drag task text to copy via OSC 52. Disable with `mouse = false`. |
-| **Remembered filters** | Active project and context filters survive restarts, separately from named saved searches. |
+| **Persona assignments** | `::person` records assignees; **ペルソナ** is the third filter section beside projects and contexts. |
+| **Remembered filters** | Active project, context, and person filters survive restarts, separately from named saved searches. |
 | **Layout refinements** | Optional pane borders, configurable outer margin, revised task rows and headers, and Japanese labels in selected UI sections. |
 | **Config reload fix** | Keeps the filesystem watcher alive and avoids repeated reload notices after its channel disconnects. |
 | **Own identity** | An original mask mark, Tuxedo Task branding, and update instructions that point to this repository. |
@@ -65,7 +66,7 @@ rights for other projects.
 - **Command palette.** `:` or `Ctrl-P` opens a fuzzy palette over every action — type a few letters, hit Enter. Same matcher as `/` search, ranked so start-of-label hits beat word-boundary hits beat mid-word hits.
 - **Atomic, sync-friendly writes.** Every change goes through write-temp-then-rename. If another process — Dropbox, an editor, a script — modifies the file, tuxedo reloads on the next keypress (or within ~250 ms while idle) and flashes a notice.
 - **Sibling-file archive.** `A` moves completed tasks to `done.txt` next to your file, atomically.
-- **Filter, sort, multi-select.** Cycle by `+project` or `@context`, sort by priority / due / file order, and bulk-complete or bulk-delete in visual mode.
+- **Filter, sort, multi-select.** Cycle by `+project`, `@context`, or `::person`, sort by priority / due / file order, and bulk-complete or bulk-delete in visual mode.
 - **Nested subtasks.** Indent with `>` and outdent with `<`; parent actions, undo, and sorting keep each subtree together.
 - **Project grouping.** Sort tasks by `+project` while preserving parent/subtask families and multi-project membership.
 - **Saved searches.** Name the active `/`-search with `fs`, then recall it any time by cycling saved filters with `ff`. Stored as plain `filter.<name>` lines in the config — hand-editable like everything else.
@@ -81,6 +82,7 @@ rights for other projects.
 | **List** • list of todos, optionally grouped | ![empty](docs/screenshots/list.svg) |
 | **Archive** • completed tasks grouped by completion date | ![archive](docs/screenshots/archive.svg) |
 | **Filter sidebar active** • `fp` cycles projects with j/k, `fc` cycles contexts; saved searches list under a **SAVED** heading with live match counts | ![filter](docs/screenshots/filter.svg) |
+| **Persona filter** • assign tasks with `m`, then filter by person with `fm` | ![Persona filter](docs/screenshots/persona.svg) |
 | **Command palette** • `:` or `Ctrl-P` opens a fuzzy palette over every action | ![command palette](docs/screenshots/command-palette.svg) |
 | **Help** • `?` opens the full keybindings overlay | ![help](docs/screenshots/help.svg) |
 
@@ -143,7 +145,7 @@ another theme is skipped with a warning at startup.
 | `border` | panel and modal borders |
 | `fg` | primary text |
 | `dim` | secondary / muted text |
-| `accent` | logo, headings, hints, and selection markers |
+| `accent` | logo, headings, hints, `::person` assignments, and selection markers |
 | `cursor` | current row, and the highlighted row in the `T` picker |
 | `selection` | set to the same value as `selected` |
 | `statusbar` | status bar background |
@@ -405,6 +407,7 @@ delete               = "dd"
 reschedule           = "r"
 cycle_priority       = "p"
 begin_prompt_context = "c"
+begin_prompt_person  = "m"
 copy_line            = "yy"
 copy_body            = "yb"
 undo                 = "u"
@@ -417,6 +420,7 @@ begin_search        = "/"
 arm_f               = "f"        # leader for the fp / fc / ff / fs chords
 pick_project        = "fp"
 pick_context        = "fc"
+pick_person         = "fm"
 pick_saved_filter   = "ff"
 save_current_filter = "fs"
 cycle_sort          = "S"
@@ -475,9 +479,10 @@ chords like `ZZ`, modifier forms like `Ctrl-n` / `Alt-x`, named keys like
 | `dd` | delete task |
 | `p` | cycle priority A → B → C → · |
 | `c` | add or remove a context |
+| `m` | assign or remove a person (**ペルソナ**); type the alias without `::` |
 | `+` | add a project |
 | `yy` | copy current line to clipboard |
-| `yb` | copy current body only (no priority, dates, projects, contexts, `key:value`) |
+| `yb` | copy current body only (no priority, dates, projects, contexts, people, `key:value`) |
 | `>` | indent task (and its subtree) one level — nests it as a subtask |
 | `<` | outdent task (and its subtree) one level |
 | `u` | undo (50 levels) |
@@ -521,6 +526,7 @@ The modal keys below apply in Normal mode:
 | `/` | search |
 | `fp` | filter by project (`j` / `k` cycles, `Esc` clears) |
 | `fc` | filter by context (`j` / `k` cycles, `Esc` clears) |
+| `fm` | filter by person (**ペルソナ**; `j` / `k` cycles, `Enter` keeps, `Esc` clears only this filter) |
 | `ff` | pick a saved search (`j` / `k` cycles, `Enter` keeps, `Esc` reverts) |
 | `fs` | save the active `/`-search as a named filter |
 | `S` | cycle sort: priority → due → file order → project |
@@ -575,7 +581,9 @@ silently ignore the keystroke.
 Mouse support is enabled by default in the list and archive views:
 
 - Click a task row to move the cursor to it.
-- Click a project or context in the filter pane to toggle that filter.
+- Click a project, context, or person in the filter pane to toggle that filter.
+- Long sections share the pane's available height. Use `fp`, `fc`, or `fm` to
+  browse all entries; the active entry stays visible.
 - Click a named saved search in the sidebar to apply it.
 - Use the scroll wheel to move the cursor up or down.
 - Drag across task text and release to copy the selection through OSC 52.
@@ -596,6 +604,7 @@ Standard [todo.txt](https://github.com/todotxt/todo.txt) lines:
 - `2026-04-28` — creation date in ISO 8601
 - `+project` — project tag
 - `@context` — context tag
+- `::person` — Tuxedo Task's Persona assignment extension (see below)
 - `key:value` — extension; `due:YYYY-MM-DD` is recognized for sort and
   due-bucket grouping in the list view. `note:<path>` is recognized by the
   note actions (`o` / `O`): relative paths resolve under `notes_dir`, then
@@ -614,6 +623,50 @@ Completed tasks are prefixed with `x ` and a completion date:
 ```
 x 2026-05-05 2026-05-01 Submit expense report +work
 ```
+
+### Persona assignments
+
+Use **Persona**, displayed as **ペルソナ** in the app, alongside projects and
+contexts to record who is responsible for a task:
+
+```text
+Prepare the launch +website @office ::ana
+  Write the announcement ::José
+  Review the design ::ana ::maria
+```
+
+- A task may have zero, one, or several assignees. Each `::alias` is explicit;
+  assigning a parent does **not** rewrite its children or replace other people.
+- Press `m`, type an alias **without** `::`, and press `Enter` to assign it.
+  Repeat the same alias to remove it. `u` undoes the change.
+- While adding or editing, type `::` and use `Tab` to complete an existing
+  alias. The `m` prompt also autocompletes aliases.
+- Press `fm` to filter by person, or click their sidebar row. Project, context,
+  person, and search filters combine. `Enter` keeps the filter across restarts;
+  `Esc` in the picker clears only the person filter.
+- In the TUI, a matching **visible** parent or subtask keeps the whole family
+  together. Other family members provide context, not additional assignments.
+  Completed/future tasks still follow `H` / `F`. Project, context, and search
+  predicates continue to use the family root. CLI listings match each task's
+  own explicit assignment instead.
+- Counts reflect open tasks explicitly assigned to each alias, counting
+  duplicates on the same task only once.
+
+Aliases are case-sensitive single words beginning with a letter or `_`.
+Unicode works (`::José`, `::山田`); use `ana-maria` or `ana_maria` instead of
+spaces. Aliases cannot contain whitespace, `+`, `@`, `:`, quotes, `/`, or `\`.
+`due:`, `rec:`, times, URLs, and embedded namespaces such as `std::path` are
+not Persona tokens. Assignments inside quoted text or quoted notes are ignored.
+A literal token beginning with `::` and a valid alias is reserved for Persona.
+
+**IPv6 stays literal:** `::1`, `::abcd`, and other valid compressed IPv6
+addresses are never treated as assignments. This also makes short hexadecimal
+aliases such as `ed` ambiguous; use `_ed` or `edgar` instead.
+
+Persona is plain-text metadata, not an account system: shared lists identify
+responsibility without sending invitations, notifications, or enforcing
+permissions. Share/sync the file separately. Other todo.txt clients can retain
+these tokens as ordinary text; no file migration is required.
 
 ### Subtasks (nested tasks)
 
@@ -727,7 +780,7 @@ The update-check cache uses `%LOCALAPPDATA%\tuxedo-task` on native Windows
 (or the explicit `XDG_CACHE_HOME`). Task files stay at the paths you choose.
 
 Cycling theme, density, or sort, and toggling sidebars / line-numbers / done-visibility
-all update the file. Active project/context filters are also persisted. Unknown
+all update the file. Active project/context/person filters are also persisted. Unknown
 keys are ignored.
 
 Fork-specific layout options (unquoted values, as in the existing config):
@@ -836,6 +889,8 @@ Examples for macOS/Linux shells:
 export TODO_FILE="$HOME/Documents/tasks/todo.txt"
 tuxedo add "Pay rent +home @bank due:2026-07-01"   # or: tuxedo a "..."
 tuxedo ls @bank                                     # filter by context
+tuxedo ls +website ::ana                             # combine project and person
+tuxedo listpersona                                   # list known assignees
 tuxedo do 3                                          # mark task 3 complete
 tuxedo pri 3 A                                        # set priority
 tuxedo archive                                        # move done tasks to done.txt
@@ -853,11 +908,12 @@ tuxedo ls --json | jq .                              # machine-readable output
 | `do` | `done`, `complete` | `N...` | Mark tasks complete (recurring tasks spawn their next instance). |
 | `del` | `rm` | `N [TERM]` | Delete task `N`, or remove just `TERM` from it. Prompts unless `-f`. |
 | `archive` | | | Move completed tasks to the done file. |
-| `list` | `ls` | `[TERM...]` | List tasks. `TERM` is `+project`, `@context`, or free text. |
+| `list` | `ls` | `[TERM...]` | List tasks. `TERM` is `+project`, `@context`, `::person`, or free text. |
 | `listall` | `lsa` | `[TERM...]` | List the todo file and the done file. |
 | `listpri` | `lsp` | `[PRIORITY]` | List prioritized tasks (optionally a single priority). |
 | `listproj` | `lsprj` | | List all `+projects`. |
 | `listcon` | `lsc` | | List all `@contexts`. |
+| `listpersona` | `lsm`, `listpeople` | | List unique `::person` assignments, including completed tasks in the todo file. |
 
 **Task numbers** are 1-based line numbers in the file, exactly as printed by
 `list` — stable regardless of how the list is filtered or sorted. `list`
@@ -869,6 +925,9 @@ shown` footer, matching todo.txt-cli.
 - `-f`, `--force` — skip confirmation prompts (e.g. for `del`).
 - `--json` — emit machine-readable JSON instead of text. `list`-style commands
   print an array of task objects; mutating commands print a result object.
+  Task objects include a `people` string array alongside `projects` and
+  `contexts`; this field name is independent of the Persona display label.
+  `listpersona --json` returns bare aliases in its `tags` array.
   No prompts or footers are written in this mode.
 
 Global flags may appear before the subcommand (`tuxedo -f del 3`).

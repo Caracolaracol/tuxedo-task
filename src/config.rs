@@ -60,6 +60,8 @@ pub struct Config {
     pub active_project: Option<String>,
     /// Persisted *active* context filter, same semantics as `active_project`.
     pub active_context: Option<String>,
+    /// Persisted active Persona filter; aliases are case-sensitive.
+    pub active_person: Option<String>,
     /// Directory used by note actions for relative `note:<path>` tokens and
     /// generated task notes. Serialized as `notes_dir = ~/notes`.
     pub notes_dir: Option<String>,
@@ -194,6 +196,7 @@ fn parse(s: &str) -> Config {
             "week_start" => c.week_start = v.parse().ok(),
             "active_project" => c.active_project = (!v.trim().is_empty()).then(|| v.to_string()),
             "active_context" => c.active_context = (!v.trim().is_empty()).then(|| v.to_string()),
+            "active_person" => c.active_person = (!v.trim().is_empty()).then(|| v.to_string()),
             // Saved searches: `filter.<name> = <query>`. The name is the
             // (trimmed) text after the `filter.` prefix; the query is the
             // (unquoted) value, which may itself contain `=`. A repeated
@@ -278,6 +281,9 @@ fn serialize(c: &Config) -> String {
     if let Some(c) = &c.active_context {
         let _ = writeln!(out, "active_context = {c}");
     }
+    if let Some(person) = &c.active_person {
+        let _ = writeln!(out, "active_person = {person}");
+    }
     out
 }
 
@@ -328,6 +334,7 @@ mod tests {
             week_start: Some(WeekStart::Sunday),
             active_project: Some("health".into()),
             active_context: Some("laptop".into()),
+            active_person: Some("ana".into()),
         };
 
         let s = serialize(&c);
@@ -553,6 +560,7 @@ mod tests {
             week_start: Some(WeekStart::Sunday),
             active_project: None,
             active_context: Some("phone".into()),
+            active_person: Some("José".into()),
         };
         written.save_to(&path).expect("save should succeed");
         assert!(path.exists());

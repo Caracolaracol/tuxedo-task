@@ -6,7 +6,7 @@ GitHub Actions, **not** for a Homebrew install or a release download.
 ## 1. Prepare the source on main
 
 - Bump the package version in `Cargo.toml` and its own entry in `Cargo.lock`.
-  Keep dependencies locked. Versions use CalVer, for example `2026.10.1`.
+  Keep dependencies locked. Versions use CalVer; the current release is `2026.10.3`.
 - Update version-specific download examples in `README.md`.
 - Run `cargo fmt --all --check`, `cargo clippy --all-targets --locked -- -D warnings`,
   and `cargo test --all-targets --locked`. If the status bar's version changes,
@@ -18,8 +18,8 @@ GitHub Actions, **not** for a Homebrew install or a release download.
 ## 2. Publish a version tag
 
 ```sh
-git tag v2026.10.1
-git push mine v2026.10.1
+git tag v2026.10.3
+git push mine v2026.10.3
 ```
 
 Use the actual version, not the example above. Do not move or reuse published
@@ -42,7 +42,7 @@ source revision. It runs native Rust tests, static-CRT import checks and the
 explicitly authorized installer lifecycle tests in disposable Windows. It uses
 preinstalled Inno Setup 6; no local installer tools are required. See
 [`packaging/windows/README.md`](../packaging/windows/README.md) for safety rules
-and the synthetic older-version fixture. Never publish a test fixture.
+and the real previous-release installer fixture. Never publish a test fixture.
 
 The release's Windows job also compiles the installer and publishes its stable
 filename plus SHA-256, alongside the portable ZIP. Initial releases are unsigned:

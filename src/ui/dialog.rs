@@ -466,6 +466,7 @@ pub fn render_prompt(frame: &mut Frame, area: Rect, app: &App) {
     let (sigil, label) = match app.mode {
         Mode::PromptProject => ("+", " ADD PROJECT "),
         Mode::PromptContext => ("@", " TOGGLE CONTEXT "),
+        Mode::PromptPerson => ("::", " ペルソナ "),
         Mode::PromptSaveFilter => ("✦", " SAVE FILTER AS "),
         _ => return,
     };
@@ -494,10 +495,10 @@ pub fn render_prompt(frame: &mut Frame, area: Rect, app: &App) {
         Span::styled(
             sigil,
             Style::default()
-                .fg(if sigil == "+" {
-                    theme.project
-                } else {
-                    theme.context
+                .fg(match sigil {
+                    "+" => theme.project,
+                    "@" => theme.context,
+                    _ => theme.accent,
                 })
                 .add_modifier(Modifier::BOLD),
         ),
@@ -529,6 +530,7 @@ pub fn format_hint_spans<'a>(theme: &Theme) -> Vec<Span<'a>> {
         Span::styled("Buy milk ", Style::default().fg(theme.fg)),
         Span::styled("+shop ", Style::default().fg(theme.project)),
         Span::styled("@home ", Style::default().fg(theme.context)),
+        Span::styled("::ana ", Style::default().fg(theme.accent)),
         Span::styled("due:2026-05-12", Style::default().fg(theme.due)),
     ]
 }
@@ -551,13 +553,20 @@ pub fn render_autocomplete(frame: &mut Frame, dlg: Rect, screen: Rect, app: &App
         None => return,
     };
     let (sigil, sigil_color) = match kind {
-        TokenKind::Project => ('+', theme.project),
-        TokenKind::Context => ('@', theme.context),
+        TokenKind::Project => ("+", theme.project),
+        TokenKind::Context => ("@", theme.context),
+        TokenKind::Person => ("::", theme.accent),
     };
 
-    let longest = matches.iter().map(|s| s.chars().count()).max().unwrap_or(0);
-    // +3 = leading space, sigil, trailing space.
-    let popup_w: u16 = (((longest as u16).saturating_add(3)).max(16)).min(dlg.width.max(16));
+    let longest = matches
+        .iter()
+        .map(|s| Span::raw(*s).width())
+        .max()
+        .unwrap_or(0);
+    // Account for wide Unicode aliases and the two-column Persona sigil.
+    let popup_w: u16 = ((longest + sigil.len() + 2) as u16)
+        .max(16)
+        .min(dlg.width.max(16));
     let popup_h: u16 = matches.len() as u16;
 
     // Anchor below the dialog, aligned to the input prefix ("  › " = 4 cols).

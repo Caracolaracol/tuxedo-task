@@ -9,18 +9,18 @@ expression: buffer_to_text(&buf)
 │   +health           3  ││ (2)  THIS WEEK  ─────────────────────││ due       2026-05-06  today    │
 │   +finance          2  ││  2   (B) Review pull requests for aut││ projects  +work                │
 │   +home             1  ││  3   (A) Call dentist to reschedule c││ contexts  @laptop              │
-│   +learning         1  ││ (2)  NEXT WEEK  ─────────────────────││                                │
-│   +personal         1  ││  4       Migrate analytics to new pip││ ロ ー                            │
-│   +travel           1  ││  5       Pay rent due:2026-05-15 rec:││                                │
-│                        ││ (2)  LATER  ─────────────────────────││ (A) 2026-05-01 Finish Q2 board │
-│ コ ン テ キ ス ト            ││  6   (B) Renew passport before summer││ deck +work @laptop             │
-│   @errands          4  ││  7   (C) Pay quarterly estimated taxe││ due:2026-05-06                 │
-│   @home             4  ││ (8)  NO DUE DATE  ───────────────────││                                │
+│   +learning         1  ││ (2)  NEXT WEEK  ─────────────────────││ ペ ル ソ ナ   —                    │
+│   +personal         1  ││  4       Migrate analytics to new pip││                                │
+│   +travel           1  ││  5       Pay rent due:2026-05-15 rec:││ ロ ー                            │
+│                        ││ (2)  LATER  ─────────────────────────││                                │
+│ コ ン テ キ ス ト            ││  6   (B) Renew passport before summer││ (A) 2026-05-01 Finish Q2 board │
+│   @errands          4  ││  7   (C) Pay quarterly estimated taxe││ deck +work @laptop             │
+│   @home             4  ││ (8)  NO DUE DATE  ───────────────────││ due:2026-05-06                 │
 │   @laptop           4  ││  8   (B) Draft hiring rubric for seni││                                │
 │   @phone            3  ││  9   (C) Order new running shoes +hea││                                │
 │                        ││ 10       Pick up dry cleaning @errand││                                │
-│                        ││ 11       Schedule annual physical @ph││                                │
-│                        ││ 12       Read "Designing Data-Intensi││                                │
+│ ペ ル ソ ナ                ││ 11       Schedule annual physical @ph││                                │
+│   tag with ::person    ││ 12       Read "Designing Data-Intensi││                                │
 │                        ││ 13       Send thank-you note to mento││                                │
 │                        ││ 14       Plan Saturday hike with K. @││                                │
 │                        ││ 15       Replace bathroom faucet wash││                                │
@@ -33,4 +33,4 @@ expression: buffer_to_text(&buf)
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
 ╰────────────────────────╯╰──────────────────────────────────────╯╰────────────────────────────────╯
- NORMAL   j/k · n new · r reschedule · x done · / searc15 open · 2026-05-06 · Tuxedo Task 2026.10.2
+ NORMAL   j/k · n new · r reschedule · x done · / searc15 open · 2026-05-06 · Tuxedo Task 2026.10.3

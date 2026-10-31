@@ -8,9 +8,10 @@ expression: buffer_to_text(&buf)
 │   tag with +project    ││  1 ▸ (A) Buy milk                    ││ created   —                    │
 │                        ││ (1)  PRIORITY B  ────────────────────││ projects                       │
 │ コ ン テ キ ス ト            ││  2   (B) Call mom                    ││ contexts                       │
-│   tag with @context    ││ (1)  NO PRIORITY  ───────────────────││                                │
-│                        ││  3       Write up notes              ││ ロ ー                            │
-│                        ││                                      ││                                │
+│   tag with @context    ││ (1)  NO PRIORITY  ───────────────────││ ペ ル ソ ナ   —                    │
+│                        ││  3       Write up notes              ││                                │
+│ ペ ル ソ ナ                ││                                      ││ ロ ー                            │
+│   tag with ::person    ││                                      ││                                │
 │                        ││                                      ││ (A) Buy milk                   │
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
@@ -31,6 +32,5 @@ expression: buffer_to_text(&buf)
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
-│                        ││                                      ││                                │
 ╰────────────────────────╯╰──────────────────────────────────────╯╰────────────────────────────────╯
- NORMAL   j/k · n new · r reschedule · x done · / search3 open · 2026-05-06 · Tuxedo Task 2026.10.2
+ NORMAL   j/k · n new · r reschedule · x done · / search3 open · 2026-05-06 · Tuxedo Task 2026.10.3

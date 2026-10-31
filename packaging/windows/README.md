@@ -5,7 +5,7 @@ precompiled Windows executables. The `windows-2025` GitHub image already has
 Inno Setup: scripts fail rather than installing tools automatically.
 
 ```powershell
-./packaging/windows/Build-Installer.ps1 -Version 2026.10.2 -BinaryDir dist/stage -OutputDir dist
+./packaging/windows/Build-Installer.ps1 -Version 2026.10.3 -BinaryDir dist/stage -OutputDir dist
 ```
 
 ## Guarantees and limits
@@ -43,11 +43,11 @@ aliases, shortcut quoting/working directory, PATH ownership and both registry
 string types, and data preservation across uninstall. Tests snapshot and restore
 runner state even on failure; the test script refuses normal local execution.
 
-Because 2026.10.1 had only a ZIP, `Build-UpgradeFixture.ps1` downloads and verifies
-that published ZIP, then wraps its **original older binaries** in a synthetic
-older installer using the same application ID. This exercises a real binary
-version change without claiming that an older installer was publicly released.
-The fixture is never included in releases.
+`Build-UpgradeFixture.ps1` downloads the actual published v2026.10.2 Setup.exe
+and verifies its adjacent checksum. CI upgrades that installation to the
+candidate release, exercising the same setup-to-setup path users will take.
+The fixture is only used on the disposable Windows runner and is never included
+in release assets.
 
 Release builds publish `tuxedo-task-windows-x86_64-setup.exe` plus its adjacent
 SHA-256 file. The filename is stable within each versioned GitHub release, so

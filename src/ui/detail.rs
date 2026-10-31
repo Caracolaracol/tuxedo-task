@@ -121,6 +121,25 @@ fn build_lines<'a>(
         ],
     ));
 
+    rows.push(line_panel(
+        theme,
+        vec![
+            Span::styled(" ペルソナ  ", Style::default().fg(theme.dim)),
+            Span::styled(
+                if t.people.is_empty() {
+                    "—".to_string()
+                } else {
+                    t.people
+                        .iter()
+                        .map(|p| format!("::{p}"))
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                },
+                Style::default().fg(theme.accent),
+            ),
+        ],
+    ));
+
     // Rendering notes line by line
     if !t.notes.is_empty() {
         rows.push(line_panel(
@@ -218,6 +237,12 @@ fn style_raw_token<'a>(
     }
     if is_url_token(token) {
         return Span::styled(token, url_token_style(task.done, theme));
+    }
+    if crate::todo::person_name(token).is_some_and(|name| task.people.iter().any(|p| p == name)) {
+        return Span::styled(
+            token,
+            Style::default().fg(if task.done { theme.done } else { theme.accent }),
+        );
     }
     if token.len() > 1 && token.starts_with('+') {
         return Span::styled(token, Style::default().fg(theme.project));

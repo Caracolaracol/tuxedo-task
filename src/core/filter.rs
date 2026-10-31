@@ -206,10 +206,19 @@ where
     idxs.copy_from_slice(&out);
 }
 
-/// Project / context / search predicate, shared by every view that honors
+/// Project / context / person / search predicate, shared by views that honor
 /// user filters. `needle` matches as a case-insensitive subsequence of the
 /// task body — chars must appear in order, gaps allowed.
 pub fn passes_user_filter(t: &Task, filter: &Filter, needle: Option<&str>) -> bool {
+    if let Some(person) = &filter.person
+        && !t.people.contains(person)
+    {
+        return false;
+    }
+    passes_root_filter(t, filter, needle)
+}
+
+fn passes_root_filter(t: &Task, filter: &Filter, needle: Option<&str>) -> bool {
     if let Some(p) = &filter.project
         && !t.projects.iter().any(|x| x == p)
     {
@@ -248,11 +257,11 @@ pub fn list_predicate(
 
 /// Family-atomic list predicate: whether task `i` should show under the active
 /// filter. The *family root* (topmost ancestor) decides the user filter
-/// (project / context / search) for the whole family, so a subtask appears
-/// alongside its root even when it carries no matching tags itself — and a
-/// matching subtask never surfaces without its root (option A). The structural
-/// filters (`done`, future threshold) still apply per task, so a completed
-/// subtask stays hidden even when its root is active.
+/// (project / context / search) for the whole family. A Persona filter can
+/// additionally match any structurally visible family member, so a person
+/// assigned to a subtask can find it without losing its parent's context.
+/// Assignments are not inherited or copied. Structural filters (`done`, future
+/// threshold) still apply per task.
 pub fn list_predicate_family(
     tasks: &[Task],
     i: usize,
@@ -270,7 +279,24 @@ pub fn list_predicate_family(
         return false;
     }
     let root = crate::todo::abs_family_root(tasks, i);
-    passes_user_filter(&tasks[root], filter, needle)
+    if !passes_root_filter(&tasks[root], filter, needle) {
+        return false;
+    }
+    // A person may be assigned directly to a subtask. Keep its family visible
+    // rather than losing the assignment because only the root was checked.
+    filter.person.as_ref().is_none_or(|person| {
+        tasks[root..]
+            .iter()
+            .enumerate()
+            .take_while(|(offset, task)| {
+                *offset == 0 || task.indent_level > tasks[root].indent_level
+            })
+            .any(|(_, task)| {
+                (show_done || !task.done)
+                    && (show_future || !is_future_threshold(task, today))
+                    && task.people.contains(person)
+            })
+    })
 }
 
 /// True when the task carries a `t:` value that resolves to a date strictly

@@ -9,18 +9,18 @@ expression: buffer_to_text(&buf)
 │   +health           3  ││  2   (A) Call dentist to reschedule c││ due       2026-05-06  today    │
 │   +finance          2  ││ (3)  PRIORITY B  ────────────────────││ projects  +work                │
 │   +home             1  ││  3   (B) Review pull requests for aut││ contexts  @laptop              │
-│   +learning         1  ││  4   (B) Renew passport before summer││                                │
-│   +personal         1  ││  5   (B) Draft hiring rubric for seni││ ロ ー                            │
-│   +travel           1  ││ (2)  PRIORITY C  ────────────────────││                                │
-│                        ││  6   (C) Pay quarterly estimated taxe││ (A) 2026-05-01 Finish Q2 board │
-│ コ ン テ キ ス ト            ││  7   (C) Order new running shoes +hea││ deck +work @laptop             │
-│   @errands          4  ││ (8)  NO PRIORITY  ───────────────────││ due:2026-05-06                 │
-│   @home             4  ││  8       Migrate analytics to new pip││                                │
+│   +learning         1  ││  4   (B) Renew passport before summer││ ペ ル ソ ナ   —                    │
+│   +personal         1  ││  5   (B) Draft hiring rubric for seni││                                │
+│   +travel           1  ││ (2)  PRIORITY C  ────────────────────││ ロ ー                            │
+│                        ││  6   (C) Pay quarterly estimated taxe││                                │
+│ コ ン テ キ ス ト            ││  7   (C) Order new running shoes +hea││ (A) 2026-05-01 Finish Q2 board │
+│   @errands          4  ││ (8)  NO PRIORITY  ───────────────────││ deck +work @laptop             │
+│   @home             4  ││  8       Migrate analytics to new pip││ due:2026-05-06                 │
 │   @laptop           4  ││  9       Pay rent due:2026-05-15 rec:││                                │
 │   @phone            3  ││ 10       Pick up dry cleaning @errand││                                │
 │                        ││ 11       Schedule annual physical @ph││                                │
-│                        ││ 12       Read "Designing Data-Intensi││                                │
-│                        ││ 13       Send thank-you note to mento││                                │
+│ ペ ル ソ ナ                ││ 12       Read "Designing Data-Intensi││                                │
+│   tag with ::person    ││ 13       Send thank-you note to mento││                                │
 │                        ││ 14       Plan Saturday hike with K. @││                                │
 │                        ││ 15       Replace bathroom faucet wash││                                │
 │                        ││                                      ││                                │
@@ -33,4 +33,4 @@ expression: buffer_to_text(&buf)
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
 ╰────────────────────────╯╰──────────────────────────────────────╯╰────────────────────────────────╯
- NORMAL   j/k · n new · r reschedule · x done · / searc15 open · 2026-05-06 · Tuxedo Task 2026.10.2
+ NORMAL   j/k · n new · r reschedule · x done · / searc15 open · 2026-05-06 · Tuxedo Task 2026.10.3

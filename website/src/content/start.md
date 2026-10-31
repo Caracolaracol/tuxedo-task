@@ -56,6 +56,7 @@ See [which file opens](#which-file-tuxedo-opens) for the full lookup order.
 ### Where to go next
 
 - [Tasks and subtasks](#tasks-and-subtasks): understand the file format and hierarchy.
+- [Persona assignments](#persona-assignments): record responsibility with `::person`.
 - [Keybindings](#keybindings): navigation, family editing, filtering, and shortcuts.
 - [Configuration](#configuration): layout, filters, notes, and preferences.
 - [Fork additions](#fork-additions): distinguish our additions from inherited features.

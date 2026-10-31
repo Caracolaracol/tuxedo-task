@@ -22,8 +22,10 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
         Mode::Settings => "SETTINGS".into(),
         Mode::PromptProject => "PROJECT".into(),
         Mode::PromptContext => "CONTEXT".into(),
+        Mode::PromptPerson => "ペルソナ".into(),
         Mode::PickProject => "PICK +PROJECT".into(),
         Mode::PickContext => "PICK @CONTEXT".into(),
+        Mode::PickPerson => "ペルソナ FILTER".into(),
         Mode::PickSavedFilter => "PICK FILTER".into(),
         Mode::PromptSaveFilter => "SAVE FILTER".into(),
         Mode::CommandPalette => "COMMAND".into(),
@@ -50,8 +52,10 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
         Mode::Settings => "Esc back",
         Mode::PromptProject => "type +project name · Enter save · Esc cancel",
         Mode::PromptContext => "type @context name · Enter toggle · Esc cancel",
+        Mode::PromptPerson => "type alias without :: · Enter assign/remove · Esc cancel",
         Mode::PickProject => "j/k or ↑↓ cycle projects · Enter keep · Esc clear",
         Mode::PickContext => "j/k or ↑↓ cycle contexts · Enter keep · Esc clear",
+        Mode::PickPerson => "j/k or ↑↓ cycle ::person · Enter keep · Esc clear",
         Mode::PickSavedFilter => "j/k or ↑↓ cycle filters · Enter keep · Esc revert",
         Mode::PromptSaveFilter => "type a filter name · Enter save · Esc cancel",
         Mode::CommandPalette => "type to filter · Enter run · Esc cancel",
@@ -87,7 +91,7 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
         .unwrap_or_default();
     // Layout: mode chip on left, hint in middle, right text right-aligned.
     let chip_text = format!(" {mode_label}{chord_suffix} ");
-    let chip_w = chip_text.chars().count() as u16;
+    let chip_w = Line::from(chip_text.as_str()).width() as u16;
     let update_w = update_suffix
         .as_deref()
         .map(|s| s.chars().count() as u16)

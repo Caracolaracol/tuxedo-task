@@ -7,20 +7,21 @@ expression: buffer_to_text(&buf)
 │ プ ロ   NAVIGATION                                  VIEW                                      │    │
 │   +│    j / ↓             next task                 /                 fuzzy search          │    │
 │   +│    k / ↑             previous task             fp / fc           filter project/context│    │
-│   +│    gg                first task                ff / fs           saved filter pick/save│    │
-│   +│    G                 last task                 S                 cycle sort            │    │
-│   +│    Ctrl-d / Ctrl-u   page down / up            v                 visual / multi-select │    │
-│   +│    mouse             click row · wheel · filter click    l                 list view   │    │
-│   +│                                                a                 archive view          │    │
-│    │  EDITING                                       A                 archive completed     │ard │
-│ コ ン     n                 new task                  H                 show done in list     │    │
-│   @│    e                 edit line (normal)        F                 show future in list   │    │
-│   @│    i                 edit line (insert)        [ / ]             toggle filter / detail│    │
-│   @│    r                 reschedule task           T                 cycle theme           │    │
-│   @│    x                 toggle complete           D                 cycle density         │    │
-│    │    dd                delete task               L                 toggle line numbers   │    │
-│    │    p                 cycle priority A→B→C→·                                            │    │
-│    │    c                 add/remove context      SUBTASKS                                  │    │
+│   +│    gg                first task                fm                ペ ル ソ ナ : filter perso│    │
+│   +│    G                 last task                 ff / fs           saved filter pick/save│    │
+│   +│    Ctrl-d / Ctrl-u   page down / up            S                 cycle sort            │    │
+│   +│    mouse             click row · wheel · filter click    v                 visual / mul│    │
+│   +│                                                l                 list view             │    │
+│    │  EDITING                                       a                 archive view          │    │
+│ コ ン     n                 new task                  A                 archive completed     │ard │
+│   @│    e                 edit line (normal)        H                 show done in list     │    │
+│   @│    i                 edit line (insert)        F                 show future in list   │    │
+│   @│    r                 reschedule task           [ / ]             toggle filter / detail│    │
+│   @│    x                 toggle complete           T                 cycle theme           │    │
+│    │    dd                delete task               D                 cycle density         │    │
+│ ペ ル     p                 cycle priority A→B→C→·    L                 toggle line numbers   │    │
+│   t│    c                 add/remove context                                                │    │
+│    │    m                 ペ ル ソ ナ : assign/remove     SUBTASKS                              │    │
 │    │    +                 add project               > / <             nest / unnest task (wh│    │
 │    │    yy                copy line to clipboard    x                 complete whole subtree│    │
 │    │    yb                copy body only            dd                delete whole subtree  │    │
@@ -38,7 +39,6 @@ expression: buffer_to_text(&buf)
 │    │    (A)               priority A-Z              due:YYYY-MM-DD    due date              │    │
 │    │    YYYY-MM-DD        creation / done date      rec:Nu            recur (u in d/w/m/y/b)│    │
 │    │    +project          project tag(s)            rec:+Nu           strict: anchor on due:│    │
-│    │    @context          context tag(s)            x DATE BODY       completed task prefix │    │
 │    └────────────────────────────────────────────────────────────────────────────────────────┘    │
 ╰────────────────────────╯╰──────────────────────────────────────╯╰────────────────────────────────╯
- HELP   ? close help                                   15 open · 2026-05-06 · Tuxedo Task 2026.10.2
+ HELP   ? close help                                   15 open · 2026-05-06 · Tuxedo Task 2026.10.3

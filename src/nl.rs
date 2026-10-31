@@ -30,6 +30,7 @@ pub struct ParsedNl {
     pub threshold: Option<String>,
     pub projects: Vec<String>,
     pub contexts: Vec<String>,
+    pub people: Vec<String>,
     pub priority: Option<char>,
 }
 
@@ -71,6 +72,7 @@ pub fn try_parse(text: &str, today: NaiveDate) -> Option<ParsedNl> {
         || parsed.threshold.is_some()
         || !parsed.projects.is_empty()
         || !parsed.contexts.is_empty()
+        || !parsed.people.is_empty()
         || parsed.priority.is_some();
     if extracted { Some(parsed) } else { None }
 }
@@ -100,6 +102,10 @@ pub fn format_as_todo_txt(p: &ParsedNl) -> String {
     for ctx in &p.contexts {
         out.push_str(" @");
         out.push_str(ctx);
+    }
+    for person in &p.people {
+        out.push_str(" ::");
+        out.push_str(person);
     }
     if let Some(d) = p.due {
         out.push_str(" due:");
@@ -375,6 +381,11 @@ fn pass_sigiled(scratch: &mut Scratch, p: &mut ParsedNl) {
             scratch.mark(s, e);
         } else if let Some(name) = tok.strip_prefix('@') {
             push_unique(&mut p.contexts, name);
+            scratch.mark(s, e);
+        } else if let Some(name) = todo::person_name(tok)
+            && scratch.text[..s].bytes().filter(|b| *b == b'"').count() % 2 == 0
+        {
+            push_unique(&mut p.people, name);
             scratch.mark(s, e);
         }
     }
