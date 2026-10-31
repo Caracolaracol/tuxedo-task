@@ -200,14 +200,21 @@ pub fn parse_tag_from_release_json(body: &str) -> Option<String> {
     Some(tag.to_string())
 }
 
-/// True when `latest` is a strictly newer version than `current`, comparing
-/// each dot-separated segment numerically. A leading `v` (e.g. `v2026.5.5`)
-/// is stripped on both sides. Non-numeric segments fall back to lexicographic
-/// comparison of that segment, so a future suffix like `2026.5.5-rc1` won't
-/// crash — it just compares the strings.
+/// True when `latest` is a strictly newer version than `current`. Stable
+/// numeric versions compare segment-by-segment. A leading `v` is optional.
+/// During the CalVer-to-SemVer migration, any SemVer release follows the
+/// legacy CalVer line, while a CalVer tag never downgrades a SemVer install.
+/// Non-numeric segments retain the historical lexicographic fallback.
 pub fn is_newer(latest: &str, current: &str) -> bool {
     let l = latest.trim_start_matches('v');
     let c = current.trim_start_matches('v');
+
+    let latest_is_calver = is_calver(l);
+    let current_is_calver = is_calver(c);
+    if latest_is_calver != current_is_calver {
+        return current_is_calver;
+    }
+
     let mut li = l.split('.');
     let mut ci = c.split('.');
     loop {
@@ -226,6 +233,21 @@ pub fn is_newer(latest: &str, current: &str) -> bool {
             },
         }
     }
+}
+
+fn is_calver(version: &str) -> bool {
+    let parts: Vec<_> = version.split('.').collect();
+    if !(2..=3).contains(&parts.len()) {
+        return false;
+    }
+    let Ok(year) = parts[0].parse::<u16>() else {
+        return false;
+    };
+    let Ok(month) = parts[1].parse::<u8>() else {
+        return false;
+    };
+    let patch_is_numeric = parts.get(2).is_none_or(|part| part.parse::<u64>().is_ok());
+    (2000..=2999).contains(&year) && (1..=12).contains(&month) && patch_is_numeric
 }
 
 fn cache_path() -> Option<PathBuf> {
@@ -365,6 +387,17 @@ mod tests {
         assert!(is_newer("2026.10.1", "2026.9.5"));
         // Year rollover
         assert!(is_newer("2027.1.1", "2026.12.31"));
+    }
+
+    #[test]
+    fn is_newer_transitions_from_calver_to_semver_without_downgrading() {
+        assert!(is_newer("2026.10.4", "2026.10.3"));
+        assert!(is_newer("1.0.0", "2026.10.4"));
+        assert!(is_newer("v1.0.0", "v2026.10.3"));
+        assert!(!is_newer("2026.10.4", "1.0.0"));
+        assert!(is_newer("1.0.1", "1.0.0"));
+        assert!(is_newer("1.1.0", "1.0.9"));
+        assert!(!is_newer("0.9.9", "1.0.0"));
     }
 
     #[test]

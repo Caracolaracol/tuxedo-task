@@ -6,7 +6,7 @@ $ErrorActionPreference = 'Stop'
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 $OutputDir = (Resolve-Path -LiteralPath $OutputDir).Path
 $name = 'tuxedo-task-windows-x86_64-setup.exe'
-$base = 'https://github.com/Caracolaracol/tuxedo-task/releases/download/v2026.10.2'
+$base = 'https://github.com/Caracolaracol/tuxedo-task/releases/download/v2026.10.3'
 $installer = Join-Path $OutputDir 'previous-installer.exe'
 Invoke-WebRequest -Uri "$base/$name" -OutFile $installer
 $checksum = (Invoke-WebRequest -Uri "$base/$name.sha256").Content
