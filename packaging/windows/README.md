@@ -5,7 +5,7 @@ precompiled Windows executables. The `windows-2025` GitHub image already has
 Inno Setup: scripts fail rather than installing tools automatically.
 
 ```powershell
-./packaging/windows/Build-Installer.ps1 -Version 2026.10.3 -BinaryDir dist/stage -OutputDir dist
+./packaging/windows/Build-Installer.ps1 -Version 2026.10.4 -BinaryDir dist/stage -OutputDir dist
 ```
 
 ## Guarantees and limits
@@ -43,7 +43,7 @@ aliases, shortcut quoting/working directory, PATH ownership and both registry
 string types, and data preservation across uninstall. Tests snapshot and restore
 runner state even on failure; the test script refuses normal local execution.
 
-`Build-UpgradeFixture.ps1` downloads the actual published v2026.10.2 Setup.exe
+`Build-UpgradeFixture.ps1` downloads the actual published v2026.10.3 Setup.exe
 and verifies its adjacent checksum. CI upgrades that installation to the
 candidate release, exercising the same setup-to-setup path users will take.
 The fixture is only used on the disposable Windows runner and is never included

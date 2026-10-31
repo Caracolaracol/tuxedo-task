@@ -6,7 +6,10 @@ GitHub Actions, **not** for a Homebrew install or a release download.
 ## 1. Prepare the source on main
 
 - Bump the package version in `Cargo.toml` and its own entry in `Cargo.lock`.
-  Keep dependencies locked. Versions use CalVer; the current release is `2026.10.3`.
+  Keep dependencies locked. `2026.10.4` is the CalVer-to-SemVer bridge release;
+  the following release starts at SemVer `1.0.0`. After that, increment MAJOR
+  for incompatible todo.txt/CLI/config changes, MINOR for compatible features,
+  and PATCH for compatible fixes.
 - Update version-specific download examples in `README.md`.
 - Run `cargo fmt --all --check`, `cargo clippy --all-targets --locked -- -D warnings`,
   and `cargo test --all-targets --locked`. If the status bar's version changes,
@@ -18,8 +21,8 @@ GitHub Actions, **not** for a Homebrew install or a release download.
 ## 2. Publish a version tag
 
 ```sh
-git tag v2026.10.3
-git push mine v2026.10.3
+git tag v2026.10.4
+git push mine v2026.10.4
 ```
 
 Use the actual version, not the example above. Do not move or reuse published

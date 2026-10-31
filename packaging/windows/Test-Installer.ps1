@@ -100,7 +100,7 @@ try {
     Assert ((UserPath) -ceq $baseline) 'Rejected installation modified PATH.'
 
     RunSetup $previous $directory
-    AssertVersion '2026.10.2'
+    AssertVersion '2026.10.3'
     Assert ((PathCount) -eq 1) 'Initial PATH entry missing or duplicated.'
     $extraData = Join-Path $directory 'my-personal-todo.txt'
     [IO.File]::WriteAllText($extraData, 'Keep unregistered files even inside the program directory')
