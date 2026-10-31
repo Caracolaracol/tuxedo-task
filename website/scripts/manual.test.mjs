@@ -44,6 +44,8 @@ test('missing guide files or required headings fail loudly', () => {
 
 test('README is a concise TUI-first overview with retained identity and licensing', () => {
   assert.ok(readme.split('\n').length < 160, 'Keep detailed reference material in Docs/');
+  const title = readme.split('\n')[0];
+  assert.match(title, /^# <img src="src\/serve\/assets\/icon\.svg"[^>]+> Tuxedo Task$/);
   assert.ok(readme.indexOf('TuxedoMask.jpg') < readme.indexOf('## Features'));
   for (const feature of ['Persona', 'recurrence', 'subtasks', 'command palette', 'Markdown notes', 'Mouse support', 'Phone capture', 'JSON', 'custom themes', 'saved searches', 'archive', 'undo']) {
     assert.ok(readme.includes(feature), feature);
