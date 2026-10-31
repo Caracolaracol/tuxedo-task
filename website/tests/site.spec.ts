@@ -76,7 +76,7 @@ test('hero uses the real renderer output and opens it with the keyboard', async 
   await expect(page.locator('[data-terminal-demo]')).toHaveCount(0);
   await expect(page.getByRole('tablist')).toHaveCount(0);
   const image = await request.get('screenshots/subtasks.svg');
-  expect(await image.body()).toEqual(await readFile(new URL('../../docs/screenshots/subtasks.svg', import.meta.url)));
+  expect(await image.body()).toEqual(await readFile(new URL('../../Docs/screenshots/subtasks.svg', import.meta.url)));
   for (const width of [320, 600, 768, 1024, 1440, 1920, 2560, 3840]) {
     await page.setViewportSize({ width, height: Math.max(900, Math.round(width * 9 / 16)) });
     const geometry = await page.locator('.hero').evaluate(element => {

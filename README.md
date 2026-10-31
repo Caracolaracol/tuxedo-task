@@ -1,18 +1,85 @@
 # Tuxedo Task
 
-<img src="src/serve/assets/icon.svg" width="88" height="88" alt="Tuxedo Task's original mask logo">
+<a href="https://en.wikipedia.org/wiki/Tuxedo_Mask"><img src="https://upload.wikimedia.org/wikipedia/en/0/07/TuxedoMask.jpg" width="180" alt="Tuxedo Mask from Sailor Moon, the inspiration for our mask motif"></a>
 
-**Your tasks, with a little more structure.** A keyboard-driven terminal UI and
-CLI for [todo.txt](http://todotxt.org/), with nested subtasks, project grouping,
-and plain-text files you own.
+**Your tasks, with a little more structure.** A keyboard-driven terminal app for
+[todo.txt](http://todotxt.org/), with nested subtasks, projects, contexts, and
+Persona assignments — all in plain-text files you own.
 
 [![CI](https://github.com/Caracolaracol/tuxedo-task/actions/workflows/ci.yml/badge.svg)](https://github.com/Caracolaracol/tuxedo-task/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
-[![Rust](https://img.shields.io/badge/rust-2024-orange.svg?logo=rust)](https://www.rust-lang.org)
 
-[Website](https://caracolaracol.github.io/tuxedo-task/) · [Documentation](https://caracolaracol.github.io/tuxedo-task/docs/) · [Install](#install) · [Fork features](#what-this-fork-adds) · [Keybindings](#keybindings) · [Configuration](#configuration)
+[Website](https://caracolaracol.github.io/tuxedo-task/) · [Documentation & tutorials](Docs/README.md) · [Releases](https://github.com/Caracolaracol/tuxedo-task/releases/latest)
 
-![Tuxedo Task with nested tasks grouped by project](docs/screenshots/subtasks.svg)
+![Tuxedo Task with nested tasks grouped by project](Docs/screenshots/subtasks.svg)
+
+## Features
+
+- **Plain-text tasks:** priorities, due dates, recurrence, and visibility dates.
+- **Task families:** nested subtasks, subtree editing, and family-aware actions.
+- **Organization:** projects, contexts, Persona assignees, and project grouping.
+- **Finding your work:** fuzzy search, combined filters, remembered filters, and saved searches.
+- **Keyboard-first TUI:** Vim-style navigation, command palette, custom shortcuts, and help.
+- **Editing:** offline natural-language entry in English, autocomplete, calendars, and recurrence controls.
+- **Task management:** rescheduling, multi-select, bulk actions, undo, and an archive view.
+- **Notes:** linked Markdown notes in your preferred editor.
+- **Mouse support:** click, scroll, filter, and copy task text locally or over SSH.
+- **Personalization:** five built-in themes, custom themes, three densities, and configurable panels.
+- **Phone capture:** QR access to a small LAN PWA and a plain-text inbox.
+- **Reliable local storage:** automatic atomic saves, external-change detection, and settings hot reload; no account, database, or required cloud service.
+- **Optional CLI:** todo.txt-style commands, shell automation, and JSON output.
+- **Cross-platform:** macOS, Linux, and Windows; precompiled releases and update notices.
+
+[Explore the guides](Docs/README.md) · [See what this fork adds](Docs/fork.md)
+
+## Install
+
+**macOS / Linux** — with [Homebrew](https://brew.sh/):
+
+```sh
+brew install caracolaracol/tap/tuxedotask
+```
+
+**Windows** — download [Tuxedo Task Setup.exe](https://github.com/Caracolaracol/tuxedo-task/releases/latest/download/tuxedo-task-windows-x86_64-setup.exe).
+It installs for your user; reopen your terminal or use the Start menu shortcut.
+The installer is unsigned: SmartScreen may warn. Use the official release and
+[verify its checksum](Docs/cli.md#verify-a-windows-installer); do not disable Windows security.
+
+Neither option requires Rust or Cargo. Both `tuxedo` and `tuxedotask` open the
+same app. For portable downloads, source builds, updates, or switching from
+upstream Tuxedo, see the [installation guide](Docs/installation.md).
+
+## Quick start — TUI
+
+Open the interactive app with the path where you want your tasks:
+
+```sh
+tuxedo "$HOME/Documents/tasks/todo.txt"
+```
+
+Windows PowerShell:
+
+```powershell
+tuxedo "$HOME\Documents\tasks\todo.txt"
+```
+
+The app creates a missing file and parent folders; existing contents are kept.
+Running just `tuxedo` opens your configured/default file or a welcome screen:
+`c` creates a list in the current folder, and `s` tries a temporary sample.
+
+| Key | Action |
+| --- | --- |
+| `n` | Add a task; `Enter` saves (review and confirm again if natural-language parsing rewrites it) |
+| `j` / `k` or arrows | Move between tasks |
+| `i` | Edit the selected task |
+| `x` / `u` | Complete / undo |
+| `>` / `<` | Nest / unnest a task family |
+| `m` | Assign or remove a Persona |
+| `/` · `fp` · `fc` · `fm` | Search or filter by project, context, or person |
+| `:` / `?` | Command palette / help |
+| `q` | Quit — changes save automatically |
+
+[First-task tutorial](Docs/getting-started.md) · [All shortcuts](Docs/keybindings.md) · [Optional CLI reference](Docs/cli.md)
 
 ## About this fork
 
@@ -20,983 +87,29 @@ and plain-text files you own.
 [Tuxedo by Webstone Technologies](https://github.com/webstonehq/tuxedo), maintained
 by [Caracolaracol](https://github.com/Caracolaracol).** It is not an official
 Webstone release. The original project and its contributors built the foundation;
-this fork builds on their work and preserves their MIT license and copyright.
-
-### What this fork adds
-
-Compared with the upstream revision this fork started from:
-
-| Addition | What it does |
-| --- | --- |
-| **Nested subtasks** | Two spaces per level; `>` / `<` move a whole subtree. Completion, deletion, undo, and priority/due sorting keep families together. |
-| **Family editing** | Add a parent with child tasks in one dialog, or edit an existing parent's subtree together. |
-| **Project grouping** | `S` cycles to project sort; grouping preserves families and supports multiple project tags. |
-| **Mouse interaction** | Click task rows or sidebar filters, navigate with the wheel, and drag task text to copy via OSC 52. Disable with `mouse = false`. |
-| **Persona assignments** | `::person` records assignees; **ペルソナ** is the third filter section beside projects and contexts. |
-| **Remembered filters** | Active project, context, and person filters survive restarts, separately from named saved searches. |
-| **Layout refinements** | Optional pane borders, configurable outer margin, revised task rows and headers, and Japanese labels in selected UI sections. |
-| **Config reload fix** | Keeps the filesystem watcher alive and avoids repeated reload notices after its channel disconnects. |
-| **Own identity** | An original mask mark, Tuxedo Task branding, and update instructions that point to this repository. |
-
-These additions have unit and rendered-snapshot coverage. They do not replace the
-features inherited from Tuxedo: its TUI/CLI workflow, natural-language dates,
-recurrence, phone capture, custom themes, saved searches, notes, and atomic writes.
-
-### A nod to Tuxedo Mask
-
-<a href="https://en.wikipedia.org/wiki/Tuxedo_Mask"><img src="https://upload.wikimedia.org/wikipedia/en/0/07/TuxedoMask.jpg" width="180" alt="Tuxedo Mask from Sailor Moon, the inspiration for our mask motif"></a>
+this fork preserves their MIT license and copyright.
 
 The mask motif is a playful nod to **Tuxedo Mask** from *Sailor Moon*, created by
-Naoko Takeuchi. The application uses its own original mask design, not this
-character artwork. This project is not affiliated with or endorsed by the
-*Sailor Moon* rights holders.
-
-Character image: [source and rights information](https://en.wikipedia.org/wiki/File:TuxedoMask.jpg).
-This externally hosted, non-free reference image is **not covered by this
-repository's MIT license**; its appearance on Wikipedia is not a grant of reuse
-rights for other projects.
-
-## Highlights
-
-- **Plain-text todo.txt workflow.** Reads and writes [todo.txt](https://github.com/todotxt/todo.txt) tasks, with a leading-space extension for subtasks — every line is text you can edit yourself. See the [compatibility note](#subtasks-nested-tasks).
-- **TUI and CLI in one binary.** Run `tuxedo` for the interactive UI, or `tuxedo <command>` for a [todo.txt-cli](https://github.com/todotxt/todo.txt-cli)-compatible command line (`add`, `ls`, `do`, `pri`, `archive`, …) — scriptable, with `--json` output and `$TODO_DIR` / `$TODO_FILE` / `$DONE_FILE` support.
-- **Natural-language add.** Type prose into the add prompt — `Pay rent monthly on the first, show 3 days before due, project home` — and tuxedo rewrites it to canonical todo.txt for you to review and save. Local, offline, no AI service.
-- **Phone capture.** Press `s` for a QR pointing at a tiny PWA on your machine's LAN — type tasks from your phone and they appear in the list. Captures land in a sibling `inbox.txt` first, so any tool that can append a line (shell, iOS Shortcuts, cron) is also a capture source.
-- **Vim keys, no surprises.** `j` / `k` to move, `dd` to delete, `gg` / `G` to jump, `u` to undo (50 levels), chord prompts (`gg`, `dd`, `fp`, `fc`) with a 600 ms window.
-- **Command palette.** `:` or `Ctrl-P` opens a fuzzy palette over every action — type a few letters, hit Enter. Same matcher as `/` search, ranked so start-of-label hits beat word-boundary hits beat mid-word hits.
-- **Atomic, sync-friendly writes.** Every change goes through write-temp-then-rename. If another process — Dropbox, an editor, a script — modifies the file, tuxedo reloads on the next keypress (or within ~250 ms while idle) and flashes a notice.
-- **Sibling-file archive.** `A` moves completed tasks to `done.txt` next to your file, atomically.
-- **Filter, sort, multi-select.** Cycle by `+project`, `@context`, or `::person`, sort by priority / due / file order, and bulk-complete or bulk-delete in visual mode.
-- **Nested subtasks.** Indent with `>` and outdent with `<`; parent actions, undo, and sorting keep each subtree together.
-- **Project grouping.** Sort tasks by `+project` while preserving parent/subtask families and multi-project membership.
-- **Saved searches.** Name the active `/`-search with `fs`, then recall it any time by cycling saved filters with `ff`. Stored as plain `filter.<name>` lines in the config — hand-editable like everything else.
-- **Five themes, three densities.** Cycle with `T` and `D`. Choices persist across runs and hot-reload when you edit `config.toml` externally.
-- **No daemon, no database, no cloud.** One file in, one file out.
-
-## Screens
-
-| | |
-| --- | --- |
-| **Empty state** • original mask mark and quick-start when the file has no tasks | ![empty](docs/screenshots/empty.svg) |
-| **Nested subtasks** • parent/child families grouped by project | ![subtasks](docs/screenshots/subtasks.svg) |
-| **List** • list of todos, optionally grouped | ![empty](docs/screenshots/list.svg) |
-| **Archive** • completed tasks grouped by completion date | ![archive](docs/screenshots/archive.svg) |
-| **Filter sidebar active** • `fp` cycles projects with j/k, `fc` cycles contexts; saved searches list under a **SAVED** heading with live match counts | ![filter](docs/screenshots/filter.svg) |
-| **Persona filter** • assign tasks with `m`, then filter by person with `fm` | ![Persona filter](docs/screenshots/persona.svg) |
-| **Command palette** • `:` or `Ctrl-P` opens a fuzzy palette over every action | ![command palette](docs/screenshots/command-palette.svg) |
-| **Help** • `?` opens the full keybindings overlay | ![help](docs/screenshots/help.svg) |
-
-<details>
-    <summary>How to generate the screenshots and demo</summary>
-    <p>The screenshots in the table above are checked-in SVGs. Regenerate them with:</p>
-    <pre>mise run screenshots</pre>
-    <p>An optional demo recording can be generated with <a href="https://github.com/charmbracelet/vhs">vhs</a> from <code>docs/demo.tape</code> (requires VHS and its dependencies):</p>
-    <pre>mise run demo</pre>
-</details>
-
-## Themes
-
-`T` opens a picker over five built-in themes, including Terminal, which respects your terminal palette.
-
-| Muted Slate (default) | Dawn |
-| --- | --- |
-| ![muted slate](docs/screenshots/theme-muted-slate.svg) | ![dawn](docs/screenshots/theme-dawn.svg) |
-| **Nord** | **Matrix** |
-| ![nord](docs/screenshots/theme-nord.svg) | ![matrix](docs/screenshots/theme-matrix.svg) |
-
-### Custom themes
-
-Beyond the built-ins, tuxedo loads any `*.toml` file you drop in
-`${XDG_CONFIG_HOME:-$HOME/.config}/tuxedo/themes/` (native Windows 2026.10.2+:
-`%APPDATA%\tuxedo\themes`, respecting XDG/legacy settings as described under
-[Configuration](#configuration)). Each one joins the `T`
-picker in sorted filename order. Ready-made themes live in
-[`docs/themes/`](docs/themes) — copy one into your platform's theme directory
-and press `T`. macOS/Linux example:
-
-```sh
-mkdir -p ~/.config/tuxedo/themes
-curl -o ~/.config/tuxedo/themes/gruvbox-dark-soft.toml \
-  https://raw.githubusercontent.com/Caracolaracol/tuxedo-task/main/docs/themes/gruvbox-dark-soft.toml
-```
-
-<details>
-<summary>Theme file format and field reference</summary>
-
-A theme file is one `key = value` per line. `name` is the label shown in the
-picker; every other field is a color value. All fields are required: a file
-missing one, carrying an unparseable color, or whose `name` collides with
-another theme is skipped with a warning at startup.
-
-**Color values** accept two forms:
-
-- `#rrggbb` — a solid hex color (case-insensitive).
-- `reset` or `transparent` — inherits the terminal emulator's own background
-  color. Useful for `bg`, `panel`, and `statusbar` when you want your
-  terminal's opacity, blur, or wallpaper to show through while keeping a
-  custom text palette. Both keywords are case-insensitive and behave
-  identically (same effect as the built-in **Terminal** theme).
-
-| Field | Colors |
-| --- | --- |
-| `name` | label shown in the `T` picker (the only non-color field) |
-| `bg` | window background |
-| `panel` | filter and detail panel background |
-| `border` | panel and modal borders |
-| `fg` | primary text |
-| `dim` | secondary / muted text |
-| `accent` | logo, headings, hints, `::person` assignments, and selection markers |
-| `cursor` | current row, and the highlighted row in the `T` picker |
-| `selection` | set to the same value as `selected` |
-| `statusbar` | status bar background |
-| `status_fg` | status bar text |
-| `mode_fg` / `mode_bg` | mode chip text / background |
-| `pri_a` `pri_b` `pri_c` `pri_d` | priorities A through D |
-| `pri_other` | priorities E through Z |
-| `project` | `+project` tags |
-| `context` | `@context` tags |
-| `due` | `due:` date |
-| `overdue` | past-due date |
-| `today` | date due today |
-| `done` | completed tasks |
-| `selected` | selected-row background (visual mode) and the active filter |
-| `matched` | search-match highlight |
-
-</details>
-
-## Install
-
-Choose your system: Homebrew for macOS/Linux, or the Windows installer below.
-Neither option needs Rust or Cargo.
-
-### Recommended: Homebrew (macOS and Linux, no Cargo required)
-
-With [Homebrew](https://brew.sh/) available:
-
-```sh
-brew install caracolaracol/tap/tuxedotask
-```
-
-Homebrew downloads a **precompiled binary** and verifies its SHA-256 checksum.
-It does not install Rust or Cargo or compile the application on your machine.
-The tap supports Apple Silicon / Intel Macs (macOS 12+) and ARM64 / x86-64 Linux.
-Linux binaries are built on Ubuntu 22.04 and require glibc 2.35 or newer.
-
-Both command names are available: **`tuxedo` and `tuxedotask` run the same
-application**. After installation, follow [Usage](#usage) to open or create your
-task file.
-
-The config stays under `~/.config/tuxedo` (or your XDG config directory), and
-existing task files are not migrated or deleted.
-
-**Already have upstream Tuxedo installed?** `brew install tuxedo` installs the
-original application, not this fork. Our formula conflicts with the upstream
-Homebrew formula because both provide `tuxedo`; choose which one you want linked
-rather than forcing an overwrite. Homebrew does not remove an existing Cargo or
-manual copy. Check `command -v tuxedo` / `command -v tuxedotask` to confirm PATH
-precedence. Back up your task files and config before switching clients.
-
-### Windows installer (recommended)
-
-1. Download [Tuxedo Task Setup.exe](https://github.com/Caracolaracol/tuxedo-task/releases/latest/download/tuxedo-task-windows-x86_64-setup.exe)
-   from our official GitHub release. Windows 10 (1809+) / Windows 11, x86-64.
-2. Run the setup wizard. It installs for **your user only** in
-   `%LOCALAPPDATA%\Programs\TuxedoTask`, without an administrator prompt.
-   Leave the optional user PATH checkbox selected to use `tuxedo` and
-   `tuxedotask` in a new terminal; a Start menu shortcut is also created.
-3. Open **Tuxedo Task** from Start, or close/reopen your terminal and follow
-   [Usage](#usage) to choose your task file.
-
-The shortcut opens a terminal in your Documents folder, not the program folder.
-Installing alone does not create a personal `todo.txt`: choose a path when
-opening the app, or choose `c` on the first-run welcome screen. Setup never
-removes another Cargo/manual/upstream copy. The shortcut always opens this
-installation even if another copy appears earlier on PATH.
-
-To update, close Tuxedo Task and run the newer Setup.exe in the same location.
-Uninstall through Windows Settings → Apps. Tasks, configuration, notes and
-unregistered files are kept; uninstall removes only this installer's PATH
-entry, not entries you already had or changes made by other software.
-
-**Unsigned initial release:** Windows SmartScreen may show an unknown-publisher
-warning. Download only from the official release and compare its
-[SHA-256 file](https://github.com/Caracolaracol/tuxedo-task/releases/latest/download/tuxedo-task-windows-x86_64-setup.exe.sha256).
-Do not disable Windows security. An optional checksum command is in the
-[late CLI reference](#verify-a-windows-installer); it is not an installation step.
-
-### Precompiled downloads (portable option, including Windows)
-
-Download your platform archive and its `.sha256` file from
-[this fork's Releases](https://github.com/Caracolaracol/tuxedo-task/releases/latest).
-Rust and Cargo are **not** needed for these downloads either.
-
-| Platform | Archive target |
-| --- | --- |
-| macOS Apple Silicon | `aarch64-apple-darwin` |
-| macOS Intel | `x86_64-apple-darwin` |
-| Linux ARM64 | `aarch64-unknown-linux-gnu` |
-| Linux x86-64 | `x86_64-unknown-linux-gnu` |
-| Windows x86-64 | `x86_64-pc-windows-msvc` |
-
-For example, for the v2026.10.2 Apple Silicon archive and checksum in the same
-directory (match the version in your own downloaded filenames):
-
-```sh
-shasum -a 256 -c tuxedo-task-v2026.10.2-aarch64-apple-darwin.tar.gz.sha256
-tar -xzf tuxedo-task-v2026.10.2-aarch64-apple-darwin.tar.gz
-```
-
-Extract the matching archive and place `tuxedo` and `tuxedotask` in a directory
-on PATH, keeping the Unix symlink beside its target. On Windows, the ZIP contains
-`tuxedo.exe` and `tuxedotask.exe`; compare `Get-FileHash -Algorithm SHA256` with the
-provided checksum before extracting. Both names share the same tasks and config.
-
-### Optional: install from source with Cargo
-
-Only source builds need **Git**, a **current stable Rust toolchain** (Rust 2024
-edition, including Cargo), and native linker/build tools. Use
-[rustup](https://rustup.rs/) for Rust; native tools come from Xcode Command Line
-Tools on macOS, your distribution's C build tools on Linux, or Visual Studio C++
-Build Tools for the MSVC toolchain on Windows.
-
-```sh
-cargo install --git https://github.com/Caracolaracol/tuxedo-task --locked
-```
-
-The Cargo package/executable remains named **`tuxedo`** for compatibility. The
-`tuxedotask` alias is supplied by Homebrew and the precompiled archives, not by
-`cargo install`. Cargo installs into `$CARGO_HOME/bin` (normally `~/.cargo/bin`
-or `%USERPROFILE%\.cargo\bin`); make sure it is on PATH. To replace an existing
-Cargo-installed copy, add `--force`. No install method moves your task files.
-
-### Alternatively: clone and run without installing
-
-```sh
-git clone https://github.com/Caracolaracol/tuxedo-task.git
-cd tuxedo-task
-cargo build --release --locked
-```
-
-The executable is in `target/release/`. Follow [Usage](#usage) to launch the
-interface with a task file; replace `tuxedo` with `./target/release/tuxedo` on
-macOS/Linux or `.\target\release\tuxedo.exe` on Windows.
-
-### Updates
-
-For Homebrew installations:
-
-```sh
-brew update
-brew upgrade caracolaracol/tap/tuxedotask
-```
-
-For Cargo installations:
-
-```sh
-cargo install --git https://github.com/Caracolaracol/tuxedo-task --locked --force
-```
-
-For manual downloads, replace the executable and alias from the latest matching
-release archive after checking its checksum. For cloned checkouts, run
-`git pull --ff-only` and `cargo build --release --locked` in the checkout.
-
-## Usage
-
-`tuxedo` opens the interactive terminal interface. **You do not need to create
-`todo.txt` by hand.** Choose where to keep your tasks and open that path:
-
-```sh
-tuxedo "$HOME/Documents/tasks/todo.txt"
-```
-
-On Windows PowerShell:
-
-```powershell
-tuxedo "$HOME\Documents\tasks\todo.txt"
-```
-
-The app creates the file **and missing parent folders** when the path does not
-exist. If it already exists, its contents are kept. You need write permission
-to that location. Installing the program alone does not create a personal task
-file; launching it with a path does.
-
-To open an already configured/default file or see the first-run welcome screen:
-
-```sh
-tuxedo
-```
-
-On a true first run, press `c` to create `todo.txt` in your terminal's current
-folder, or `s` to try a temporary sample. No manual `touch` or file setup is
-needed. You can also open that sample directly with `tuxedo --sample`.
-
-Inside the app, press `n` to add a task, `Enter` to confirm, `?` for help and
-`q` to quit. Changes are saved automatically. The optional shell-command and
-scripting reference is [near the end](#command-line-interface).
-
-When a newer release is available, the status bar shows `↑ <version> (tuxedo
-update)` next to the version. The check runs in the background, is cached at
-`${XDG_CACHE_HOME:-$HOME/.cache}/tuxedo-task/latest_version.json` for 24 h, and
-fails silently when offline. Set `TUXEDO_NO_UPDATE_CHECK=1` to disable.
-
-### Which file tuxedo opens
-
-The interactive app chooses a task file in this order:
-
-1. An explicit `FILE` argument (TUI only).
-2. `$TODO_FILE`, if set.
-3. `$TODO_DIR/todo.txt`, if `$TODO_DIR` is set.
-4. `./todo.txt` in the current directory, if it exists.
-5. Otherwise the TUI shows a first-run prompt — press `c` to create
-   `./todo.txt` here, or `s` to open a sample todo.txt in the system temp
-   directory so you can try the app without choosing a permanent path.
-
-The archive file is `$DONE_FILE` if set, otherwise a sibling `done.txt` next
-to the todo file. The file (and any missing parent directories) is created on
-first use. These variable names are compatible with todo.txt-cli. Export them
-from your shell configuration as below; Tuxedo Task reads the environment,
-**not the `todo.cfg` file itself**:
-
-```sh
-export TODO_DIR="$HOME/Documents/todo"
-export TODO_FILE="$TODO_DIR/todo.txt"
-export DONE_FILE="$TODO_DIR/done.txt"
-```
-
-Edits are persisted on every change via atomic write (write `.tmp`, rename).
-
-If the file changes on disk (another editor, a sync client, a script),
-tuxedo notices on the next keypress, or within ~250 ms while idle, and
-reloads. The keystroke that triggered the reload is consumed — press it
-again to act on the fresh state — and the status bar flashes a notice.
-
-Pressing `A` appends every completed task to a sibling `done.txt` and
-removes them from the working file (atomically: `done.txt` is written
-before the originals are dropped). `a` toggles the archive view so you
-can browse, un-archive, or permanently delete past tasks.
-
-## Keybindings
-
-Custom normal-mode keybindings can be added in
-`${XDG_CONFIG_HOME:-$HOME/.config}/tuxedo/keybinds.toml`. On native Windows
-2026.10.2+, the default is `%APPDATA%\tuxedo\keybinds.toml`; explicit XDG and
-existing legacy settings are respected (see [Configuration](#configuration)).
-
-The block below lists every rebindable action with the key it ships with —
-copy it, then change the keys you care about and delete the rest (anything you
-leave out keeps its default). A value is a single key or an array of
-alternatives, e.g. `begin_add = ["N", "Ctrl-n"]`.
-
-```toml
-[normal]
-
-# Navigation
-cursor_down    = ["j", "Down"]
-cursor_up      = ["k", "Up"]
-cursor_top     = "gg"
-cursor_bottom  = "G"
-half_page_down = "Ctrl-d"
-half_page_up   = "Ctrl-u"
-
-# Editing
-begin_add            = "n"
-begin_edit           = "e"
-begin_edit_insert    = "i"
-toggle_complete      = "x"
-delete               = "dd"
-reschedule           = "r"
-cycle_priority       = "p"
-begin_prompt_context = "c"
-begin_prompt_person  = "m"
-copy_line            = "yy"
-copy_body            = "yb"
-undo                 = "u"
-# begin_prompt_project defaults to "+", which can't be written here (the
-# parser reads "+" as a modifier separator). Pick another key to move it, e.g.
-# begin_prompt_project = "P"
-
-# Filtering, sort, view
-begin_search        = "/"
-arm_f               = "f"        # leader for the fp / fc / ff / fs chords
-pick_project        = "fp"
-pick_context        = "fc"
-pick_person         = "fm"
-pick_saved_filter   = "ff"
-save_current_filter = "fs"
-cycle_sort          = "S"
-toggle_visual       = "v"
-toggle_selected     = "space"
-go_list             = "l"
-toggle_archive_view = "a"
-archive_completed   = "A"
-toggle_show_done    = "H"
-toggle_show_future  = "F"
-
-# Layout & theme
-toggle_left_pane  = "["
-toggle_right_pane = "]"
-open_theme_picker = "T"
-cycle_density     = "D"
-toggle_line_num   = "L"
-# cycle_theme has no default — bind a key to cycle themes without the picker:
-# cycle_theme = "Ctrl-t"
-
-# System
-open_command_palette = [":", "Ctrl-P"]
-open_share           = "s"
-open_help            = "?"
-open_settings        = ","
-escape_stack         = "Esc"
-quit                 = "q"
-```
-
-Custom bindings are checked before the defaults. The default bindings remain
-available unless the same key or two-key chord is bound to another action in
-the file. Action names are snake_case, matching the names in the command
-palette where possible: `toggle_complete`, `pick_project`,
-`open_theme_picker`, and so on. Key names can be single characters, two-key
-chords like `ZZ`, modifier forms like `Ctrl-n` / `Alt-x`, named keys like
-`Esc`, `Enter`, `Tab`, arrows, `Page-Up`, `Page-Down`, or `F1` through `F24`.
-
-### Navigation
-
-| Key | Action |
-| --- | --- |
-| `j` / `↓` | next task |
-| `k` / `↑` | previous task |
-| `gg` | first task |
-| `G` | last task |
-| `Ctrl-d` / `Ctrl-u` | half-page down / up |
-
-### Editing
-
-| Key | Action |
-| --- | --- |
-| `n` | add task |
-| `e` | edit current task in Normal mode (see [Edit dialog](#edit-dialog)) |
-| `i` | edit current task in Insert mode (see [Edit dialog](#edit-dialog)) |
-| `x` | toggle complete |
-| `dd` | delete task |
-| `p` | cycle priority A → B → C → · |
-| `c` | add or remove a context |
-| `m` | assign or remove a person (**ペルソナ**); type the alias without `::` |
-| `+` | add a project |
-| `yy` | copy current line to clipboard |
-| `yb` | copy current body only (no priority, dates, projects, contexts, people, `key:value`) |
-| `>` | indent task (and its subtree) one level — nests it as a subtask |
-| `<` | outdent task (and its subtree) one level |
-| `u` | undo (50 levels) |
-
-### Edit dialog
-
-**Fork family editing:** `e` / `i` on a parent opens its existing subtree. In the
-add/edit dialog, press `Esc` to enter Normal mode, then `o` to insert a child
-line. Use `j` / `k` to switch draft lines, `>` / `<` to adjust their indentation,
-and `dd` to remove a draft line. `Enter` saves the whole family as one undoable
-change. In Normal mode, another `Esc` cancels the dialog.
-
-The edit dialog uses vim-style modal editing. Press `i` to edit the current task
-starting in **Insert mode** — start typing immediately. Press `e` to start in
-**Normal mode** so you can navigate before changing anything. The add prompt
-(`n`) also opens directly in Insert mode.
-
-The modal keys below apply in Normal mode:
-
-| Key | Action |
-| --- | --- |
-| `h` / `←` | move cursor left |
-| `l` / `→` | move cursor right |
-| `w` | jump to start of next word |
-| `b` | jump to start of previous word |
-| `e` | jump to end of current word |
-| `x` | delete character under cursor |
-| `dw` | delete to start of next word |
-| `cw` | delete to start of next word and enter Insert mode |
-| `i` | enter Insert mode before cursor |
-| `a` | enter Insert mode after cursor |
-| `A` | enter Insert mode at end of line |
-| `Esc` (in Insert) | return to Normal mode |
-| `Esc` (in Normal) | cancel and close |
-| `Enter` (in Insert and Normal) | save |
-
-### Filtering, sort, view
-
-| Key | Action |
-| --- | --- |
-| `/` | search |
-| `fp` | filter by project (`j` / `k` cycles, `Esc` clears) |
-| `fc` | filter by context (`j` / `k` cycles, `Esc` clears) |
-| `fm` | filter by person (**ペルソナ**; `j` / `k` cycles, `Enter` keeps, `Esc` clears only this filter) |
-| `ff` | pick a saved search (`j` / `k` cycles, `Enter` keeps, `Esc` reverts) |
-| `fs` | save the active `/`-search as a named filter |
-| `S` | cycle sort: priority → due → file order → project |
-| `v` | enter visual / multi-select; `space` toggles a row |
-| `x` / `dd` (in visual) | bulk-complete / bulk-delete the selection |
-| `l` | list (default) view |
-| `a` | toggle archive view |
-| `A` | archive completed tasks → `done.txt` |
-| `H` | toggle showing done tasks in the main list |
-| `o` | open the current task's existing `note:<path>` in `$VISUAL` / `$EDITOR` |
-| `O` | create the current task's note if needed, then open it |
-
-### Project grouping
-
-Press `S` until the header shows `sort:project`. Tasks appear under `+project`
-group headings, with untagged families in a final **NO PROJECT** group. A task
-with multiple project tags can appear in more than one group; this does not
-create duplicate lines in the task file. Parent/subtask families stay together.
-Use `fp` to filter by a project instead of grouping the whole list.
-
-### Layout & theme
-
-| Key | Action |
-| --- | --- |
-| `[` | toggle filter sidebar |
-| `]` | toggle detail sidebar |
-| `T` | open theme picker |
-| `D` | cycle density: compact → comfortable → cozy |
-| `L` | toggle line numbers |
-
-### System
-
-| Key | Action |
-| --- | --- |
-| `:` / `Ctrl-P` | command palette |
-| `s` | share capture QR (phone PWA) |
-| `?` | help overlay |
-| `,` | settings overlay |
-| `q` | quit |
-
-Two-key chord prompts (`gg`, `dd`, `yy`, `yb`, `fp`, `fc`, `ff`, `fs`) show
-a `g…` / `d…` / `y…` / `f…` indicator in the status-bar mode chip while the
-leader is armed; the window is 600 ms.
-
-Copy uses the OSC 52 terminal escape, so it works locally and over SSH on
-any terminal that supports it (kitty, alacritty, wezterm, iTerm2, foot,
-modern xterm; tmux when `set -g set-clipboard on`). Older terminals will
-silently ignore the keystroke.
-
-## Mouse interaction
-
-Mouse support is enabled by default in the list and archive views:
-
-- Click a task row to move the cursor to it.
-- Click a project, context, or person in the filter pane to toggle that filter.
-- Long sections share the pane's available height. Use `fp`, `fc`, or `fm` to
-  browse all entries; the active entry stays visible.
-- Click a named saved search in the sidebar to apply it.
-- Use the scroll wheel to move the cursor up or down.
-- Drag across task text and release to copy the selection through OSC 52.
-
-Modal dialogs remain keyboard-driven. Copying depends on the terminal's OSC 52
-support. Set `mouse = false` in `config.toml` to use the keyboard only and let
-your terminal handle text selection normally.
-
-## todo.txt format
-
-Standard [todo.txt](https://github.com/todotxt/todo.txt) lines:
-
-```
-(A) 2026-04-28 Call dentist @phone +health due:2026-05-08
-```
-
-- `(A)` — priority, A through Z (omit for none)
-- `2026-04-28` — creation date in ISO 8601
-- `+project` — project tag
-- `@context` — context tag
-- `::person` — Tuxedo Task's Persona assignment extension (see below)
-- `key:value` — extension; `due:YYYY-MM-DD` is recognized for sort and
-  due-bucket grouping in the list view. `note:<path>` is recognized by the
-  note actions (`o` / `O`): relative paths resolve under `notes_dir`, then
-  `$NOTES_DIR`, then `~/notes`. Keys you'd rather not see can be hidden from
-  the rows via [`hide_keys`](#hiding-keyvalue-tags)
-- `rec:[+]N{d,b,w,m,y}` — recurrence; on completion (`x`), tuxedo inserts
-  a fresh copy of the task with `due:` advanced by `N` days, business
-  days (Mon–Fri), weeks, months, or years. The `+` prefix means
-  *strict* recurrence anchored to the previous due date (e.g.
-  `rec:+1m` for monthly rent on the 15th); without it, the new due is
-  computed from the completion date (e.g. `rec:1w` for "water plants
-  one week after I last did").
-
-Completed tasks are prefixed with `x ` and a completion date:
-
-```
-x 2026-05-05 2026-05-01 Submit expense report +work
-```
-
-### Persona assignments
-
-Use **Persona**, displayed as **ペルソナ** in the app, alongside projects and
-contexts to record who is responsible for a task:
-
-```text
-Prepare the launch +website @office ::ana
-  Write the announcement ::José
-  Review the design ::ana ::maria
-```
-
-- A task may have zero, one, or several assignees. Each `::alias` is explicit;
-  assigning a parent does **not** rewrite its children or replace other people.
-- Press `m`, type an alias **without** `::`, and press `Enter` to assign it.
-  Repeat the same alias to remove it. `u` undoes the change.
-- While adding or editing, type `::` and use `Tab` to complete an existing
-  alias. The `m` prompt also autocompletes aliases.
-- Press `fm` to filter by person, or click their sidebar row. Project, context,
-  person, and search filters combine. `Enter` keeps the filter across restarts;
-  `Esc` in the picker clears only the person filter.
-- In the TUI, a matching **visible** parent or subtask keeps the whole family
-  together. Other family members provide context, not additional assignments.
-  Completed/future tasks still follow `H` / `F`. Project, context, and search
-  predicates continue to use the family root. CLI listings match each task's
-  own explicit assignment instead.
-- Counts reflect open tasks explicitly assigned to each alias, counting
-  duplicates on the same task only once.
-
-Aliases are case-sensitive single words beginning with a letter or `_`.
-Unicode works (`::José`, `::山田`); use `ana-maria` or `ana_maria` instead of
-spaces. Aliases cannot contain whitespace, `+`, `@`, `:`, quotes, `/`, or `\`.
-`due:`, `rec:`, times, URLs, and embedded namespaces such as `std::path` are
-not Persona tokens. Assignments inside quoted text or quoted notes are ignored.
-A literal token beginning with `::` and a valid alias is reserved for Persona.
-
-**IPv6 stays literal:** `::1`, `::abcd`, and other valid compressed IPv6
-addresses are never treated as assignments. This also makes short hexadecimal
-aliases such as `ed` ambiguous; use `_ed` or `edgar` instead.
-
-Persona is plain-text metadata, not an account system: shared lists identify
-responsibility without sending invitations, notifications, or enforcing
-permissions. Share/sync the file separately. Other todo.txt clients can retain
-these tokens as ordinary text; no file migration is required.
-
-### Subtasks (nested tasks)
-
-Subtasks are expressed with two leading spaces per nesting level:
-
-```
-Plan the launch
-  Write the announcement
-    Draft copy
-    Get review
-  Prepare the demo
-```
-
-Indent the task under the cursor with `>` and outdent it with `<` (the whole
-subtree moves together). Subtasks render indented in the list, and they stay
-attached to their parent across priority/due sorting. Completing or deleting
-a parent (`x` / `dd`) completes or deletes its whole subtree; `u` undoes it
-all at once.
-
-**Compatibility:** indentation is a fork-specific extension, not part of the
-standard todo.txt hierarchy model. Other clients may display these lines as
-independent tasks or strip their indentation. The CLI's formatted listing/JSON
-does not currently expose the hierarchy; use the TUI or the file itself when you
-need to see parent/child structure.
-
-Recurring example:
-
-```
-2026-05-09 Pay rent due:2026-05-15 rec:+1m
-```
-
-Pressing `x` on the line above marks the original complete *and* inserts
-`2026-05-09 Pay rent due:2026-06-15 rec:+1m`. `u` undoes both at once.
-
-## Natural-language add
-
-Press `n` to open the add prompt. Type the task in plain English. When the
-buffer contains recognized phrases (dates, weekdays, recurrence, project /
-context names, priority), pressing Enter rewrites the draft into canonical
-todo.txt — review or tweak it, then Enter again to save.
-
-| What you type | What lands in the draft |
-| --- | --- |
-| `Pay rent monthly on the first of the month, show the todo 3 days before the due date. It's part of project home and context bank` | `Pay rent +home @bank due:2026-06-01 rec:+1m t:-3d` |
-| `Buy milk tomorrow` | `Buy milk due:2026-05-12` |
-| `Call mom every week starting Friday for project family` | `Call mom +family due:2026-05-15 rec:+1w` |
-| `Submit timesheet every other friday show 1 day before` | `Submit timesheet due:2026-05-15 rec:+2w t:-1d` |
-| `Daily standup high priority` | `(A) standup rec:+1d` |
-| `Annual review April 15 +work @office` | `Annual review +work @office due:2027-04-15` |
-
-Recognized vocabulary:
-
-- **Dates** — `today`, `tonight`, `tomorrow`, `yesterday`, weekdays (`monday` / `mon` …), months (`april 15`, `15th of april`), `in 3 days`, `the first of the month`, ISO `2026-05-15`.
-- **Recurrence** — `daily`, `weekly`, `biweekly`, `monthly`, `yearly`, `annually`, `every monday`, `every 2 weeks`, `every other friday`, `every business day`.
-- **Threshold** — `show 3 days before due`, `2 weeks before due`.
-- **Projects / contexts** — prose form `project home` and `context bank`, or the standard `+home` / `@bank` sigils.
-- **Priority** — `high priority` → A, `medium priority` → B, `low priority` → C, or `priority A`.
-
-Parsing is rule-based and runs locally — no network calls, no API key. If
-the buffer already contains a `due:`, `rec:`, or `t:` token, tuxedo assumes
-you've typed canonical form and saves it directly on the first Enter.
-
-## Phone capture
-
-Press `s` to start a tiny capture server on your machine's LAN address and
-display a QR code for it. Scan it from your phone — any modern browser — to
-get a minimal PWA you can install to your home screen. Type a task, tap
-Add, and within a tick it shows up in your task list.
-
-Captures never touch `todo.txt` directly. They land in a sibling
-`inbox.txt`, which tuxedo drains on every external-change poll: each line
-is run through the same natural-language pipeline as the `n` add prompt,
-given a creation date if missing, and merged into `todo.txt` as a single
-undoable batch (`u` rolls back the whole drain at once).
-
-Advanced file-based producers and shell automation are covered in the
-[command-line reference](#capture-from-scripts), near the end.
-
-The server:
-
-- Binds on first `s` press and stays up for the rest of the session.
-  Subsequent `s` presses just re-show the QR; any key dismisses the
-  overlay.
-- Listens on `0.0.0.0:<port>` so phones on the same WiFi can reach it.
-  The port is OS-assigned on first use and persisted to `config.toml` so
-  phone bookmarks survive across sessions.
-- Gates every protected route on a 64-character hex token baked into the
-  URL path. The token is generated once, persisted to `config.toml`, and
-  compared in constant time.
-- Speaks plain HTTP — **trusted networks only.** On a shared or public
-  WiFi anyone passive-sniffing can recover the token. To rotate, delete
-  `share_token` from `config.toml` and press `s` again.
-
-Drains from tuxedo-managed producers are crash-safe: the capture server
-holds the same advisory lock as the TUI's rename-and-merge, and any
-staging file left over from an interrupted drain is replayed on the
-next session. Plain shell appends are useful for lightweight capture,
-but they do not take that lock; use the capture server or the same lock
-if a producer must be serialized with the TUI drain.
-
-## Configuration
-
-On macOS/Linux, persisted to
-`${XDG_CONFIG_HOME:-$HOME/.config}/tuxedo/config.toml`. Native Windows from
-2026.10.2 uses `%APPDATA%\tuxedo\config.toml` by default. For home-relative
-paths, `%USERPROFILE%` supplies the home directory when `HOME` is absent.
-An explicit absolute `XDG_CONFIG_HOME` takes priority;
-an existing legacy `~/.config/tuxedo` directory is kept in place rather than
-silently migrated. Keybindings and user themes share that configuration base.
-The update-check cache uses `%LOCALAPPDATA%\tuxedo-task` on native Windows
-(or the explicit `XDG_CACHE_HOME`). Task files stay at the paths you choose.
-
-Cycling theme, density, or sort, and toggling sidebars / line-numbers / done-visibility
-all update the file. Active project/context/person filters are also persisted. Unknown
-keys are ignored.
-
-Fork-specific layout options (unquoted values, as in the existing config):
-
-```toml
-mouse = true
-borders = true
-margin = 0
-```
-
-`mouse` and `borders` default to `true`; `margin` defaults to `0`. Set `mouse = false`
-for terminal-native text selection. Upstream Tuxedo shares this configuration
-location but may not understand fork-only fields.
-
-**Hot-reload.** Edits to `config.toml` are picked up while the TUI is running —
-change the theme, density, sort, layout, saved filters, or any other field and
-the UI updates within ~200 ms. Parse failures (e.g. a typo mid-edit) leave the
-running config intact and flash a warning in the status bar.
-
-Two additional keys, `share_token` and `share_port`, are written by the
-[phone capture](#phone-capture) server on first use. Treat `share_token`
-as a secret — anyone who has the value and LAN reach can append to your
-inbox. Delete the key from `config.toml` to rotate it on the next `s`
-press.
-
-Saved searches (created with `fs`) are written one per line as
-`filter.<name> = <query>`, where `<query>` is the `/`-search needle. They
-round-trip as plain text, so you can add, rename, or delete them by editing
-`config.toml` directly; a repeated `filter.<name>` keeps the last value, and
-`<name>` may not contain `=`.
-
-Task-note actions resolve relative `note:<path>` tokens under `notes_dir`.
-If `notes_dir` is not set, tuxedo falls back to `$NOTES_DIR` and then
-`~/notes`. `O` creates missing notes under `projects/tuxedo-tasks/` using a
-small Markdown template and appends the generated `note:<path>` token to the
-task; `o` only opens an existing linked note.
-
-```toml
-notes_dir = ~/notes
-```
-
-### Hiding `key:value` tags
-
-Some `key:value` extensions are for machines, not eyes — e.g. a `uid:` you
-sync against. Add a comma-separated `hide_keys` line to `config.toml` and
-those keys' tokens are dropped from the task rows (list and archive views):
-
-```toml
-hide_keys = uid, sync
-```
-
-Matching is case-insensitive. Hiding is purely visual — the tags stay on
-disk untouched, still serialize, and still show in the detail pane's **RAW**
-section (a deliberate escape hatch). Searches still match hidden text; the
-hidden characters just aren't drawn.
-
-## Command-line interface
-
-**Optional reference for shell commands and automation.** You do not need these
-commands to use the interactive app. With no subcommand, `tuxedo` opens the TUI.
-
-### Help, version and update instructions
-
-These commands inspect the installed application or show instructions; they
-**do not install it**:
-
-```sh
-tuxedo --version
-tuxedo --help
-tuxedo update
-```
-
-`--version` identifies the fork as **Tuxedo Task**. `--help` lists available
-options and commands. `tuxedo update` (or `tuxedotask update`) only prints upgrade
-instructions for your install method; it never installs anything automatically.
-
-### Verify a Windows installer
-
-This PowerShell command only checks a download; it does not install anything:
-
-```powershell
-Get-FileHash .\tuxedo-task-windows-x86_64-setup.exe -Algorithm SHA256
-```
-
-Compare the hash with the adjacent `.sha256` file from the same official release;
-uppercase/lowercase hexadecimal letters mean the same hash.
-Signing/SmartScreen reputation and a future WinGet submission are separate from
-these checks; no WinGet package is currently advertised as published.
-
-### Task commands and automation
-
-The CLI uses `$TODO_FILE`, `$TODO_DIR/todo.txt`, or an existing `./todo.txt` in
-that order. With none available, it uses a temporary sample instead of asking.
-Set `TODO_FILE` explicitly when scripting your own files; use a copy while
-trying commands that modify tasks.
-
-When the first argument is a recognized subcommand, tuxedo runs a one-shot
-command instead of launching the TUI. The surface mirrors
-[todo.txt-cli](https://github.com/todotxt/todo.txt-cli/wiki/Usage) — same
-commands, aliases, task numbering, and output — so it's a drop-in for scripts
-and aliases.
-
-Examples for macOS/Linux shells:
-
-```sh
-export TODO_FILE="$HOME/Documents/tasks/todo.txt"
-tuxedo add "Pay rent +home @bank due:2026-07-01"   # or: tuxedo a "..."
-tuxedo ls @bank                                     # filter by context
-tuxedo ls +website ::ana                             # combine project and person
-tuxedo listpersona                                   # list known assignees
-tuxedo do 3                                          # mark task 3 complete
-tuxedo pri 3 A                                        # set priority
-tuxedo archive                                        # move done tasks to done.txt
-tuxedo ls --json | jq .                              # machine-readable output
-```
-
-| Command | Aliases | Arguments | Description |
-| --- | --- | --- | --- |
-| `add` | `a` | `TEXT...` | Add a task (natural-language dates supported, same as the `n` prompt). |
-| `append` | `app` | `N TEXT...` | Append text to task `N`. |
-| `prepend` | `prep` | `N TEXT...` | Prepend text to task `N`. |
-| `replace` | | `N TEXT...` | Replace task `N` entirely. |
-| `pri` | `p` | `N PRIORITY` | Set priority `A`–`Z` on task `N`. |
-| `depri` | `dp` | `N...` | Remove priority from the given tasks. |
-| `do` | `done`, `complete` | `N...` | Mark tasks complete (recurring tasks spawn their next instance). |
-| `del` | `rm` | `N [TERM]` | Delete task `N`, or remove just `TERM` from it. Prompts unless `-f`. |
-| `archive` | | | Move completed tasks to the done file. |
-| `list` | `ls` | `[TERM...]` | List tasks. `TERM` is `+project`, `@context`, `::person`, or free text. |
-| `listall` | `lsa` | `[TERM...]` | List the todo file and the done file. |
-| `listpri` | `lsp` | `[PRIORITY]` | List prioritized tasks (optionally a single priority). |
-| `listproj` | `lsprj` | | List all `+projects`. |
-| `listcon` | `lsc` | | List all `@contexts`. |
-| `listpersona` | `lsm`, `listpeople` | | List unique `::person` assignments, including completed tasks in the todo file. |
-
-**Task numbers** are 1-based line numbers in the file, exactly as printed by
-`list` — stable regardless of how the list is filtered or sorted. `list`
-sorts by the full line (case-insensitive) and prints a `TODO: X of Y tasks
-shown` footer, matching todo.txt-cli.
-
-**Options:**
-
-- `-f`, `--force` — skip confirmation prompts (e.g. for `del`).
-- `--json` — emit machine-readable JSON instead of text. `list`-style commands
-  print an array of task objects; mutating commands print a result object.
-  Task objects include a `people` string array alongside `projects` and
-  `contexts`; this field name is independent of the Persona display label.
-  `listpersona --json` returns bare aliases in its `tags` array.
-  No prompts or footers are written in this mode.
-
-Global flags may appear before the subcommand (`tuxedo -f del 3`).
-
-**Differences from todo.txt-cli:** `do` marks a task complete but does **not**
-auto-archive it — completed tasks stay in the file until you run `archive` (or
-press `A` in the TUI), matching tuxedo's interactive model. There is no `-d`
-config-file flag; configure paths with the environment variables above.
-
-### Capture from scripts
-
-The sibling `inbox.txt` described under [Phone capture](#phone-capture) also
-accepts file-based producers. The example below assumes the running app opened
-`$HOME/Documents/tasks/todo.txt`, so its inbox is in that same directory:
-
-```sh
-echo "Refill prescription tomorrow" >> "$HOME/Documents/tasks/inbox.txt"
-echo "Call dentist due:2026-06-01" >> "$HOME/Documents/tasks/inbox.txt"
-```
-
-Shell aliases, Shortcuts writing to a synced folder, cron jobs and email-to-file
-gateways can append lines to that inbox. The running app picks them up on its
-next poll. Plain shell appends do not acquire the app's lock; use the capture
-server or the same lock when producers must be serialized with the TUI drain.
-
-## Website
-
-The [Tuxedo Task landing page](https://caracolaracol.github.io/tuxedo-task/) is a
-static Astro site in [`website/`](website). Its setup, browser tests, and GitHub
-Pages deployment are documented in [`website/README.md`](website/README.md).
-The [online application guide](https://caracolaracol.github.io/tuxedo-task/docs/)
-includes the reference sections from this README, plus getting-started and
-troubleshooting guidance. It is regenerated when the website builds.
-The website is independent of the Rust application and does not change how tasks are stored.
-
-## Development
-
-```sh
-mise run fmt      # cargo fmt --all
-mise run clippy   # cargo clippy --all-targets --locked -- -D warnings
-mise run test     # cargo test --locked
-```
-
-CI runs all three on every push and pull request. Tasks are also runnable as
-plain `cargo` commands if you don't use [mise](https://mise.jdx.dev/).
-
-## Acknowledgments
-
-- [Tuxedo](https://github.com/webstonehq/tuxedo) by Webstone Technologies Inc and its contributors — the original application this fork is based on.
-- [@IogaMaster's upstream walkthrough](https://www.youtube.com/watch?v=mT1tg6SQ_Ag) — a tour of the original Tuxedo workflow, not a demo of this fork's additions.
-- [todo.txt](http://todotxt.org/) by Gina Trapani — the format that makes a tool like this possible.
-- [ratatui](https://ratatui.rs/) and [crossterm](https://github.com/crossterm-rs/crossterm) — the rendering and terminal-input crates tuxedo is built on.
-
-## Roadmap
-
-Ideas, bug reports, and proposed improvements belong in
-[this fork's issue tracker](https://github.com/Caracolaracol/tuxedo-task/issues).
-
-## Contributing
-
-Issues and pull requests are welcome. For larger changes, please open an
-issue first to discuss the approach. Run `mise run fmt clippy test` (or the
-plain cargo equivalents) before submitting.
+Naoko Takeuchi. The app uses its own original mask design, not the character
+artwork above, and is not affiliated with or endorsed by the rights holders.
+The externally hosted character image is non-free: [source and rights information](https://en.wikipedia.org/wiki/File:TuxedoMask.jpg).
+Its appearance on Wikipedia is not a grant of reuse rights.
+
+## Contributing & credits
+
+[Issues and ideas](https://github.com/Caracolaracol/tuxedo-task/issues) and pull
+requests are welcome. See [development](Docs/development.md) for checks and
+contribution guidance.
+
+Thanks to the original Tuxedo contributors, Gina Trapani and
+[todo.txt](http://todotxt.org/), [ratatui](https://ratatui.rs/), and
+[crossterm](https://github.com/crossterm-rs/crossterm).
+[More credits and support](Docs/support.md).
 
 ## License
 
 Code and original project assets are released under the [MIT License](LICENSE).
 The original Webstone Technologies Inc copyright notice is preserved. The
-externally hosted Tuxedo Mask character reference above is not an MIT-licensed
-project asset; see its linked source for rights information. The website's
-Openclipart rose border is CC0; its Twemoji roses are CC BY 4.0. See
-[`website/THIRD_PARTY.md`](website/THIRD_PARTY.md).
+Tuxedo Mask reference image is **not covered by MIT**. Website decorations have
+separate licenses: Openclipart roses are CC0, and Twemoji roses are CC BY 4.0;
+see [third-party credits](website/THIRD_PARTY.md).

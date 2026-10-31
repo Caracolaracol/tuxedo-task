@@ -90,7 +90,7 @@ same scaling; its index scrolls within the viewport even on short ultrawide scre
 - `src/styles/global.css`: responsive, paper/plum/cerise visual identity.
 - `scripts/prepare-assets.mjs`: copies the app's original mask and real UI renders
   from the repository into `public/` before development/builds. The hero uses
-  `docs/screenshots/subtasks.svg`; the workflow section uses `docs/screenshots/list.svg`.
+  `Docs/screenshots/subtasks.svg`; the workflow section uses `Docs/screenshots/list.svg`.
   These come from the application's actual Ratatui renderer with sample tasks,
   not an HTML/CSS mockup. Generated copies are ignored; edit the originals.
 - `public/social-card.svg` and `.png`: original social preview. After editing the
@@ -122,28 +122,30 @@ Onboarding explicitly explains automatic file/folder creation and the `c`/`s`
 choices when starting without a path. Top quick links prioritize the first task,
 not command-line automation.
 
-The technical reference is **generated from the repository's `README.md`**:
+The technical reference is **generated from the Markdown guides in [`Docs/`](../Docs/README.md)**.
+The root README is a concise project overview, not the reference source.
 
-- `scripts/manual.mjs` extracts the selected application sections and rewrites
-  links for the documentation route. It fails if an expected section disappears.
-- `scripts/prepare-docs.mjs` combines those references with
-  `src/content/start.md` and `src/content/reference-notes.md`.
-- The result is `src/generated/manual.md`, which is ignored by Git. Do not edit it.
+- `scripts/manual.mjs` lists and loads the guides in TUI-first order, promotes
+  their headings, and rewrites cross-file links into single-page anchors.
+  Missing guides or renamed top-level headings fail the build.
+- `scripts/prepare-docs.mjs` writes `src/generated/manual.md`, which is ignored
+  by Git. Do not edit the generated file.
 - The `predev`, `precheck`, and `prebuild` hooks regenerate the guide, so fresh
   checkouts and CI can import it before Astro compiles the page.
-- The Pages workflow also watches root `README.md`, so reference edits redeploy
-  the documentation. Run `npm run test:docs` to check the generator separately.
+- The Pages workflow watches `Docs/**` (including screenshots), so reference edits
+  redeploy the documentation. Run `npm run test:docs` to check the generator,
+  local documentation paths/case, and cross-file anchors separately.
 
-Change application reference material in the root README; change onboarding and
-troubleshooting in the two source Markdown files. Keep claims about fork-only
-features scoped to the original upstream base, rather than unverified current
-upstream releases.
+Edit each guide in `Docs/` to update both GitHub documentation and the website.
+There are no separate website-only copies of the onboarding or troubleshooting
+text. Keep claims about fork-only features scoped to the original upstream base,
+not unverified current upstream releases.
 
 ## GitHub Pages
 
 The workflow is **`.github/workflows/pages.yml`**:
 
-1. Pushes to `main` affecting the README or site/shared assets trigger
+1. Pushes to `main` affecting the README, `Docs/`, or site/shared assets trigger
    installation, dependency audit, type checks, static build and browser tests.
 2. Pull requests run the same validation but **cannot deploy**.
 3. Successful branch builds upload `website/dist` and deploy to GitHub Pages with
