@@ -1,4 +1,4 @@
-# Tuxedo Task
+# <img src="src/serve/assets/icon.svg" width="48" height="48" align="absmiddle" alt="Tuxedo Task's original mask logo"> Tuxedo Task
 
 <a href="https://en.wikipedia.org/wiki/Tuxedo_Mask"><img src="https://upload.wikimedia.org/wikipedia/en/0/07/TuxedoMask.jpg" width="180" alt="Tuxedo Mask from Sailor Moon, the inspiration for our mask motif"></a>
 
