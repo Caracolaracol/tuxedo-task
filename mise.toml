@@ -27,5 +27,5 @@ run = "cargo run --example screenshots"
 description = "Record the README hero GIF via vhs (requires vhs on PATH)."
 run = [
     "cargo build --release",
-    "vhs docs/demo.tape",
+    "vhs Docs/demo.tape",
 ]

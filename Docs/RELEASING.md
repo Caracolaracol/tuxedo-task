@@ -10,7 +10,7 @@ GitHub Actions, **not** for a Homebrew install or a release download.
   the following release starts at SemVer `1.0.0`. After that, increment MAJOR
   for incompatible todo.txt/CLI/config changes, MINOR for compatible features,
   and PATCH for compatible fixes.
-- Update version-specific download examples in `README.md`.
+- Update version-specific download examples in `Docs/installation.md`.
 - Run `cargo fmt --all --check`, `cargo clippy --all-targets --locked -- -D warnings`,
   and `cargo test --all-targets --locked`. If the status bar's version changes,
   review and update the rendered snapshots and regenerate the screenshots.

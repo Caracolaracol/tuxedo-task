@@ -1,10 +1,10 @@
-## Getting started
+# Getting started
 
-Once [installation](#installation) is complete, open Tuxedo Task and create your
+Once [installation](installation.md#installation) is complete, open Tuxedo Task and create your
 first task. `tuxedo` and `tuxedotask` open the same app when installed through
 Homebrew, the Windows installer, or a portable download.
 
-### Your first task
+## Your first task
 
 > **You do not need to create `todo.txt` yourself.** When you open a path that
 > does not exist, Tuxedo Task creates the file **and any missing parent folders**
@@ -42,7 +42,7 @@ explained below.
 4. Press `?` for help inside the app and `q` to quit. Changes are saved as you
    make them; there is no separate Save button.
 
-### What if I just run tuxedo?
+## What if I just run tuxedo?
 
 If a task file is already configured or `todo.txt` exists in your terminal's
 current folder, the app opens that file. Otherwise, a welcome screen lets you:
@@ -51,19 +51,23 @@ current folder, the app opens that file. Otherwise, a welcome screen lets you:
   with an empty list.
 - Press `s` to try a sample in the system's temporary folder instead.
 
-See [which file opens](#which-file-tuxedo-opens) for the full lookup order.
+See [which file opens](usage.md#which-file-tuxedo-opens) for the full lookup order.
 
-### Where to go next
+## Where to go next
 
-- [Tasks and subtasks](#tasks-and-subtasks): understand the file format and hierarchy.
-- [Persona assignments](#persona-assignments): record responsibility with `::person`.
-- [Keybindings](#keybindings): navigation, family editing, filtering, and shortcuts.
-- [Configuration](#configuration): layout, filters, notes, and preferences.
-- [Fork additions](#fork-additions): distinguish our additions from inherited features.
+- [Tasks and subtasks](tasks.md#tasks-and-subtasks): understand the file format and hierarchy.
+- [Persona assignments](tasks.md#persona-assignments): record responsibility with `::person`.
+- [Keybindings](keybindings.md#keybindings): navigation, family editing, filtering, and shortcuts.
+- [Configuration](configuration.md#configuration): layout, filters, notes, and preferences.
+- [Fork additions](fork.md#fork-additions): distinguish our additions from inherited features.
 
 > **Your files stay local.** No account or database is required. Natural-language
 > parsing is offline. Optional phone capture uses your trusted LAN; the optional
 > update check contacts GitHub and can be disabled with `TUXEDO_NO_UPDATE_CHECK=1`.
 
 For optional shell commands and automation, see the
-[command-line reference near the end](#command-line-interface).
+[command-line reference near the end](cli.md#command-line-interface).
+
+---
+
+[Documentation index](README.md) · [Project overview](../README.md)
