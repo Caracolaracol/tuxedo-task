@@ -72,6 +72,8 @@ pub fn task_object(n: usize, t: &Task, out: &mut String) {
     out.push(',');
     arr(out, "contexts", &t.contexts);
     out.push(',');
+    arr(out, "people", &t.people);
+    out.push(',');
     opt(out, "due", &t.due);
     out.push(',');
     opt(out, "rec", &t.rec);

@@ -46,6 +46,8 @@ pub struct Task {
     pub created_date: Option<String>,
     pub projects: Vec<String>,
     pub contexts: Vec<String>,
+    /// Explicit assignees written as standalone `::name` tokens.
+    pub people: Vec<String>,
     pub due: Option<String>,
     /// Raw value of the `rec:` tag if present, e.g. `"+1m"` or `"3b"`. Stored
     /// as the unparsed string so a malformed value round-trips intact through
@@ -102,6 +104,12 @@ pub fn parse_line(raw: &str) -> Result<Task, ParseError> {
 
     let projects = collect_tokens(rest, '+');
     let contexts = collect_tokens(rest, '@');
+    let mut people = Vec::new();
+    for name in unquoted_tokens(rest).filter_map(person_name) {
+        if !people.iter().any(|p| p == name) {
+            people.push(name.to_string());
+        }
+    }
     let due = find_kv(rest, "due");
     let rec = find_kv(rest, "rec");
     let threshold = find_kv(rest, "t");
@@ -117,6 +125,7 @@ pub fn parse_line(raw: &str) -> Result<Task, ParseError> {
         created_date,
         projects,
         contexts,
+        people,
         due,
         rec,
         threshold,
@@ -178,6 +187,35 @@ fn collect_tokens(s: &str, sigil: char) -> Vec<String> {
         }
     }
     out
+}
+
+/// Only unquoted words can carry assignments. In particular, note text is
+/// never interpreted as an assignee, even when it contains `::name`.
+fn unquoted_tokens(s: &str) -> impl Iterator<Item = &str> {
+    s.split_whitespace()
+        .scan(false, |quoted, token| {
+            let inside = *quoted;
+            *quoted ^= token.chars().filter(|c| *c == '"').count() % 2 != 0;
+            Some((!inside && !token.contains('"')).then_some(token))
+        })
+        .flatten()
+}
+
+/// Return the name only for a complete, valid `::person` token. Embedded
+/// namespace separators, URLs, and compressed IPv6 literals remain text.
+pub fn person_name(token: &str) -> Option<&str> {
+    token
+        .strip_prefix("::")
+        .filter(|name| is_valid_person_name(name))
+}
+
+/// Person aliases are single words, beginning with a letter or underscore.
+/// An alias must not itself form an IPv6 literal when prefixed with `::`.
+pub fn is_valid_person_name(name: &str) -> bool {
+    is_valid_tag_name(name)
+        && name.starts_with(|c: char| c.is_alphabetic() || c == '_')
+        && !name.contains(['"', '\'', '/', '\\'])
+        && format!("::{name}").parse::<std::net::Ipv6Addr>().is_err()
 }
 
 /// Find the value of `key:value` for a specific key. Returns the first hit;
@@ -362,13 +400,13 @@ impl Task {
     /// Append `+name` to the line. Returns `Ok(true)` if added, `Ok(false)`
     /// if the project was already present.
     pub fn add_project(&mut self, name: &str) -> Result<bool, TagError> {
-        self.add_tag(name, '+', |t| &t.projects)
+        self.add_tag(name, "+", |t| &t.projects)
     }
 
     /// Append `@name` to the line. Returns `Ok(true)` if added, `Ok(false)`
     /// if the context was already present.
     pub fn add_context(&mut self, name: &str) -> Result<bool, TagError> {
-        self.add_tag(name, '@', |t| &t.contexts)
+        self.add_tag(name, "@", |t| &t.contexts)
     }
 
     /// Remove every `@name` token from the line. Returns `Ok(true)` if any
@@ -391,10 +429,48 @@ impl Task {
         Ok(true)
     }
 
+    /// Add an explicit assignee without changing other tags or assignments.
+    pub fn add_person(&mut self, name: &str) -> Result<bool, TagError> {
+        if !is_valid_person_name(name) {
+            return Err(TagError::Invalid);
+        }
+        self.add_tag(name, "::", |t| &t.people)
+    }
+
+    /// Remove all occurrences of this assignment, leaving quoted notes intact.
+    pub fn remove_person(&mut self, name: &str) -> Result<bool, TagError> {
+        if !is_valid_person_name(name) {
+            return Err(TagError::Invalid);
+        }
+        if !self.people.iter().any(|p| p == name) {
+            return Ok(false);
+        }
+        let needle = format!("::{name}");
+        let mut ranges = Vec::new();
+        for token in unquoted_tokens(&self.raw).filter(|token| *token == needle) {
+            let start = token.as_ptr() as usize - self.raw.as_ptr() as usize;
+            let end = start + token.len();
+            // Consume the following separator, not whitespace inside notes.
+            let separator = self.raw[end..]
+                .chars()
+                .next()
+                .filter(|c| c.is_whitespace())
+                .map_or(0, char::len_utf8);
+            ranges.push(start..end + separator);
+        }
+        let mut raw = self.raw.clone();
+        for range in ranges.into_iter().rev() {
+            raw.replace_range(range, "");
+        }
+        self.replace_from_raw(raw.trim_end())
+            .map_err(TagError::Parse)?;
+        Ok(true)
+    }
+
     fn add_tag(
         &mut self,
         name: &str,
-        sigil: char,
+        sigil: &str,
         existing: impl Fn(&Task) -> &Vec<String>,
     ) -> Result<bool, TagError> {
         if !is_valid_tag_name(name) {
@@ -513,7 +589,7 @@ pub fn body_after_quoted_kv(raw: &str) -> String {
 
 /// Description text only: strip the leading `x `, done/created dates, and
 /// priority via `body_after_priority`, then drop every `+project`,
-/// `@context`, and `key:value` token from what remains. Whitespace between
+/// `@context`, `::person`, and `key:value` token from what remains. Whitespace between
 /// surviving words collapses to single spaces. Returns an owned `String`
 /// because we're filtering tokens, not slicing a prefix.
 pub fn body_only(raw: &str) -> String {
@@ -526,6 +602,9 @@ pub fn body_only(raw: &str) -> String {
 }
 
 fn is_meta_token(tok: &str) -> bool {
+    if person_name(tok).is_some() {
+        return true;
+    }
     if let Some(rest) = tok.strip_prefix('+')
         && !rest.is_empty()
     {

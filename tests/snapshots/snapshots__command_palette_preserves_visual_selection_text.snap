@@ -12,20 +12,20 @@ expression: buffer_to_text(&buf)
 │   +learning       │ > █                                                      │                   │
 │   +personal       │──────────────────────────────────────────────────────────│                   │
 │   +travel         │ ▶ new task                                             n │                   │
-│                   │   edit current task (normal mode)                      e │01 Finish Q2 board │
-│ コ ン テ キ ス ト       │   edit current task (insert mode)                      i │laptop             │
-│   @errands        │   toggle complete                                      x │06                 │
-│   @home           │   delete task                                         dd │                   │
+│                   │   edit current task (normal mode)                      e │                   │
+│ コ ン テ キ ス ト       │   edit current task (insert mode)                      i │01 Finish Q2 board │
+│   @errands        │   toggle complete                                      x │laptop             │
+│   @home           │   delete task                                         dd │06                 │
 │   @laptop         │   cycle priority                                       p │                   │
 │   @phone          │   add project to current task                          + │                   │
 │                   │   add or remove context on current task                c │                   │
-│                   │   copy line to clipboard                              yy │                   │
+│ ペ ル ソ ナ           │   ペ ル ソ ナ  (Persona): assign or remove person            │                   │
+│   tag with ::perso│   copy line to clipboard                              yy │                   │
 │                   │   copy body to clipboard                              yb │                   │
 │                   │   open task note                                       o │                   │
 │                   │   create or open task note                             O │                   │
 │                   │   undo                                                 u │                   │
 │                   │   cursor down                                      j / ↓ │                   │
-│                   │   cursor up                                        k / ↑ │                   │
 │                   │  ↑↓ / Ctrl-N/P navigate · Enter run · Esc cancel         │                   │
 │                   └──────────────────────────────────────────────────────────┘                   │
 │                        ││                                      ││                                │
@@ -33,4 +33,4 @@ expression: buffer_to_text(&buf)
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
 ╰────────────────────────╯╰──────────────────────────────────────╯╰────────────────────────────────╯
- COMMAND   type to filter · Enter run · Es15 open · 2 selected · 2026-05-06 · Tuxedo Task 2026.10.2
+ COMMAND   type to filter · Enter run · Es15 open · 2 selected · 2026-05-06 · Tuxedo Task 2026.10.3

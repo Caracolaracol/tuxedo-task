@@ -12,15 +12,15 @@ expression: buffer_to_text(&buf)
 │   +learning       │ > arch█  4 matches                                       │                   │
 │   +personal       │──────────────────────────────────────────────────────────│                   │
 │   +travel         │ ▶ archive completed tasks                              A │                   │
-│                   │   toggle archive view                                  a │01 Finish Q2 board │
-│ コ ン テ キ ス ト       │   fuzzy search                                         / │laptop             │
-│   @errands        │   save search as filter                               fs │06                 │
-│   @home           │                                                          │                   │
+│                   │   toggle archive view                                  a │                   │
+│ コ ン テ キ ス ト       │   fuzzy search                                         / │01 Finish Q2 board │
+│   @errands        │   save search as filter                               fs │laptop             │
+│   @home           │                                                          │06                 │
 │   @laptop         │                                                          │                   │
 │   @phone          │                                                          │                   │
 │                   │                                                          │                   │
-│                   │                                                          │                   │
-│                   │                                                          │                   │
+│ ペ ル ソ ナ           │                                                          │                   │
+│   tag with ::perso│                                                          │                   │
 │                   │                                                          │                   │
 │                   │                                                          │                   │
 │                   │                                                          │                   │
@@ -33,4 +33,4 @@ expression: buffer_to_text(&buf)
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
 ╰────────────────────────╯╰──────────────────────────────────────╯╰────────────────────────────────╯
- COMMAND   type to filter · Enter run · Esc cancel     15 open · 2026-05-06 · Tuxedo Task 2026.10.2
+ COMMAND   type to filter · Enter run · Esc cancel     15 open · 2026-05-06 · Tuxedo Task 2026.10.3

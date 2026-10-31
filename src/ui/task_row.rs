@@ -323,6 +323,9 @@ pub(crate) fn url_token_style(task_done: bool, theme: &Theme) -> Style {
 }
 
 fn sigil_token_color(token: &str, task: &Task, theme: &Theme) -> Option<Color> {
+    if crate::todo::person_name(token).is_some_and(|name| task.people.iter().any(|p| p == name)) {
+        return Some(if task.done { theme.done } else { theme.accent });
+    }
     if !token.starts_with('+') && !token.starts_with('@') {
         return None;
     }

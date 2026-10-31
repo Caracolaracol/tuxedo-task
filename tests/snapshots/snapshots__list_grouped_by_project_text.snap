@@ -9,18 +9,18 @@ expression: buffer_to_text(&buf)
 │   +health           3  ││  2       Pay rent due:2026-05-15 rec:││ due       2026-06-15  2026-06-1│
 │   +finance          2  ││ (3)  +health  ───────────────────────││ projects  +finance             │
 │   +home             1  ││  3   (A) Call dentist to reschedule c││ contexts  @home                │
-│   +learning         1  ││  4   (C) Order new running shoes +hea││                                │
-│   +personal         1  ││  5       Schedule annual physical @ph││ ロ ー                            │
-│   +travel           1  ││ (1)  +home  ─────────────────────────││                                │
-│                        ││  6       Replace bathroom faucet wash││ (C) 2026-05-03 Pay quarterly   │
-│ コ ン テ キ ス ト            ││ (1)  +learning  ─────────────────────││ estimated taxes @home +finance │
-│   @errands          4  ││  7       Read "Designing Data-Intensi││ due:2026-06-15                 │
-│   @home             4  ││ (1)  +personal  ─────────────────────││                                │
+│   +learning         1  ││  4   (C) Order new running shoes +hea││ ペ ル ソ ナ   —                    │
+│   +personal         1  ││  5       Schedule annual physical @ph││                                │
+│   +travel           1  ││ (1)  +home  ─────────────────────────││ ロ ー                            │
+│                        ││  6       Replace bathroom faucet wash││                                │
+│ コ ン テ キ ス ト            ││ (1)  +learning  ─────────────────────││ (C) 2026-05-03 Pay quarterly   │
+│   @errands          4  ││  7       Read "Designing Data-Intensi││ estimated taxes @home +finance │
+│   @home             4  ││ (1)  +personal  ─────────────────────││ due:2026-06-15                 │
 │   @laptop           4  ││  8       Plan Saturday hike with K. @││                                │
 │   @phone            3  ││ (1)  +travel  ───────────────────────││                                │
 │                        ││  9   (B) Renew passport before summer││                                │
-│                        ││ (4)  +work  ─────────────────────────││                                │
-│                        ││ 10   (A) Finish Q2 board deck +work @││                                │
+│ ペ ル ソ ナ                ││ (4)  +work  ─────────────────────────││                                │
+│   tag with ::person    ││ 10   (A) Finish Q2 board deck +work @││                                │
 │                        ││ 11   (B) Review pull requests for aut││                                │
 │                        ││ 12   (B) Draft hiring rubric for seni││                                │
 │                        ││ 13       Migrate analytics to new pip││                                │
@@ -33,4 +33,4 @@ expression: buffer_to_text(&buf)
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
 ╰────────────────────────╯╰──────────────────────────────────────╯╰────────────────────────────────╯
- NORMAL   j/k · n new · r reschedule · x done · / searc15 open · 2026-05-06 · Tuxedo Task 2026.10.2
+ NORMAL   j/k · n new · r reschedule · x done · / searc15 open · 2026-05-06 · Tuxedo Task 2026.10.3

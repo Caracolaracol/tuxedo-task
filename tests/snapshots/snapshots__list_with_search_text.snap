@@ -9,18 +9,18 @@ expression: buffer_to_text(&buf)
 │   +health           3  ││ (2)  PRIORITY B  ────────────────────││ due       2026-05-06  today    │
 │   +finance          2  ││  2   (B) Review pull requests for aut││ projects  +work                │
 │   +home             1  ││  3   (B) Draft hiring rubric for seni││ contexts  @laptop              │
-│   +learning         1  ││ (1)  NO PRIORITY  ───────────────────││                                │
-│   +personal         1  ││  4       Migrate analytics to new pip││ ロ ー                            │
-│   +travel           1  ││                                      ││                                │
-│                        ││                                      ││ (A) 2026-05-01 Finish Q2 board │
-│ コ ン テ キ ス ト            ││                                      ││ deck +work @laptop             │
-│   @errands          4  ││                                      ││ due:2026-05-06                 │
-│   @home             4  ││                                      ││                                │
+│   +learning         1  ││ (1)  NO PRIORITY  ───────────────────││ ペ ル ソ ナ   —                    │
+│   +personal         1  ││  4       Migrate analytics to new pip││                                │
+│   +travel           1  ││                                      ││ ロ ー                            │
+│                        ││                                      ││                                │
+│ コ ン テ キ ス ト            ││                                      ││ (A) 2026-05-01 Finish Q2 board │
+│   @errands          4  ││                                      ││ deck +work @laptop             │
+│   @home             4  ││                                      ││ due:2026-05-06                 │
 │   @laptop           4  ││                                      ││                                │
 │   @phone            3  ││                                      ││                                │
 │                        ││                                      ││                                │
-│                        ││                                      ││                                │
-│                        ││                                      ││                                │
+│ ペ ル ソ ナ                ││                                      ││                                │
+│   tag with ::person    ││                                      ││                                │
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
@@ -33,4 +33,4 @@ expression: buffer_to_text(&buf)
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
 ╰────────────────────────╯╰──────────────────────────────────────╯╰────────────────────────────────╯
- NORMAL   j/k · n new · r reschedule · x done · / search4 open · 2026-05-06 · Tuxedo Task 2026.10.2
+ NORMAL   j/k · n new · r reschedule · x done · / search4 open · 2026-05-06 · Tuxedo Task 2026.10.3

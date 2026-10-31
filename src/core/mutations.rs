@@ -400,6 +400,14 @@ impl Store {
     }
 
     pub fn toggle_context(&mut self, abs: usize, name: &str) -> TagOutcome {
+        self.toggle_tag(abs, name, false)
+    }
+
+    pub fn toggle_person(&mut self, abs: usize, name: &str) -> TagOutcome {
+        self.toggle_tag(abs, name, true)
+    }
+
+    fn toggle_tag(&mut self, abs: usize, name: &str, person: bool) -> TagOutcome {
         let name = name.trim();
         match self.reconcile() {
             Reconcile::Unchanged => {}
@@ -408,15 +416,18 @@ impl Store {
         if abs >= self.tasks.len() {
             return TagOutcome::OutOfRange;
         }
-        let has = self.tasks[abs].contexts.iter().any(|c| c == name);
         let mut task = self.tasks[abs].clone();
-        let result = if has {
-            task.remove_context(name).map(|_| ())
-        } else {
-            task.add_context(name).map(|_| ())
+        let has = if person { &task.people } else { &task.contexts }
+            .iter()
+            .any(|c| c == name);
+        let result = match (person, has) {
+            (true, true) => task.remove_person(name),
+            (true, false) => task.add_person(name),
+            (false, true) => task.remove_context(name),
+            (false, false) => task.add_context(name),
         };
         match result {
-            Ok(()) => {
+            Ok(_) => {
                 self.push_history();
                 self.tasks[abs] = task;
                 if let Err(e) = self.persist() {

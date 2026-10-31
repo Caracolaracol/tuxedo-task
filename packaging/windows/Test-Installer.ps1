@@ -14,7 +14,7 @@ $expectedHash = ([regex]::Match($checksum, '^([a-f0-9]{64})  ')).Groups[1].Value
 if (-not $expectedHash -or (Get-FileHash -LiteralPath $InstallerPath -Algorithm SHA256).Hash -ine $expectedHash) { throw 'Installer checksum mismatch.' }
 $output = Split-Path $InstallerPath
 $previous = Join-Path $output 'test-fixtures/previous-installer.exe'
-if (-not (Test-Path -LiteralPath $previous)) { throw 'Build the synthetic upgrade fixture first.' }
+if (-not (Test-Path -LiteralPath $previous)) { throw 'Download the published previous-release installer first.' }
 $statePath = 'Software\Caracolaracol\TuxedoTask'
 $uninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{BEE5823B-1635-4B5B-BA07-5E392807F3E0}_is1'
 if ([Microsoft.Win32.Registry]::CurrentUser.OpenSubKey($uninstallKey)) { throw 'Refusing to touch an existing installation.' }
@@ -100,7 +100,7 @@ try {
     Assert ((UserPath) -ceq $baseline) 'Rejected installation modified PATH.'
 
     RunSetup $previous $directory
-    AssertVersion '2026.10.1'
+    AssertVersion '2026.10.2'
     Assert ((PathCount) -eq 1) 'Initial PATH entry missing or duplicated.'
     $extraData = Join-Path $directory 'my-personal-todo.txt'
     [IO.File]::WriteAllText($extraData, 'Keep unregistered files even inside the program directory')

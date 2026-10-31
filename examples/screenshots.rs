@@ -2,6 +2,7 @@
 //!
 //! Usage:
 //!     cargo run --example screenshots
+//!     cargo run --example screenshots -- --persona   # Persona preview only
 //!
 //! Renders each scene through ratatui's `TestBackend`, then walks the
 //! resulting buffer and emits an SVG: one `<rect>` per horizontal bg run,
@@ -32,6 +33,22 @@ const CH: f32 = 16.0;
 fn main() -> std::io::Result<()> {
     let out = PathBuf::from("docs/screenshots");
     fs::create_dir_all(&out)?;
+
+    let mut people = App::new(
+        std::env::temp_dir().join("tuxedo-people-screenshots/todo.txt"),
+        "(A) 2026-05-01 Launch the website +tuxedo @team ::agus\n  2026-05-01 Write the announcement ::ana\n  2026-05-01 Review the design ::maria\n  2026-05-01 Prepare the demo ::ana ::José\n2026-05-01 Call the print shop +home @phone ::maria\n".into(),
+        "2026-05-06".into(), Config::default(),
+    );
+    people.config_path = Some(std::env::temp_dir().join("tuxedo-people-screenshots/config.toml"));
+    people.file_path = PathBuf::from("tasks/todo.txt");
+    people.prefs.density = Density::Compact;
+    people.prefs.sort = Sort::Project;
+    people.set_person_filter(Some("ana".into()));
+    people.cursor = 1;
+    save(&people, &out.join("persona.svg"))?;
+    if std::env::args().any(|arg| arg == "--persona" || arg == "--people") {
+        return Ok(());
+    }
 
     // Render every scene at Compact density so the screenshots stay
     // consistent and pack the most content per frame.

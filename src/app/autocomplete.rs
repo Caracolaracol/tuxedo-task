@@ -7,9 +7,20 @@ use crate::todo::{self, Task};
 pub enum TokenKind {
     Project,
     Context,
+    Person,
 }
 
-/// The `+project` / `@context` token currently under the input cursor, if any.
+impl TokenKind {
+    pub fn sigil(self) -> &'static str {
+        match self {
+            Self::Project => "+",
+            Self::Context => "@",
+            Self::Person => "::",
+        }
+    }
+}
+
+/// The `+project` / `@context` / `::person` token under the input cursor.
 /// `start` is the byte offset of the sigil within the draft so callers can
 /// slice and replace; `prefix` is the text already typed after the sigil.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -29,7 +40,7 @@ pub struct AutocompleteTarget<'a> {
 
 /// Find the autocomplete token at `cursor`. Walks back through non-whitespace
 /// chars to the start of the current word; returns `Some` only if that word
-/// begins with `+` or `@`. Cursor on whitespace, on plain text, or at byte 0
+/// begins with `+`, `@`, or unquoted `::`. Cursor on whitespace, plain text, or byte 0
 /// of an empty draft yields `None`.
 pub fn active_token(draft: &str, cursor: usize) -> Option<ActiveToken<'_>> {
     let cursor = cursor.min(draft.len());
@@ -51,11 +62,18 @@ pub fn active_token(draft: &str, cursor: usize) -> Option<ActiveToken<'_>> {
     let kind = match draft.as_bytes()[start] {
         b'+' => TokenKind::Project,
         b'@' => TokenKind::Context,
+        b':' if draft[start..cursor].starts_with("::") => TokenKind::Person,
         _ => return None,
     };
+    let prefix = &draft[start + kind.sigil().len()..cursor];
+    if kind == TokenKind::Person
+        && (prefix.contains(':') || draft[..start].bytes().filter(|b| *b == b'"').count() % 2 != 0)
+    {
+        return None;
+    }
     Some(ActiveToken {
         kind,
-        prefix: &draft[start + 1..cursor],
+        prefix,
         start,
     })
 }
@@ -65,11 +83,11 @@ impl App {
     /// based on the current app mode.
     pub fn autocomplete_target(&self) -> Option<AutocompleteTarget<'_>> {
         match self.mode {
-            Mode::PromptProject | Mode::PromptContext => {
-                let kind = if self.mode == Mode::PromptProject {
-                    TokenKind::Project
-                } else {
-                    TokenKind::Context
+            Mode::PromptProject | Mode::PromptContext | Mode::PromptPerson => {
+                let kind = match self.mode {
+                    Mode::PromptProject => TokenKind::Project,
+                    Mode::PromptPerson => TokenKind::Person,
+                    _ => TokenKind::Context,
                 };
                 let text = self.draft.text();
                 let cursor = self.draft.cursor().min(text.len());
@@ -83,17 +101,18 @@ impl App {
             _ => {
                 let tok = active_token(self.draft.text(), self.draft.cursor())?;
                 let token_start = tok.start;
-                let after_sigil = &self.draft.text()[token_start + 1..];
+                let name_start = token_start + tok.kind.sigil().len();
+                let after_sigil = &self.draft.text()[name_start..];
                 let end_offset = after_sigil
                     .char_indices()
                     .find(|(_, c)| c.is_whitespace())
                     .map(|(i, _)| i)
                     .unwrap_or(after_sigil.len());
-                let end = token_start + 1 + end_offset;
+                let end = name_start + end_offset;
                 Some(AutocompleteTarget {
                     kind: tok.kind,
                     prefix: tok.prefix,
-                    replace_start: token_start + 1,
+                    replace_start: name_start,
                     replace_end: end,
                 })
             }
@@ -107,7 +126,7 @@ impl App {
         !self.draft.autocomplete_suppressed() && !self.autocomplete_matches().is_empty()
     }
 
-    /// Suggestions for the `+project` / `@context` token currently under the
+    /// Suggestions for the `+project` / `@context` / `::person` token under the
     /// cursor. Empty when no token is active or the corpus has nothing
     /// matching the prefix. Sorted prefix-matches-first then contains-only,
     /// each group alphabetical, capped at 8.
@@ -121,6 +140,7 @@ impl App {
             let source = match target.kind {
                 TokenKind::Project => &t.projects,
                 TokenKind::Context => &t.contexts,
+                TokenKind::Person => &t.people,
             };
             for s in source {
                 seen.insert(s.as_str());

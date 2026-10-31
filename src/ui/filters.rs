@@ -1,6 +1,6 @@
 use ratatui::Frame;
 use ratatui::layout::Rect;
-use ratatui::style::{Modifier, Style};
+use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, BorderType, Borders, Paragraph};
 
@@ -9,16 +9,21 @@ use crate::search::subseq_match_ci;
 use crate::theme::Theme;
 use crate::todo;
 
+struct Section<'a> {
+    title: &'static str,
+    sigil: &'static str,
+    hint: &'static str,
+    keys: &'static str,
+    color: Color,
+    values: Vec<(String, usize)>,
+    active: Option<&'a str>,
+    target: fn(String) -> FilterTarget,
+}
+
 pub fn render(frame: &mut Frame, area: Rect, app: &App) {
     let theme = app.theme();
-    let bordered = app.prefs.borders;
-
-    // Optional border around the whole pane. Content renders inside so the
-    // border doesn't collide with the rows; the mouse hit-map uses the inner
-    // rect for the same reason. The pane is transparent (bg = main bg) so
-    // only the border separates it from the rest of the UI.
     let block = Block::default()
-        .borders(if bordered {
+        .borders(if app.prefs.borders {
             Borders::ALL
         } else {
             Borders::NONE
@@ -30,132 +35,175 @@ pub fn render(frame: &mut Frame, area: Rect, app: &App) {
             Style::default().fg(theme.dim).add_modifier(Modifier::BOLD),
         )))
         .style(Style::default().bg(theme.bg));
-    let content = if bordered { block.inner(area) } else { area };
+    let content = if app.prefs.borders {
+        block.inner(area)
+    } else {
+        area
+    };
     frame.render_widget(block, area);
 
-    let projects = ordered_unique(app.tasks(), |t| &t.projects);
-    let contexts = ordered_unique(app.tasks(), |t| &t.contexts);
-
-    let mut lines: Vec<Line> = Vec::new();
-    let mut hit_rows: Vec<Option<FilterTarget>> = Vec::new();
-    lines.push(line_pad(theme, vec![Span::raw(" ")]));
-    hit_rows.push(None);
-    lines.push(line_pad(
-        theme,
-        vec![Span::styled(
-            " プロジェクト",
-            Style::default()
-                .fg(theme.project)
-                .add_modifier(Modifier::BOLD),
-        )],
-    ));
-    hit_rows.push(None);
-    if projects.is_empty() {
-        lines.push(hint_row(theme, "+project", theme.project));
-        hit_rows.push(None);
-    } else {
-        for (name, count) in &projects {
-            let active = app.filter.project.as_deref() == Some(name.as_str());
-            lines.push(filter_row(theme, "+", name, *count, active, theme.project));
-            hit_rows.push(Some(FilterTarget::Project(name.clone())));
-        }
-    }
-    lines.push(line_pad(theme, vec![Span::raw(" ")]));
-    hit_rows.push(None);
-    lines.push(line_pad(
-        theme,
-        vec![Span::styled(
-            " コンテキスト",
-            Style::default()
-                .fg(theme.context)
-                .add_modifier(Modifier::BOLD),
-        )],
-    ));
-    hit_rows.push(None);
-    if contexts.is_empty() {
-        lines.push(hint_row(theme, "@context", theme.context));
-        hit_rows.push(None);
-    } else {
-        for (name, count) in &contexts {
-            let active = app.filter.context.as_deref() == Some(name.as_str());
-            lines.push(filter_row(theme, "@", name, *count, active, theme.context));
-            hit_rows.push(Some(FilterTarget::Context(name.clone())));
-        }
-    }
-
+    let mut sections = vec![
+        Section {
+            title: " プロジェクト",
+            sigil: "+",
+            hint: "project",
+            keys: "fp",
+            color: theme.project,
+            values: ordered_unique(app.tasks(), |t| &t.projects),
+            active: app.filter.project.as_deref(),
+            target: FilterTarget::Project,
+        },
+        Section {
+            title: " コンテキスト",
+            sigil: "@",
+            hint: "context",
+            keys: "fc",
+            color: theme.context,
+            values: ordered_unique(app.tasks(), |t| &t.contexts),
+            active: app.filter.context.as_deref(),
+            target: FilterTarget::Context,
+        },
+        Section {
+            title: " ペルソナ",
+            sigil: "::",
+            hint: "person",
+            keys: "fm",
+            color: theme.accent,
+            values: ordered_unique(app.tasks(), |t| &t.people),
+            active: app.filter.person.as_deref(),
+            target: FilterTarget::Person,
+        },
+    ];
     let saved = app.saved_filters();
     if !saved.is_empty() {
-        lines.push(line_pad(theme, vec![Span::raw(" ")]));
-        hit_rows.push(None);
-        lines.push(line_pad(
-            theme,
-            vec![Span::styled(
-                " SAVED",
-                Style::default()
-                    .fg(theme.accent)
-                    .add_modifier(Modifier::BOLD),
-            )],
-        ));
-        hit_rows.push(None);
-        for f in saved {
-            let active = app.filter().search == f.query;
-            let count = app
-                .tasks()
+        sections.push(Section {
+            title: " SAVED",
+            sigil: "",
+            hint: "",
+            keys: "ff",
+            color: theme.accent,
+            active: saved
                 .iter()
-                .filter(|t| {
-                    !t.done
-                        && subseq_match_ci(todo::body_after_priority(&t.raw), &f.query).is_some()
+                .find(|f| f.query == app.filter.search)
+                .map(|f| f.name.as_str()),
+            values: saved
+                .iter()
+                .map(|f| {
+                    let count = app
+                        .tasks()
+                        .iter()
+                        .filter(|t| {
+                            !t.done
+                                && subseq_match_ci(todo::body_after_priority(&t.raw), &f.query)
+                                    .is_some()
+                        })
+                        .count();
+                    (f.name.clone(), count)
                 })
-                .count();
-            lines.push(filter_row(theme, "", &f.name, count, active, theme.accent));
-            hit_rows.push(Some(FilterTarget::Saved(f.name.clone())));
+                .collect(),
+            target: FilterTarget::Saved,
+        });
+    }
+
+    // Share the vertical space instead of letting a long project list push
+    // Persona (and saved searches) offscreen. Short sections donate spare rows.
+    let budget = (content.height as usize).saturating_sub(1 + 2 * sections.len());
+    let mut limits = vec![1; sections.len()];
+    let mut remaining = budget.saturating_sub(sections.len());
+    while remaining > 0 {
+        let before = remaining;
+        for (section, limit) in sections.iter().zip(&mut limits) {
+            if *limit < section.values.len() && remaining > 0 {
+                *limit += 1;
+                remaining -= 1;
+            }
+        }
+        if before == remaining {
+            break;
         }
     }
 
-    // Rebuild the mouse hit-map for this frame.
+    let mut lines = vec![Line::raw(" ")];
+    let mut hit_rows = vec![None];
+    for (section, limit) in sections.iter().zip(limits) {
+        lines.push(Line::from(Span::styled(
+            section.title,
+            Style::default()
+                .fg(section.color)
+                .add_modifier(Modifier::BOLD),
+        )));
+        hit_rows.push(None);
+        if section.values.is_empty() {
+            lines.push(Line::from(vec![
+                Span::styled("   tag with ", Style::default().fg(theme.dim)),
+                Span::styled(
+                    format!("{}{}", section.sigil, section.hint),
+                    Style::default().fg(section.color),
+                ),
+            ]));
+            hit_rows.push(None);
+        } else {
+            let truncated = section.values.len() > limit;
+            let shown = if truncated {
+                limit.saturating_sub(1).max(1)
+            } else {
+                limit
+            };
+            let active = section
+                .values
+                .iter()
+                .position(|(name, _)| Some(name.as_str()) == section.active);
+            // Keep the active item on screen while cycling with the keyboard.
+            let start = active.map_or(0, |i| i.saturating_sub(shown - 1));
+            for (name, count) in section.values.iter().skip(start).take(shown) {
+                lines.push(filter_row(
+                    theme,
+                    section.sigil,
+                    name,
+                    *count,
+                    Some(name.as_str()) == section.active,
+                    section.color,
+                ));
+                hit_rows.push(Some((section.target)(name.clone())));
+            }
+            if truncated && limit > 1 {
+                lines.push(Line::from(Span::styled(
+                    format!("   … {} to browse", section.keys),
+                    Style::default().fg(theme.dim),
+                )));
+                hit_rows.push(None);
+            }
+        }
+        lines.push(Line::raw(" "));
+        hit_rows.push(None);
+    }
     let mut mouse = app.mouse_hit.borrow_mut();
     mouse.left_rect = Some((content.x, content.y, content.width, content.height));
     mouse.left_rows = hit_rows;
-
-    let para = Paragraph::new(lines).style(Style::default().bg(theme.bg).fg(theme.fg));
-    frame.render_widget(para, content);
+    frame.render_widget(
+        Paragraph::new(lines).style(Style::default().bg(theme.bg).fg(theme.fg)),
+        content,
+    );
 }
 
-fn filter_row<'a>(
+fn filter_row(
     theme: &Theme,
     sigil: &str,
-    name: &'a str,
+    name: &str,
     count: usize,
     active: bool,
-    sigil_color: ratatui::style::Color,
-) -> Line<'a> {
-    // Inactive rows are transparent (bg = main bg); the active filter keeps a
-    // highlight chip so it still reads as selected against the border.
+    color: Color,
+) -> Line<'static> {
     let bg = if active { theme.selected } else { theme.bg };
     let prefix = if active { "▸ " } else { "  " };
-    let mut padded = format!("{}{}", sigil, name);
-    if padded.chars().count() < 16 {
-        let pad = 16 - padded.chars().count();
-        padded.push_str(&" ".repeat(pad));
-    }
+    let mut padded = format!("{sigil}{name}");
+    let width = Span::raw(padded.as_str()).width();
+    padded.push_str(&" ".repeat(16usize.saturating_sub(width)));
     Line::from(vec![
         Span::raw(" "),
-        Span::styled(prefix.to_string(), Style::default().fg(theme.accent)),
-        Span::styled(padded, Style::default().fg(sigil_color)),
-        Span::styled(format!("{:>3}", count), Style::default().fg(theme.dim)),
+        Span::styled(prefix, Style::default().fg(theme.accent)),
+        Span::styled(padded, Style::default().fg(color)),
+        Span::styled(format!("{count:>3}"), Style::default().fg(theme.dim)),
     ])
     .style(Style::default().bg(bg))
-}
-
-fn hint_row<'a>(theme: &Theme, token: &'a str, token_color: ratatui::style::Color) -> Line<'a> {
-    Line::from(vec![
-        Span::raw("   "),
-        Span::styled("tag with ", Style::default().fg(theme.dim)),
-        Span::styled(token, Style::default().fg(token_color)),
-    ])
-    .style(Style::default().bg(theme.bg))
-}
-
-fn line_pad<'a>(theme: &Theme, spans: Vec<Span<'a>>) -> Line<'a> {
-    Line::from(spans).style(Style::default().bg(theme.bg))
 }

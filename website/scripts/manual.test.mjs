@@ -70,6 +70,19 @@ test('installation comes first and optional CLI stays after the interactive guid
   assert.ok(cli.includes('### Capture from scripts'));
 });
 
+test('Persona reference documents Katakana, shortcuts, sharing limits and availability', () => {
+  const manual = buildManual(readme, start, notes);
+  const people = readmeSection(manual, 'Persona assignments', 3);
+  assert.ok(people.includes('ペルソナ'));
+  assert.ok(people.includes('::person') || people.includes('::alias'));
+  assert.ok(people.includes('Press `m`'));
+  assert.ok(people.includes('Press `fm`'));
+  assert.ok(people.includes('IPv6 stays literal'));
+  assert.ok(people.includes('not an account system'));
+  assert.ok(manual.includes('`listpersona`'));
+  assert.ok(manual.includes('`people` string array'));
+});
+
 test('generated links are suitable for the documentation route', () => {
   const manual = buildManual(readme, start, notes);
   assert.ok(manual.includes('](#installation)'));

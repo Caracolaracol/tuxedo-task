@@ -40,9 +40,36 @@ fn parse_args(rest: &[String]) -> Result<Args, String> {
 
 /// Every recognized subcommand and alias.
 const SUBCOMMANDS: &[&str] = &[
-    "add", "a", "append", "app", "prepend", "prep", "replace", "pri", "p", "depri", "dp", "done",
-    "do", "complete", "del", "rm", "archive", "list", "ls", "listall", "lsa", "listpri", "lsp",
-    "listproj", "lsprj", "listcon", "lsc",
+    "add",
+    "a",
+    "append",
+    "app",
+    "prepend",
+    "prep",
+    "replace",
+    "pri",
+    "p",
+    "depri",
+    "dp",
+    "done",
+    "do",
+    "complete",
+    "del",
+    "rm",
+    "archive",
+    "list",
+    "ls",
+    "listall",
+    "lsa",
+    "listpri",
+    "lsp",
+    "listproj",
+    "lsprj",
+    "listcon",
+    "lsc",
+    "listpersona",
+    "listpeople",
+    "lsm",
 ];
 
 /// Locate the subcommand: the first non-global token, if it is a known
@@ -112,6 +139,7 @@ pub fn run(argv: &[String]) -> Result<Option<i32>> {
         "listpri" | "lsp" => cmd_listpri(&store, pos, json),
         "listproj" | "lsprj" => cmd_listtags(&store, json, TagKind::Project),
         "listcon" | "lsc" => cmd_listtags(&store, json, TagKind::Context),
+        "listpersona" | "listpeople" | "lsm" => cmd_listtags(&store, json, TagKind::Person),
         other => {
             eprintln!("tuxedo: unknown command: {other}");
             2
@@ -542,6 +570,8 @@ fn filter_from_terms(terms: &[String]) -> Filter {
             f.project = Some(p.to_string());
         } else if let Some(c) = t.strip_prefix('@').filter(|s| !s.is_empty()) {
             f.context = Some(c.to_string());
+        } else if let Some(person) = crate::todo::person_name(t) {
+            f.person = Some(person.to_string());
         } else {
             if !needle.is_empty() {
                 needle.push(' ');
@@ -682,6 +712,7 @@ fn cmd_listpri(store: &Store, pos: &[String], json: bool) -> i32 {
 enum TagKind {
     Project,
     Context,
+    Person,
 }
 
 fn cmd_listtags(store: &Store, json: bool, kind: TagKind) -> i32 {
@@ -691,14 +722,16 @@ fn cmd_listtags(store: &Store, json: bool, kind: TagKind) -> i32 {
     // tasks (`core::filter::unique_values`).
     use std::collections::BTreeSet;
     let (sigil, action) = match kind {
-        TagKind::Project => ('+', "listproj"),
-        TagKind::Context => ('@', "listcon"),
+        TagKind::Project => ("+", "listproj"),
+        TagKind::Context => ("@", "listcon"),
+        TagKind::Person => ("::", "listpersona"),
     };
     let mut set: BTreeSet<&str> = BTreeSet::new();
     for t in store.tasks() {
         let src = match kind {
             TagKind::Project => &t.projects,
             TagKind::Context => &t.contexts,
+            TagKind::Person => &t.people,
         };
         for v in src {
             set.insert(v.as_str());

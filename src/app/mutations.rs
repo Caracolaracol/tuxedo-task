@@ -221,6 +221,28 @@ impl App {
         }
     }
 
+    pub fn toggle_person_on_current(&mut self, name: &str) {
+        let Some(abs) = self.cur_abs() else {
+            return;
+        };
+        match self.store.toggle_person(abs, name) {
+            TagOutcome::Added { abs, name } => {
+                self.flash(format!("::{name}"));
+                self.after_mutation(abs);
+            }
+            TagOutcome::Removed { abs, name } => {
+                self.flash(format!("removed ::{name}"));
+                self.after_mutation(abs);
+            }
+            TagOutcome::Unchanged | TagOutcome::OutOfRange => {}
+            TagOutcome::InvalidName => {
+                self.flash("invalid alias: use a single name, not an IPv6 literal")
+            }
+            TagOutcome::Aborted(r) => self.handle_reconcile_abort(r),
+            TagOutcome::Error(e) => self.flash(format!("invalid: {e}")),
+        }
+    }
+
     pub fn open_note_for_current(&mut self) {
         self.open_note_for_current_with_create(false);
     }

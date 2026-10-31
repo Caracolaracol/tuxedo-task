@@ -32,6 +32,7 @@ const EDITING: Section = (
         ("dd", "delete task"),
         ("p", "cycle priority A→B→C→·"),
         ("c", "add/remove context"),
+        ("m", "ペルソナ: assign/remove"),
         ("+", "add project"),
         ("yy", "copy line to clipboard"),
         ("yb", "copy body only"),
@@ -44,6 +45,7 @@ const VIEW: Section = (
     &[
         ("/", "fuzzy search"),
         ("fp / fc", "filter project/context"),
+        ("fm", "ペルソナ: filter person"),
         ("ff / fs", "saved filter pick/save"),
         ("S", "cycle sort"),
         ("v", "visual / multi-select"),
@@ -88,6 +90,7 @@ const FORMAT: Section = (
         ("YYYY-MM-DD", "creation / done date"),
         ("+project", "project tag(s)"),
         ("@context", "context tag(s)"),
+        ("::person", "ペルソナ assignment(s)"),
         ("due:YYYY-MM-DD", "due date"),
         ("rec:Nu", "recur (u in d/w/m/y/b)"),
         ("rec:+Nu", "strict: anchor on due:"),

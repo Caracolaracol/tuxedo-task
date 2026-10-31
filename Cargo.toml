@@ -1,6 +1,6 @@
 [package]
 name = "tuxedo"
-version = "2026.10.2"
+version = "2026.10.3"
 edition = "2024"
 description = "Keyboard-driven todo.txt TUI with nested subtasks — a community fork of Tuxedo"
 repository = "https://github.com/Caracolaracol/tuxedo-task"

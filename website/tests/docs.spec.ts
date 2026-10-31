@@ -43,6 +43,15 @@ test('documentation is linked from the landing and contains the full application
   expect(errors).toEqual([]);
 });
 
+test('Persona reference documents the released feature', async ({ page }) => {
+  await page.goto('docs/#persona-assignments');
+  await expect(page.getByRole('heading', { name: 'Persona assignments', exact: true })).toBeVisible();
+  await expect(page.locator('.docs-prose')).toContainText('Use Persona');
+  await expect(page.locator('.docs-prose')).toContainText('ペルソナ');
+  await expect(page.locator('.docs-prose')).toContainText('IPv6 stays literal');
+  await expect(page.locator('.docs-prose')).toContainText('listpersona');
+});
+
 test('table of contents, quick links and internal guide references resolve to unique targets', async ({ page }) => {
   await page.goto('docs/');
   const invalid = await page.locator('.docs-page a[href^="#"]').evaluateAll(links => links.flatMap(link => {

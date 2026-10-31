@@ -29,8 +29,10 @@ pub enum Mode {
     Settings,
     PromptProject,    // text input → add project on current task
     PromptContext,    // text input → add/remove context on current task
+    PromptPerson,     // text input → assign/remove person on current task
     PickProject,      // j/k cycles through projects to filter by
     PickContext,      // j/k cycles through contexts to filter by
+    PickPerson,       // j/k cycles through people to filter by
     PickSavedFilter,  // j/k cycles through saved searches to apply
     PromptSaveFilter, // text input → name the current search and save it
     CommandPalette,
@@ -144,19 +146,24 @@ impl FromStr for Density {
 pub struct Filter {
     pub project: Option<String>,
     pub context: Option<String>,
+    pub person: Option<String>,
     pub search: String,
 }
 
 impl Filter {
-    /// True when at least one of project / context / search is non-empty.
+    /// True when at least one of project / context / person / search is non-empty.
     pub fn has_any(&self) -> bool {
-        self.project.is_some() || self.context.is_some() || !self.search.is_empty()
+        self.project.is_some()
+            || self.context.is_some()
+            || self.person.is_some()
+            || !self.search.is_empty()
     }
 
     /// Drop every filter component back to its empty state.
     pub fn clear(&mut self) {
         self.project = None;
         self.context = None;
+        self.person = None;
         self.search.clear();
     }
 }
@@ -176,6 +183,7 @@ pub struct SavedFilter {
 pub enum FilterTarget {
     Project(String),
     Context(String),
+    Person(String),
     Saved(String),
 }
 

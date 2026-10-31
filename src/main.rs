@@ -180,11 +180,12 @@ fn print_usage() {
     println!("  done, do N...             mark task N complete");
     println!("  del, rm N [TERM]          delete task N (prompts; -f to force), or remove TERM");
     println!("  archive                   move completed tasks to done.txt");
-    println!("  list, ls [TERM...]        list tasks (TERM: +project @context or text)");
+    println!("  list, ls [TERM...]        list tasks (TERM: +project @context ::person or text)");
     println!("  listall, lsa [TERM...]    list todo.txt and done.txt");
     println!("  listpri, lsp [PRIORITY]   list prioritized tasks");
     println!("  listproj, lsprj           list +projects");
     println!("  listcon, lsc              list @contexts");
+    println!("  listpersona, lsm          list ::person assignments");
     println!("  update                    print instructions for upgrading tuxedo");
     println!();
     println!("Options:");
@@ -363,10 +364,12 @@ fn handle_key(app: &mut App, key: KeyEvent, keybinds: &KeyBindings) {
         Mode::Search => handle_search(app, key),
         Mode::Help => handle_help(app, key),
         Mode::Settings => handle_settings(app, key),
-        Mode::PromptProject | Mode::PromptContext | Mode::PromptSaveFilter => {
+        Mode::PromptProject | Mode::PromptContext | Mode::PromptPerson | Mode::PromptSaveFilter => {
             handle_prompt(app, key)
         }
-        Mode::PickProject | Mode::PickContext | Mode::PickSavedFilter => handle_pick(app, key),
+        Mode::PickProject | Mode::PickContext | Mode::PickPerson | Mode::PickSavedFilter => {
+            handle_pick(app, key)
+        }
         Mode::PickTheme => handle_pick_theme(app, key),
         Mode::CommandPalette => handle_command_palette(app, key),
         Mode::Share => handle_share(app, key),
@@ -431,6 +434,13 @@ fn handle_mouse(app: &mut App, ev: MouseEvent) {
                             app.set_context_filter(None);
                         } else {
                             app.set_context_filter(Some(name));
+                        }
+                    }
+                    FilterTarget::Person(name) => {
+                        if app.filter().person.as_deref() == Some(name.as_str()) {
+                            app.set_person_filter(None);
+                        } else {
+                            app.set_person_filter(Some(name));
                         }
                     }
                     FilterTarget::Saved(name) => {
@@ -1124,6 +1134,7 @@ fn handle_prompt(app: &mut App, key: KeyEvent) {
             match prev_mode {
                 Mode::PromptProject => app.add_project_to_current(&value),
                 Mode::PromptContext => app.toggle_context_on_current(&value),
+                Mode::PromptPerson => app.toggle_person_on_current(&value),
                 Mode::PromptSaveFilter => app.save_current_filter_as(&value),
                 _ => {}
             }
@@ -1198,6 +1209,13 @@ fn resolve_normal_key(app: &mut App, key: KeyEvent, keybinds: &KeyBindings) -> O
                 Action::BeginPromptContext
             }
         }
+        KeyCode::Char('m') => {
+            if app.chord.consume('f') {
+                Action::PickPerson
+            } else {
+                Action::BeginPromptPerson
+            }
+        }
         KeyCode::Char('/') => Action::BeginSearch,
         KeyCode::Char('?') => Action::OpenHelp,
         KeyCode::Char(',') => Action::OpenSettings,
@@ -1269,8 +1287,10 @@ fn apply_action(app: &mut App, action: Action) {
             | Action::BeginSearch
             | Action::BeginPromptProject
             | Action::BeginPromptContext
+            | Action::BeginPromptPerson
             | Action::PickProject
             | Action::PickContext
+            | Action::PickPerson
             | Action::PickSavedFilter
             | Action::SaveCurrentFilter
             | Action::CycleSort
@@ -1410,6 +1430,7 @@ fn apply_action(app: &mut App, action: Action) {
         Action::ArmF => app.chord.arm('f'),
         Action::PickProject => app.enter_pick_project(),
         Action::PickContext => app.enter_pick_context(),
+        Action::PickPerson => app.enter_pick_person(),
         Action::PickSavedFilter => app.enter_pick_saved(),
         Action::SaveCurrentFilter => {
             if app.filter().search.is_empty() {
@@ -1426,6 +1447,10 @@ fn apply_action(app: &mut App, action: Action) {
         }
         Action::BeginPromptContext => {
             app.mode = Mode::PromptContext;
+            app.draft_clear();
+        }
+        Action::BeginPromptPerson => {
+            app.mode = Mode::PromptPerson;
             app.draft_clear();
         }
         Action::ToggleLeftPane => {
@@ -1655,6 +1680,70 @@ mod tests {
         );
         app.config_path = Some(std::env::temp_dir().join("tuxedo-tests-config.toml"));
         app
+    }
+
+    #[test]
+    fn people_shortcuts_preserve_priority_context_and_command_palette() {
+        let mut app = build_app();
+        assert_eq!(resolve(&mut app, key('m')), Some(Action::BeginPromptPerson));
+        assert_eq!(resolve(&mut app, key('f')), Some(Action::ArmF));
+        // The event loop dispatches ArmF before the second key.
+        apply_action(&mut app, Action::ArmF);
+        assert_eq!(resolve(&mut app, key('m')), Some(Action::PickPerson));
+        assert_eq!(
+            resolve(&mut app, key(':')),
+            Some(Action::OpenCommandPalette)
+        );
+        assert_eq!(resolve(&mut app, key('p')), Some(Action::CyclePriority));
+        assert_eq!(
+            resolve(&mut app, key('c')),
+            Some(Action::BeginPromptContext)
+        );
+    }
+
+    #[test]
+    fn people_prompt_enter_assigns_then_removes_with_undo() {
+        let mut app = build_app();
+        apply_action(&mut app, Action::BeginPromptPerson);
+        assert_eq!(app.mode, Mode::PromptPerson);
+        app.draft_set("ana".into());
+        handle_prompt(&mut app, KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
+        assert_eq!(app.mode, Mode::Normal);
+        assert_eq!(app.tasks()[0].people, ["ana"]);
+        apply_action(&mut app, Action::BeginPromptPerson);
+        app.draft_set("ana".into());
+        handle_prompt(&mut app, KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
+        assert!(app.tasks()[0].people.is_empty());
+        apply_action(&mut app, Action::Undo);
+        assert_eq!(app.tasks()[0].people, ["ana"]);
+    }
+
+    #[test]
+    fn people_mouse_click_toggles_filter_without_losing_other_filters() {
+        let mut app = build_app();
+        app.set_project_filter(Some("work".into()));
+        {
+            let mut hit = app.mouse_hit().borrow_mut();
+            hit.left_rect = Some((0, 0, 20, 5));
+            hit.left_rows = vec![Some(FilterTarget::Person("ana".into()))];
+        }
+        handle_mouse(&mut app, mouse_click(2, 0));
+        assert_eq!(app.filter().person.as_deref(), Some("ana"));
+        handle_mouse(&mut app, mouse_click(2, 0));
+        assert_eq!(app.filter().person, None);
+        assert_eq!(app.filter().project.as_deref(), Some("work"));
+    }
+
+    #[test]
+    fn people_assignment_and_picker_are_read_only_in_archive() {
+        let mut app = build_app();
+        app.set_view(View::Archive);
+        apply_action(&mut app, Action::BeginPromptPerson);
+        assert_eq!(app.mode, Mode::Normal);
+        assert_eq!(app.flash_active(), Some("read-only in archive"));
+        apply_action(&mut app, Action::PickPerson);
+        assert_eq!(app.mode, Mode::Normal);
+        assert!(app.tasks().iter().all(|t| t.people.is_empty()));
     }
 
     #[test]
