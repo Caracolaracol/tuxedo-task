@@ -39,7 +39,7 @@ test('documentation is linked from the landing and contains the full application
   await expect(page.locator('.docs-prose')).toContainText('APPDATA');
   await expect(page.locator('.docs-prose')).toContainText('fork-specific extension');
   await expect(page.locator('.docs-prose')).toContainText('trusted networks only');
-  await expect(page.getByRole('link', { name: /^Source reference on GitHub/ })).toHaveAttribute('href', 'https://github.com/Caracolaracol/tuxedo-task/tree/main/Docs');
+  await expect(page.getByRole('link', { name: /^Source reference on GitHub/ })).toHaveAttribute('href', 'https://github.com/Caracolaracol/tuxedo-task/tree/main/docs');
   expect(errors).toEqual([]);
 });
 
@@ -81,7 +81,7 @@ test('CLI tables, config examples and custom-theme reference are readable', asyn
   const themeReference = page.locator('.docs-prose summary').filter({ hasText: 'Theme file format and field reference' });
   await themeReference.click();
   await expect(page.locator('.docs-prose details[open]')).toContainText('status_fg');
-  await expect(page.locator('.docs-prose a[href="https://github.com/Caracolaracol/tuxedo-task/tree/main/Docs/themes"]')).toBeVisible();
+  await expect(page.locator('.docs-prose a[href="https://github.com/Caracolaracol/tuxedo-task/tree/main/docs/themes"]')).toBeVisible();
 });
 
 test('documentation remains within the viewport at all supported widths', async ({ page }) => {

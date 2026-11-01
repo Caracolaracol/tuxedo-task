@@ -10,7 +10,7 @@ GitHub Actions, **not** for a Homebrew install or a release download.
   the following release starts at SemVer `1.0.0`. After that, increment MAJOR
   for incompatible todo.txt/CLI/config changes, MINOR for compatible features,
   and PATCH for compatible fixes.
-- Update version-specific download examples in `Docs/installation.md`.
+- Update version-specific download examples in `docs/installation.md`.
 - Run `cargo fmt --all --check`, `cargo clippy --all-targets --locked -- -D warnings`,
   and `cargo test --all-targets --locked`. If the status bar's version changes,
   review and update the rendered snapshots and regenerate the screenshots.
@@ -34,8 +34,10 @@ runs the Rust checks, and builds on native runners for:
 - Windows x86-64.
 
 Every archive includes the executable, `tuxedotask` alias, README and MIT license,
-plus an adjacent `.sha256` checksum. Unix archives use a relative symlink;
-Windows ZIPs include a second copy of the executable. Packaging smoke-tests the
+plus an adjacent `.sha256` checksum. The README links to the online guides and
+artwork using absolute URLs; only its bundled `LICENSE` link is local. It does
+not require a `docs/` folder beside the executable or promise offline guides.
+Unix archives use a relative symlink; Windows ZIPs include a second copy of the executable. Packaging smoke-tests the
 alias before uploading. Release publication waits for **all** targets.
 
 ### Windows installer gate

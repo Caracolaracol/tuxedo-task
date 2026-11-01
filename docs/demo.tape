@@ -1,6 +1,6 @@
 # VHS script for the README hero GIF.
 #
-#   vhs Docs/demo.tape  →  Docs/demo.gif
+#   vhs docs/demo.tape  →  docs/demo.gif
 #
 # Four scenes on an empty todo.txt:
 #   1. Empty state
@@ -8,7 +8,7 @@
 #   3. Slash-command metadata picker
 #   4. Command palette to toggle complete
 
-Output Docs/demo.gif
+Output docs/demo.gif
 
 Set FontSize 14
 Set Width 1200

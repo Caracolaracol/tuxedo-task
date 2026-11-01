@@ -9,13 +9,13 @@ Beyond the built-ins, tuxedo loads any `*.toml` file you drop in
 `%APPDATA%\tuxedo\themes`, respecting XDG/legacy settings as described under
 [Configuration](configuration.md#configuration)). Each one joins the `T`
 picker in sorted filename order. Ready-made themes live in
-[`Docs/themes/`](themes) — copy one into your platform's theme directory
+[`docs/themes/`](themes) — copy one into your platform's theme directory
 and press `T`. macOS/Linux example:
 
 ```sh
 mkdir -p ~/.config/tuxedo/themes
 curl -o ~/.config/tuxedo/themes/gruvbox-dark-soft.toml \
-  https://raw.githubusercontent.com/Caracolaracol/tuxedo-task/main/Docs/themes/gruvbox-dark-soft.toml
+  https://raw.githubusercontent.com/Caracolaracol/tuxedo-task/main/docs/themes/gruvbox-dark-soft.toml
 ```
 
 <details>

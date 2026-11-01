@@ -90,7 +90,7 @@ same scaling; its index scrolls within the viewport even on short ultrawide scre
 - `src/styles/global.css`: responsive, paper/plum/cerise visual identity.
 - `scripts/prepare-assets.mjs`: copies the app's original mask and real UI renders
   from the repository into `public/` before development/builds. The hero uses
-  `Docs/screenshots/subtasks.svg`; the workflow section uses `Docs/screenshots/list.svg`.
+  `docs/screenshots/subtasks.svg`; the workflow section uses `docs/screenshots/list.svg`.
   These come from the application's actual Ratatui renderer with sample tasks,
   not an HTML/CSS mockup. Generated copies are ignored; edit the originals.
 - `public/social-card.svg` and `.png`: original social preview. After editing the
@@ -122,7 +122,7 @@ Onboarding explicitly explains automatic file/folder creation and the `c`/`s`
 choices when starting without a path. Top quick links prioritize the first task,
 not command-line automation.
 
-The technical reference is **generated from the Markdown guides in [`Docs/`](../Docs/README.md)**.
+The technical reference is **generated from the Markdown guides in [Docs](../docs/README.md)**.
 The root README is a concise project overview, not the reference source.
 
 - `scripts/manual.mjs` lists and loads the guides in TUI-first order, promotes
@@ -132,11 +132,11 @@ The root README is a concise project overview, not the reference source.
   by Git. Do not edit the generated file.
 - The `predev`, `precheck`, and `prebuild` hooks regenerate the guide, so fresh
   checkouts and CI can import it before Astro compiles the page.
-- The Pages workflow watches `Docs/**` (including screenshots), so reference edits
+- The Pages workflow watches `docs/**` (including screenshots), so reference edits
   redeploy the documentation. Run `npm run test:docs` to check the generator,
   local documentation paths/case, and cross-file anchors separately.
 
-Edit each guide in `Docs/` to update both GitHub documentation and the website.
+Edit each guide in `docs/` to update both GitHub documentation and the website.
 There are no separate website-only copies of the onboarding or troubleshooting
 text. Keep claims about fork-only features scoped to the original upstream base,
 not unverified current upstream releases.
@@ -145,7 +145,7 @@ not unverified current upstream releases.
 
 The workflow is **`.github/workflows/pages.yml`**:
 
-1. Pushes to `main` affecting the README, `Docs/`, or site/shared assets trigger
+1. Pushes to `main` affecting the README, `docs/`, or site/shared assets trigger
    installation, dependency audit, type checks, static build and browser tests.
 2. Pull requests run the same validation but **cannot deploy**.
 3. Successful branch builds upload `website/dist` and deploy to GitHub Pages with

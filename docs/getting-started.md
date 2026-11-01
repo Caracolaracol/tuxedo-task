@@ -66,7 +66,7 @@ See [which file opens](usage.md#which-file-tuxedo-opens) for the full lookup ord
 > update check contacts GitHub and can be disabled with `TUXEDO_NO_UPDATE_CHECK=1`.
 
 For optional shell commands and automation, see the
-[command-line reference near the end](cli.md#command-line-interface).
+[command-line reference](cli.md#command-line-interface).
 
 ---
 
