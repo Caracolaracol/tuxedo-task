@@ -12,7 +12,7 @@ given a creation date if missing, and merged into `todo.txt` as a single
 undoable batch (`u` rolls back the whole drain at once).
 
 Advanced file-based producers and shell automation are covered in the
-[command-line reference](cli.md#capture-from-scripts), near the end.
+[command-line reference](cli.md#capture-from-scripts).
 
 The server:
 

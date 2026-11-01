@@ -25,7 +25,7 @@
     <summary>How to generate the screenshots and demo</summary>
     <p>The screenshots in the table above are checked-in SVGs. Regenerate them with:</p>
     <pre>mise run screenshots</pre>
-    <p>An optional demo recording can be generated with <a href="https://github.com/charmbracelet/vhs">vhs</a> from <code>Docs/demo.tape</code> (requires VHS and its dependencies):</p>
+    <p>An optional demo recording can be generated with <a href="https://github.com/charmbracelet/vhs">vhs</a> from <code>docs/demo.tape</code> (requires VHS and its dependencies):</p>
     <pre>mise run demo</pre>
 </details>
 

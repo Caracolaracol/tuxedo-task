@@ -31,7 +31,7 @@ const CW: f32 = 8.0;
 const CH: f32 = 16.0;
 
 fn main() -> std::io::Result<()> {
-    let out = PathBuf::from("Docs/screenshots");
+    let out = PathBuf::from("docs/screenshots");
     fs::create_dir_all(&out)?;
 
     let mut people = App::new(

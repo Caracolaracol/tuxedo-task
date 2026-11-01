@@ -1,4 +1,4 @@
-# <img src="src/serve/assets/icon.svg" width="48" height="48" align="absmiddle" alt="Tuxedo Task's original mask logo"> Tuxedo Task
+# <img src="https://github.com/Caracolaracol/tuxedo-task/raw/main/src/serve/assets/icon.svg" width="48" height="48" align="absmiddle" alt="Tuxedo Task's original mask logo"> Tuxedo Task
 
 <a href="https://en.wikipedia.org/wiki/Tuxedo_Mask"><img src="https://upload.wikimedia.org/wikipedia/en/0/07/TuxedoMask.jpg" width="180" alt="Tuxedo Mask from Sailor Moon, the inspiration for our mask motif"></a>
 
@@ -9,9 +9,9 @@ Persona assignments — all in plain-text files you own.
 [![CI](https://github.com/Caracolaracol/tuxedo-task/actions/workflows/ci.yml/badge.svg)](https://github.com/Caracolaracol/tuxedo-task/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
 
-[Website](https://caracolaracol.github.io/tuxedo-task/) · [Documentation & tutorials](Docs/README.md) · [Releases](https://github.com/Caracolaracol/tuxedo-task/releases/latest)
+[Website](https://caracolaracol.github.io/tuxedo-task/) · [Documentation & tutorials](https://github.com/Caracolaracol/tuxedo-task/blob/main/docs/README.md) · [Releases](https://github.com/Caracolaracol/tuxedo-task/releases/latest)
 
-![Tuxedo Task with nested tasks grouped by project](Docs/screenshots/subtasks.svg)
+![Tuxedo Task with nested tasks grouped by project](https://github.com/Caracolaracol/tuxedo-task/raw/main/docs/screenshots/subtasks.svg)
 
 ## Features
 
@@ -30,7 +30,7 @@ Persona assignments — all in plain-text files you own.
 - **Optional CLI:** todo.txt-style commands, shell automation, and JSON output.
 - **Cross-platform:** macOS, Linux, and Windows; precompiled releases and update notices.
 
-[Explore the guides](Docs/README.md) · [See what this fork adds](Docs/fork.md)
+[Explore the guides](https://github.com/Caracolaracol/tuxedo-task/blob/main/docs/README.md) · [See what this fork adds](https://github.com/Caracolaracol/tuxedo-task/blob/main/docs/fork.md)
 
 ## Install
 
@@ -43,11 +43,11 @@ brew install caracolaracol/tap/tuxedotask
 **Windows** — download [Tuxedo Task Setup.exe](https://github.com/Caracolaracol/tuxedo-task/releases/latest/download/tuxedo-task-windows-x86_64-setup.exe).
 It installs for your user; reopen your terminal or use the Start menu shortcut.
 The installer is unsigned: SmartScreen may warn. Use the official release and
-[verify its checksum](Docs/cli.md#verify-a-windows-installer); do not disable Windows security.
+[verify its checksum](https://github.com/Caracolaracol/tuxedo-task/blob/main/docs/cli.md#verify-a-windows-installer); do not disable Windows security.
 
 Neither option requires Rust or Cargo. Both `tuxedo` and `tuxedotask` open the
 same app. For portable downloads, source builds, updates, or switching from
-upstream Tuxedo, see the [installation guide](Docs/installation.md).
+upstream Tuxedo, see the [installation guide](https://github.com/Caracolaracol/tuxedo-task/blob/main/docs/installation.md).
 
 ## Quick start — TUI
 
@@ -79,7 +79,7 @@ Running just `tuxedo` opens your configured/default file or a welcome screen:
 | `:` / `?` | Command palette / help |
 | `q` | Quit — changes save automatically |
 
-[First-task tutorial](Docs/getting-started.md) · [All shortcuts](Docs/keybindings.md) · [Optional CLI reference](Docs/cli.md)
+[First-task tutorial](https://github.com/Caracolaracol/tuxedo-task/blob/main/docs/getting-started.md) · [All shortcuts](https://github.com/Caracolaracol/tuxedo-task/blob/main/docs/keybindings.md) · [Optional CLI reference](https://github.com/Caracolaracol/tuxedo-task/blob/main/docs/cli.md)
 
 ## About this fork
 
@@ -98,13 +98,13 @@ Its appearance on Wikipedia is not a grant of reuse rights.
 ## Contributing & credits
 
 [Issues and ideas](https://github.com/Caracolaracol/tuxedo-task/issues) and pull
-requests are welcome. See [development](Docs/development.md) for checks and
+requests are welcome. See [development](https://github.com/Caracolaracol/tuxedo-task/blob/main/docs/development.md) for checks and
 contribution guidance.
 
 Thanks to the original Tuxedo contributors, Gina Trapani and
 [todo.txt](http://todotxt.org/), [ratatui](https://ratatui.rs/), and
 [crossterm](https://github.com/crossterm-rs/crossterm).
-[More credits and support](Docs/support.md).
+[More credits and support](https://github.com/Caracolaracol/tuxedo-task/blob/main/docs/support.md).
 
 ## License
 
@@ -112,4 +112,4 @@ Code and original project assets are released under the [MIT License](LICENSE).
 The original Webstone Technologies Inc copyright notice is preserved. The
 Tuxedo Mask reference image is **not covered by MIT**. Website decorations have
 separate licenses: Openclipart roses are CC0, and Twemoji roses are CC BY 4.0;
-see [third-party credits](website/THIRD_PARTY.md).
+see [third-party credits](https://github.com/Caracolaracol/tuxedo-task/blob/main/website/THIRD_PARTY.md).

@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile, readdir } from 'node:fs/promises';
-import { dirname, resolve, relative, sep } from 'node:path';
+import { readFile, readdir, mkdtemp, copyFile, rm } from 'node:fs/promises';
+import { dirname, resolve, relative, sep, join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { buildManual, loadGuides, markdownSection } from './manual.mjs';
 
@@ -43,29 +44,31 @@ test('missing guide files or required headings fail loudly', () => {
 });
 
 test('README is a concise TUI-first overview with retained identity and licensing', () => {
-  assert.ok(readme.split('\n').length < 160, 'Keep detailed reference material in Docs/');
+  assert.ok(readme.split('\n').length < 160, 'Keep detailed reference material in docs/');
   const title = readme.split('\n')[0];
-  assert.match(title, /^# <img src="src\/serve\/assets\/icon\.svg"[^>]+> Tuxedo Task$/);
+  assert.match(title, /^# <img src="https:\/\/github\.com\/Caracolaracol\/tuxedo-task\/raw\/main\/src\/serve\/assets\/icon\.svg"[^>]+> Tuxedo Task$/);
   assert.ok(readme.indexOf('TuxedoMask.jpg') < readme.indexOf('## Features'));
   for (const feature of ['Persona', 'recurrence', 'subtasks', 'command palette', 'Markdown notes', 'Mouse support', 'Phone capture', 'JSON', 'custom themes', 'saved searches', 'archive', 'undo']) {
     assert.ok(readme.includes(feature), feature);
   }
   assert.ok(readme.includes('## Quick start — TUI'));
-  assert.ok(readme.includes('Docs/README.md'));
+  assert.ok(readme.includes('/docs/README.md'));
   assert.ok(readme.includes('independent community fork'));
   assert.ok(readme.includes('not covered by MIT'));
   assert.ok(readme.includes('website/THIRD_PARTY.md'));
   assert.doesNotMatch(readme, /## Configuration|## Command-line interface|## Keybindings/);
 });
 
-test('all local README and guide links exist with correct case and anchors', async () => {
-  const docsFiles = (await readdir(resolve(repo, 'Docs'))).filter(name => name.endsWith('.md'));
-  for (const file of ['README.md', ...docsFiles.map(name => `Docs/${name}`)]) {
+test('all README and guide repository links exist with correct case and anchors', async () => {
+  const docsFiles = (await readdir(resolve(repo, 'docs'))).filter(name => name.endsWith('.md'));
+  for (const file of ['README.md', ...docsFiles.map(name => `docs/${name}`)]) {
     const source = await readFile(resolve(repo, file), 'utf8');
-    for (const [, href] of source.matchAll(/\]\(([^)]+)\)/g)) {
-      if (/^(?:https?:|mailto:)/.test(href)) continue;
-      const [path, fragment] = href.split('#');
-      const target = path ? resolve(repo, dirname(file), path) : resolve(repo, file);
+    const links = [...source.matchAll(/\]\(([^)]+)\)/g), ...source.matchAll(/(?:src|href)="([^"]+)"/g)];
+    for (const [, href] of links) {
+      const repositoryLink = /^https:\/\/github\.com\/Caracolaracol\/tuxedo-task\/(?:blob|raw|tree)\/main\/(.*)$/.exec(href);
+      if (!repositoryLink && /^(?:https?:|mailto:)/.test(href)) continue;
+      const [path, fragment] = (repositoryLink?.[1] ?? href).split('#');
+      const target = repositoryLink ? resolve(repo, path) : path ? resolve(repo, dirname(file), path) : resolve(repo, file);
       await assertExactPath(target);
       if (fragment && target.endsWith('.md')) {
         const ids = headingIds(await readFile(target, 'utf8'));
@@ -73,6 +76,36 @@ test('all local README and guide links exist with correct case and anchors', asy
       }
     }
   }
+});
+
+test('packaged README needs only the bundled LICENSE, not a missing docs or assets folder', async () => {
+  const bundle = await mkdtemp(join(tmpdir(), 'tuxedo-readme-'));
+  try {
+    for (const file of ['README.md', 'LICENSE']) await copyFile(resolve(repo, file), join(bundle, file));
+    const packaged = await readFile(join(bundle, 'README.md'), 'utf8');
+    const links = [...packaged.matchAll(/\]\(([^)]+)\)/g), ...packaged.matchAll(/(?:src|href)="([^"]+)"/g)];
+    for (const [, href] of links) {
+      if (/^(?:https?:\/\/|#)/.test(href)) continue;
+      assert.equal(href, 'LICENSE', `Unbundled local README reference: ${href}`);
+      assert.ok((await readFile(join(bundle, href), 'utf8')).includes('MIT License'));
+    }
+  } finally {
+    await rm(bundle, { recursive: true, force: true });
+  }
+});
+
+test('legacy lowercase asset URLs remain available in the repository', async () => {
+  for (const path of ['docs/RELEASING.md', 'docs/demo.tape', 'docs/themes/gruvbox-dark-soft.toml', 'docs/screenshots/subtasks.svg']) {
+    await assertExactPath(resolve(repo, path));
+  }
+  assert.ok(guides['themes.md'].includes('/main/docs/themes/gruvbox-dark-soft.toml'));
+});
+
+test('standalone guides avoid monolithic-page wording and use the current archive example', async () => {
+  for (const source of Object.values(guides)) assert.doesNotMatch(source, /near the end|late CLI reference/);
+  const cargo = await readFile(resolve(repo, 'Cargo.toml'), 'utf8');
+  const version = /^version = "([^"]+)"/m.exec(cargo)[1];
+  assert.ok(guides['installation.md'].includes(`tuxedo-task-v${version}-aarch64-apple-darwin.tar.gz.sha256`));
 });
 
 test('manual includes all application references and excludes marketing artwork', () => {
@@ -127,7 +160,7 @@ test('Persona reference documents Katakana, shortcuts, sharing limits and availa
 test('generated links resolve inside the single-page guide or to GitHub assets', () => {
   assert.ok(manual.includes('](#installation)'));
   assert.ok(!manual.includes('](#install)'));
-  assert.ok(manual.includes('](https://github.com/Caracolaracol/tuxedo-task/tree/main/Docs/themes)'));
+  assert.ok(manual.includes('](https://github.com/Caracolaracol/tuxedo-task/tree/main/docs/themes)'));
   assert.ok(!/\]\([a-z-]+\.md(?:#|\))/.test(manual), 'No unresolved relative Markdown links');
   const ids = headingIds(manual);
   for (const [, id] of manual.matchAll(/\]\(#([^)]*)\)/g)) {

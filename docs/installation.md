@@ -56,7 +56,7 @@ entry, not entries you already had or changes made by other software.
 warning. Download only from the official release and compare its
 [SHA-256 file](https://github.com/Caracolaracol/tuxedo-task/releases/latest/download/tuxedo-task-windows-x86_64-setup.exe.sha256).
 Do not disable Windows security. An optional checksum command is in the
-[late CLI reference](cli.md#verify-a-windows-installer); it is not an installation step.
+[CLI reference](cli.md#verify-a-windows-installer); it is not an installation step.
 
 ## Precompiled downloads (portable option, including Windows)
 
@@ -72,12 +72,12 @@ Rust and Cargo are **not** needed for these downloads either.
 | Linux x86-64 | `x86_64-unknown-linux-gnu` |
 | Windows x86-64 | `x86_64-pc-windows-msvc` |
 
-For example, for the v2026.10.2 Apple Silicon archive and checksum in the same
+For example, for the v2026.10.4 Apple Silicon archive and checksum in the same
 directory (match the version in your own downloaded filenames):
 
 ```sh
-shasum -a 256 -c tuxedo-task-v2026.10.2-aarch64-apple-darwin.tar.gz.sha256
-tar -xzf tuxedo-task-v2026.10.2-aarch64-apple-darwin.tar.gz
+shasum -a 256 -c tuxedo-task-v2026.10.4-aarch64-apple-darwin.tar.gz.sha256
+tar -xzf tuxedo-task-v2026.10.4-aarch64-apple-darwin.tar.gz
 ```
 
 Extract the matching archive and place `tuxedo` and `tuxedotask` in a directory

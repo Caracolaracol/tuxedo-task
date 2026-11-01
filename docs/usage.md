@@ -30,7 +30,7 @@ needed. You can also open that sample directly with `tuxedo --sample`.
 
 Inside the app, press `n` to add a task, `Enter` to confirm, `?` for help and
 `q` to quit. Changes are saved automatically. The optional shell-command and
-scripting reference is [near the end](cli.md#command-line-interface).
+scripting reference is in the [CLI guide](cli.md#command-line-interface).
 
 When a newer release is available, the status bar shows `↑ <version> (tuxedo
 update)` next to the version. The check runs in the background, is cached at
