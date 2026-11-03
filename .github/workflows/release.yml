@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing version tag to release (for example v2026.10.4)"
+        description: "Existing version tag to release (for example v1.0.0)"
         required: true
 
 permissions:
@@ -158,9 +158,12 @@ jobs:
           tag_name: ${{ inputs.tag || github.ref_name }}
           name: Tuxedo Task ${{ inputs.tag || github.ref_name }}
           generate_release_notes: true
+          make_latest: true
           fail_on_unmatched_files: true
           body: |
             Precompiled Tuxedo Task binaries. End users do not need Rust or Cargo.
+
+            Versions from 1.0.0 use SemVer, following the 2026.10.4 bridge release. This is not a downgrade. Homebrew's formula uses version_scheme 1; Windows Setup keeps your existing installation directory. Tasks and configuration do not require migration. Installations older than 2026.10.4 may not show the new-version notice; follow the documented update instructions manually.
 
             Windows: [Download Setup.exe](https://github.com/Caracolaracol/tuxedo-task/releases/download/${{ inputs.tag || github.ref_name }}/tuxedo-task-windows-x86_64-setup.exe) for a per-user installation with optional user PATH integration and a Start menu shortcut. No administrator account, Rust or Cargo required. Windows 10 (1809+) / 11, x86-64.
 

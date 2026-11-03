@@ -72,12 +72,12 @@ Rust and Cargo are **not** needed for these downloads either.
 | Linux x86-64 | `x86_64-unknown-linux-gnu` |
 | Windows x86-64 | `x86_64-pc-windows-msvc` |
 
-For example, for the v2026.10.4 Apple Silicon archive and checksum in the same
+For example, for the v1.0.0 Apple Silicon archive and checksum in the same
 directory (match the version in your own downloaded filenames):
 
 ```sh
-shasum -a 256 -c tuxedo-task-v2026.10.4-aarch64-apple-darwin.tar.gz.sha256
-tar -xzf tuxedo-task-v2026.10.4-aarch64-apple-darwin.tar.gz
+shasum -a 256 -c tuxedo-task-v1.0.0-aarch64-apple-darwin.tar.gz.sha256
+tar -xzf tuxedo-task-v1.0.0-aarch64-apple-darwin.tar.gz
 ```
 
 Extract the matching archive and place `tuxedo` and `tuxedotask` in a directory
@@ -116,6 +116,16 @@ interface with a task file; replace `tuxedo` with `./target/release/tuxedo` on
 macOS/Linux or `.\target\release\tuxedo.exe` on Windows.
 
 ## Updates
+
+Versions from **1.0.0** use SemVer rather than the earlier calendar-based
+versions. **1.0.0 follows 2026.10.4**, despite its smaller first number; no task
+or configuration migration is required. Homebrew uses `version_scheme 1` so
+its normal upgrade command recognizes this transition. Windows users can run
+the new Setup.exe in the existing installation directory.
+
+The 2026.10.4 bridge release understands this transition in its update notice.
+Earlier releases may not announce 1.0.0: use the instructions below to update
+manually instead. The update notice never installs software automatically.
 
 For Homebrew installations:
 

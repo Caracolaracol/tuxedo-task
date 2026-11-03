@@ -23,6 +23,7 @@ test('loads at the Pages subpath with working assets, metadata and attribution',
   await expect(page.getByRole('link', { name: 'Full installation guide' })).toHaveAttribute('href', '/tuxedo-task/docs/#installation');
   await expect(page.getByRole('link', { name: 'All the shortcuts' })).toHaveAttribute('href', '/tuxedo-task/docs/#keybindings');
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://caracolaracol.github.io/tuxedo-task/');
+  await expect(page.locator('#install-title')).toHaveText('One command.');
   await expect(page.locator('#install-command')).toHaveText(command);
   await expect(page.locator('.install-top')).toContainText('Install with Homebrew');
   await expect(page.locator('.installation')).toContainText('No Rust or Cargo required.');

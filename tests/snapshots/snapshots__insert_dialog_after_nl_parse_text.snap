@@ -33,4 +33,4 @@ expression: buffer_to_text(&buf)
 │                        ││                                      ││                                │
 │                        ││                                      ││                                │
 ╰────────────────────────╯╰──────────────────────────────────────╯╰────────────────────────────────╯
- NORMAL · parsed natural language; press Enter to save 15 open · 2026-05-06 · Tuxedo Task 2026.10.4
+ NORMAL · parsed natural language; press Enter to save   h/15 open · 2026-05-06 · Tuxedo Task 1.0.0

@@ -6,10 +6,9 @@ GitHub Actions, **not** for a Homebrew install or a release download.
 ## 1. Prepare the source on main
 
 - Bump the package version in `Cargo.toml` and its own entry in `Cargo.lock`.
-  Keep dependencies locked. `2026.10.4` is the CalVer-to-SemVer bridge release;
-  the following release starts at SemVer `1.0.0`. After that, increment MAJOR
-  for incompatible todo.txt/CLI/config changes, MINOR for compatible features,
-  and PATCH for compatible fixes.
+  Keep dependencies locked. Versions use SemVer starting at `1.0.0`, following
+  the CalVer bridge `2026.10.4`. Increment MAJOR for incompatible todo.txt/CLI/
+  config changes, MINOR for compatible features, and PATCH for compatible fixes.
 - Update version-specific download examples in `docs/installation.md`.
 - Run `cargo fmt --all --check`, `cargo clippy --all-targets --locked -- -D warnings`,
   and `cargo test --all-targets --locked`. If the status bar's version changes,
@@ -21,8 +20,8 @@ GitHub Actions, **not** for a Homebrew install or a release download.
 ## 2. Publish a version tag
 
 ```sh
-git tag v2026.10.4
-git push mine v2026.10.4
+git tag v1.0.0
+git push mine v1.0.0
 ```
 
 Use the actual version, not the example above. Do not move or reuse published
@@ -39,6 +38,8 @@ artwork using absolute URLs; only its bundled `LICENSE` link is local. It does
 not require a `docs/` folder beside the executable or promise offline guides.
 Unix archives use a relative symlink; Windows ZIPs include a second copy of the executable. Packaging smoke-tests the
 alias before uploading. Release publication waits for **all** targets.
+The workflow explicitly marks the release as latest: do not rely on GitHub
+sorting `1.x` above the historical `2026.x` tags.
 
 ### Windows installer gate
 
@@ -73,6 +74,12 @@ The tap's workflow also checks for updates on a schedule. It downloads the
 latest stable release metadata and checksums, verifies the expected four archive
 names, generates `Formula/tuxedotask.rb`, and commits changes using that tap's
 own short-lived GitHub token. No cross-repository PAT is stored in this repo.
+
+The generator emits **`version_scheme 1` for SemVer releases**, while historical
+CalVer formulas retain scheme 0. This makes `1.0.0` an upgrade from `2026.10.4`;
+keep the scheme for subsequent SemVer releases, and cover it with tests in the
+tap before publishing. Run Formula CI on the updated formula via its manual
+dispatch: bot pushes from the update workflow do not trigger another workflow.
 
 The formula downloads the matching binary and declares **no Rust/Cargo build
 dependency**. It installs `tuxedo` and a `tuxedotask` symlink pointing to it. It
