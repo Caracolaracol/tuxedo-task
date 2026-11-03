@@ -17,7 +17,8 @@ test('loads at the Pages subpath with working assets, metadata and attribution',
   await expect(page.locator('#features .eyebrow')).toHaveText('01 / Features');
   await expect(page.locator('#features-title')).toHaveText('Features');
   await expect(page.locator('#features h3')).toHaveText(['Subtasks', 'Project grouping', 'Family editing', 'Mouse support', 'Persistent filters', 'Layout customization']);
-  await expect(page.locator('.hero-description')).toHaveText('A rose, a mask, and a mission: bring order to your todo.txt. Break down your tasks, finish the job, and make a dramatic exit.');
+  await expect(page.locator('.hero .eyebrow')).toHaveCount(0);
+  await expect(page.locator('.hero-description')).toHaveText('A rose, a mask, and a mission: bring order to your todo.txt.');
   await expect(page.getByRole('link', { name: /View full size/i })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Full installation guide' })).toHaveAttribute('href', '/tuxedo-task/docs/#installation');
   await expect(page.getByRole('link', { name: 'All the shortcuts' })).toHaveAttribute('href', '/tuxedo-task/docs/#keybindings');
